@@ -1,32 +1,28 @@
 {
-    "reports": {
-        "title": "Reports Dashboard",
-        "description": "View and analyze various reports",
-        "sections": {
-            "entry": {
-                "title": "Entry Report",
-                "partyInfo": "Information of Party",
-                "transporters": "Transporters",
-                "brokers": "Brokers",
-                "committee": "Committee Structure",
-                "doReport": "DO Entry Report",
-                "remainingDO": "Details of Remaining DO Lifting"
-            },
-            "purchase": {
-                "title": "Purchase Deals Report",
-                "paddy": "Paddy Purchase Deal Report",
-                "rice": "Rice Purchase Deal Report"
-            },
-            "sales": {
-                "title": "Sales Deals Report",
-                "paddy": "Paddy Deals Report"
-            },
-            "inward": {
-                "title": "Inward Report",
-                "paddy": "Paddy Inward Report",
-                "private": "Private Inward Report",
-                "rice": "Rice Inward / Lot Deposit Report"
-            }
+    "sections": {
+        "entry": {
+            "title": "Entry Report",
+            "partyInfo": "Information of Party",
+            "transporters": "Transporters",
+            "brokers": "Brokers",
+            "committee": "Committee Structure",
+            "doReport": "DO Entry Report",
+            "remainingDO": "Details of Remaining DO Lifting"
+        },
+        "purchase": {
+            "title": "Purchase Deals Report",
+            "paddy": "Paddy Purchase Deal Report",
+            "rice": "Rice Purchase Deal Report"
+        },
+        "sales": {
+            "title": "Sales Deals Report",
+            "paddy": "Paddy Deals Report"
+        },
+        "inward": {
+            "title": "Inward Report",
+            "paddy": "Paddy Inward Report",
+            "private": "Private Inward Report",
+            "rice": "Rice Inward / Lot Deposit Report"
         }
     }
 }

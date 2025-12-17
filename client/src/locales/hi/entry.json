@@ -2,30 +2,50 @@
     "entry": {
         "title": "प्रविष्टी डैशबोर्ड",
         "description": "अपनी दैनिक कार्यों का प्रबंधन करें",
-        "sections": {
-            "entry": {
-                "title": "प्रविष्टी",
-                "addParty": "पार्टी जोड़ें",
-                "addTransporters": "परिवहनकर्ता जोड़ें",
-                "addBrokers": "दलाल जोड़ें",
-                "addCommittee": "समिति संरचना जोड़ें",
-                "doEntry": "DO प्रविष्टी"
-            },
-            "purchase": {
-                "title": "खरीदी सौदा",
-                "paddy": "धान खरीदी सौदा",
-                "rice": "चावल खरीदी सौदा"
-            },
-            "sales": {
-                "title": "बिक्री सौदा",
-                "paddy": "धान बिक्री सौदा"
-            },
-            "inward": {
-                "title": "आवक",
-                "govtPaddy": "शासकीय धान आवक",
-                "privatePaddy": "निजी धान आवक",
-                "rice": "चावल आवक / LOT जमा"
-            }
+        "management": {
+            "title": "प्रबंधन",
+            "addParty": "पार्टी जोड़ें",
+            "addTransporter": "परिवहनकर्ता जोड़ें",
+            "addWorker": "दलाल जोड़ें",
+            "propertyManagement": "समिति संरचना",
+            "doEntry": "DO प्रविष्टी"
+        },
+        "purchaseDeals": {
+            "title": "खरीदी सौदा",
+            "paddyPurchase": "धान खरीदी सौदा",
+            "ricePurchase": "चावल खरीदी सौदा",
+            "paddySales": "धान बिक्री सौदा"
+        },
+        "inward": {
+            "title": "आवक",
+            "govtPaddy": "शासकीय धान आवक",
+            "privatePaddy": "निजी धान आवक",
+            "riceInward": "चावल आवक / LOT जमा"
+        }
+    },
+    "sections": {
+        "entry": {
+            "title": "प्रविष्टी",
+            "addParty": "पार्टी जोड़ें",
+            "addTransporters": "परिवहनकर्ता जोड़ें",
+            "addBrokers": "दलाल जोड़ें",
+            "addCommittee": "समिति संरचना जोड़ें",
+            "doEntry": "DO प्रविष्टी"
+        },
+        "purchase": {
+            "title": "खरीदी सौदा",
+            "paddy": "धान खरीदी सौदा",
+            "rice": "चावल खरीदी सौदा"
+        },
+        "sales": {
+            "title": "बिक्री सौदा",
+            "paddy": "धान बिक्री सौदा"
+        },
+        "inward": {
+            "title": "आवक",
+            "govtPaddy": "शासकीय धान आवक",
+            "privatePaddy": "निजी धान आवक",
+            "rice": "चावल आवक / LOT जमा"
         }
     },
     "nav": {

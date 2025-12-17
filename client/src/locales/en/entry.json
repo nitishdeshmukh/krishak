@@ -2,30 +2,50 @@
     "entry": {
         "title": "Entry Dashboard",
         "description": "Manage your daily operations",
-        "sections": {
-            "entry": {
-                "title": "Entry",
-                "addParty": "Add Party",
-                "addTransporters": "Add Transporters",
-                "addBrokers": "Add Brokers",
-                "addCommittee": "Add Committee Structure",
-                "doEntry": "DO Entry"
-            },
-            "purchase": {
-                "title": "Purchase Deals",
-                "paddy": "Paddy Purchase Deal",
-                "rice": "Rice Purchase Deal"
-            },
-            "sales": {
-                "title": "Sales Deals",
-                "paddy": "Paddy Deals"
-            },
-            "inward": {
-                "title": "Inward",
-                "govtPaddy": "Government Paddy Inward",
-                "privatePaddy": "Private Paddy Inward",
-                "rice": "Rice Inward / Lot Deposit"
-            }
+        "management": {
+            "title": "Management",
+            "addParty": "Add Party",
+            "addTransporter": "Add Transporters",
+            "addWorker": "Add Brokers",
+            "propertyManagement": "Committee Structure",
+            "doEntry": "DO Entry"
+        },
+        "purchaseDeals": {
+            "title": "Purchase Deals",
+            "paddyPurchase": "Paddy Purchase Deal",
+            "ricePurchase": "Rice Purchase Deal",
+            "paddySales": "Paddy Sales"
+        },
+        "inward": {
+            "title": "Inward",
+            "govtPaddy": "Government Paddy Inward",
+            "privatePaddy": "Private Paddy Inward",
+            "riceInward": "Rice Inward / Lot Deposit"
+        }
+    },
+    "sections": {
+        "entry": {
+            "title": "Entry",
+            "addParty": "Add Party",
+            "addTransporters": "Add Transporters",
+            "addBrokers": "Add Brokers",
+            "addCommittee": "Add Committee Structure",
+            "doEntry": "DO Entry"
+        },
+        "purchase": {
+            "title": "Purchase Deals",
+            "paddy": "Paddy Purchase Deal",
+            "rice": "Rice Purchase Deal"
+        },
+        "sales": {
+            "title": "Sales Deals",
+            "paddy": "Paddy Deals"
+        },
+        "inward": {
+            "title": "Inward",
+            "govtPaddy": "Government Paddy Inward",
+            "privatePaddy": "Private Paddy Inward",
+            "rice": "Rice Inward / Lot Deposit"
         }
     },
     "nav": {

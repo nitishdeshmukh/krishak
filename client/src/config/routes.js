@@ -34,6 +34,15 @@ export const routes = [
         view: 'entry', // Which view this belongs to
     },
     {
+        path: '/demo',
+        component: Reports,
+        title: 'Entry',
+        titleKey: 'entry:nav.entry',
+        icon: DocumentTextIcon,
+        showInSidebar: false,
+        view: 'entry', // Which view this belongs to
+    },
+    {
         path: '/entry',
         component: Entry,
         title: 'Entry',
