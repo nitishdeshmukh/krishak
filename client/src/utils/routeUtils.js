@@ -39,16 +39,11 @@ export const generateRoutes = (routes) => {
 /**
  * Generate navigation items for sidebar from route config
  * @param {Array} routes - Route configuration array
- * @param {string} group - Optional group filter (platform, settings)
  * @returns {Array} Navigation items array
  */
-export const generateNavItems = (routes, group = null) => {
+export const generateNavItems = (routes) => {
     return routes
-        .filter((route) => {
-            if (!route.showInSidebar) return false;
-            if (group && route.group !== group) return false;
-            return true;
-        })
+        .filter((route) => route.showInSidebar)
         .map((route) => ({
             title: route.title,
             titleKey: route.titleKey, // Pass titleKey for translation

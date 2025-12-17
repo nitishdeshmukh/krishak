@@ -1,6 +1,8 @@
 import React from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveView } from '@/store/slices/sidebarSlice';
 import {
     Sidebar,
     SidebarContent,
@@ -33,19 +35,18 @@ import { generateNavItems } from '@/utils/routeUtils';
 export default function AppSidebar() {
     const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { t } = useTranslation(['entry', 'common', 'reports']);
 
+    // Get active view from Redux store
+    const activeView = useSelector((state) => state.sidebar.activeView);
+
     // Auto-generate nav items from route config
-    const platformNavItems = generateNavItems(routes, 'platform');
+    const allNavItems = generateNavItems(routes);
 
-    // Determine active view based on current route
-    const activeView = React.useMemo(() => {
-        if (location.pathname === '/reports') return 'reports';
-        return 'entry'; // Default to entry for all other routes
-    }, [location.pathname]);
-
-    // Handle toggle change - navigate to appropriate dashboard
+    // Handle toggle change - navigate and update Redux state
     const handleToggleChange = (view) => {
+        dispatch(setActiveView(view));
         if (view === 'reports') {
             navigate('/reports');
         } else {
@@ -106,21 +107,13 @@ export default function AppSidebar() {
         );
     };
 
-    // Filter menu items based on active view
+    // Filter menu items based on active view from Redux
     const getMenuItems = () => {
-        if (activeView === 'entry') {
-            // Entry view shows: Purchase/Sales/Inward (not the entry dashboard itself)
-            return platformNavItems.filter(item =>
-                item.url === '/purchase' ||
-                item.url === '/sales' ||
-                item.url === '/inward' ||
-                item.url === '/students' ||
-                item.url === '/ui/guide'
-            );
-        } else {
-            // Reports view shows: Reports submenu items (Entry/Purchase/Sales/Inward reports)
-            return platformNavItems.filter(item => item.url === '/reports');
-        }
+        return allNavItems.filter(item => {
+            // Find the route to check its view property
+            const route = routes.find(r => r.path === item.url);
+            return route && route.view === activeView;
+        });
     };
 
     return (

@@ -1,18 +1,28 @@
 {
-    "reports": {
-        "title": "Reports",
-        "description": "View and analyze various reports",
-        "menu": {
-            "entry": "Entry Reports",
-            "purchase": "Purchase Deal Reports",
-            "sales": "Sales Deal Reports",
-            "inward": "Inward Reports"
+    "sections": {
+        "entry": {
+            "title": "Entry Report",
+            "partyInfo": "Information of Party",
+            "transporters": "Transporters",
+            "brokers": "Brokers",
+            "committee": "Committee Structure",
+            "doReport": "DO Entry Report",
+            "remainingDO": "Details of Remaining DO Lifting"
         },
-        "categories": {
-            "entry": "Entry Reports",
-            "purchase": "Purchase Reports",
-            "sales": "Sales Reports",
-            "inward": "Inward Reports"
+        "purchase": {
+            "title": "Purchase Deals Report",
+            "paddy": "Paddy Purchase Deal Report",
+            "rice": "Rice Purchase Deal Report"
+        },
+        "sales": {
+            "title": "Sales Deals Report",
+            "paddy": "Paddy Deals Report"
+        },
+        "inward": {
+            "title": "Inward Report",
+            "paddy": "Paddy Inward Report",
+            "private": "Private Inward Report",
+            "rice": "Rice Inward / Lot Deposit Report"
         }
     }
 }

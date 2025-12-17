@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useDispatch } from 'react-redux';
+import { setActiveView } from '@/store/slices/sidebarSlice';
 import {
     SidebarInset,
     SidebarProvider,
@@ -21,28 +23,52 @@ import { routes } from '@/config/routes';
 
 export default function AppLayout({ children }) {
     const location = useLocation();
-    const { t } = useTranslation(['entry', 'common']);
+    const { t } = useTranslation(['entry', 'common', 'reports']);
+    const dispatch = useDispatch();
+
+    // Sync Redux state with current route on navigation
+    useEffect(() => {
+        if (location.pathname.startsWith('/reports')) {
+            dispatch(setActiveView('reports'));
+        } else {
+            dispatch(setActiveView('entry'));
+        }
+    }, [location.pathname, dispatch]);
 
     // Function to get translated breadcrumbs
     const getBreadcrumbs = () => {
-        const breadcrumbs = [{ label: t('entry:nav.entry'), path: '/' }]; // Home/Entry
+        const breadcrumbs = [];
 
-        // Find matching route
+        // Add dashboard breadcrumb based on current view
+        if (location.pathname.startsWith('/reports')) {
+            breadcrumbs.push({ label: t('entry:dashboard.reports'), path: '/reports' });
+        } else {
+            breadcrumbs.push({ label: t('entry:dashboard.entry'), path: '/' });
+        }
+
+        // Skip if we're on a dashboard root
+        if (location.pathname === '/' || location.pathname === '/reports') {
+            return breadcrumbs;
+        }
+
+        // Find matching route for breadcrumbs
         for (const route of routes) {
-            if (route.path === location.pathname && route.path !== '/') {
-                const label = route.titleKey ? t(route.titleKey) : route.title;
+            if (route.path === location.pathname && route.titleKey) {
+                const label = t(route.titleKey);
                 breadcrumbs.push({ label, path: route.path });
-                break;
+                return breadcrumbs;
             }
 
             // Check children
             if (route.children) {
                 for (const child of route.children) {
-                    if (child.path === location.pathname) {
-                        const parentLabel = route.titleKey ? t(route.titleKey) : route.title;
-                        const childLabel = child.titleKey ? t(child.titleKey) : child.title;
-                        breadcrumbs.push({ label: parentLabel, path: route.path });
-                        breadcrumbs.push({ label: childLabel, path: child.path });
+                    if (child.path === location.pathname && child.titleKey) {
+                        // Add parent
+                        if (route.titleKey) {
+                            breadcrumbs.push({ label: t(route.titleKey), path: route.path });
+                        }
+                        // Add child
+                        breadcrumbs.push({ label: t(child.titleKey), path: child.path });
                         return breadcrumbs;
                     }
                 }
