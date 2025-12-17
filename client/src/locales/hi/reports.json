@@ -3,11 +3,11 @@
         "entry": {
             "title": "प्रविष्टि रिपोर्ट",
             "partyInfo": "पार्टी की जानकारी",
-            "transporters": "परिवहनकर्ता",
-            "brokers": "दलाल",
-            "committee": "समिति संरचना",
+            "transporters": "परिवहनकर्ता की जानकारी",
+            "brokers": "ब्रोकर की जानकारी",
+            "committee": "समिति संरचना की जानकारी",
             "doReport": "DO प्रविष्टी रिपोर्ट",
-            "remainingDO": "शेष DO उठाव का विवरण"
+            "remainingDO": "DO उठाव शेष का विवरण"
         },
         "purchase": {
             "title": "खरीदी सौदा रिपोर्ट",

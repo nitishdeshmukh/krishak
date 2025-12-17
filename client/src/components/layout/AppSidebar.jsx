@@ -7,9 +7,6 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -31,6 +28,7 @@ import {
 } from '@/components/ui/collapsible';
 import { routes } from '@/config/routes';
 import { generateNavItems } from '@/utils/routeUtils';
+import { cn } from '@/lib/utils';
 
 export default function AppSidebar() {
     const location = useLocation();
@@ -140,19 +138,23 @@ export default function AppSidebar() {
                         <div className="flex gap-1 p-2 bg-muted/50 rounded-lg">
                             <button
                                 onClick={() => handleToggleChange('entry')}
-                                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeView === 'entry'
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                                    }`}
+                                className={cn(
+                                    'flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200',
+                                    activeView === 'entry'
+                                        ? 'bg-background text-foreground shadow-sm'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                                )}
                             >
                                 {t('entry:dashboard.entry')}
                             </button>
                             <button
                                 onClick={() => handleToggleChange('reports')}
-                                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${activeView === 'reports'
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                                    }`}
+                                className={cn(
+                                    'flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200',
+                                    activeView === 'reports'
+                                        ? 'bg-background text-foreground shadow-sm'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                                )}
                             >
                                 {t('entry:dashboard.reports')}
                             </button>
@@ -162,14 +164,14 @@ export default function AppSidebar() {
             </SidebarHeader>
 
             {/* Sidebar Content - Navigation */}
-            <SidebarContent>
+            < SidebarContent >
                 <SidebarMenu>
                     {getMenuItems().map(renderMenuItem)}
                 </SidebarMenu>
-            </SidebarContent>
+            </SidebarContent >
 
             {/* Sidebar Footer - User Profile with Settings */}
-            <SidebarFooter>
+            < SidebarFooter >
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
@@ -188,7 +190,7 @@ export default function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-            </SidebarFooter>
-        </Sidebar>
+            </SidebarFooter >
+        </Sidebar >
     );
 }
