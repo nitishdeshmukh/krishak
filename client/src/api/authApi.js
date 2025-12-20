@@ -1,24 +1,27 @@
 /**
  * Authentication API service
+ * Note: State storage is handled by Redux (authSlice)
  */
 import apiClient from '@/lib/apiClient';
 
 // Test credentials from environment variables
 const TEMP_CREDENTIALS = {
-    email: import.meta.env.VITE_AUTH_EMAIL || 'admin@krishak.com',
-    password: import.meta.env.VITE_AUTH_PASSWORD || 'admin123'
+    email: import.meta.env.VITE_AUTH_EMAIL,
+    password: import.meta.env.VITE_AUTH_PASSWORD
 };
 
 /**
- * Mock login function with temporary credentials
- * Email: admin@krishak.com
- * Password: admin123
+ * Login function with temporary credentials
+ * Credentials are set via VITE_AUTH_EMAIL and VITE_AUTH_PASSWORD env vars
  */
 export const login = async ({ email, password }) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Check temporary credentials
+    console.log('email', email);
+    console.log('password', password);
+    console.log('TEMP_CREDENTIALS', TEMP_CREDENTIALS);
     if (email === TEMP_CREDENTIALS.email && password === TEMP_CREDENTIALS.password) {
         // Mock successful response
         const mockUser = {
@@ -31,10 +34,7 @@ export const login = async ({ email, password }) => {
 
         const mockToken = 'mock_jwt_token_' + btoa(email);
 
-        // Store token in localStorage
-        localStorage.setItem('authToken', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-
+        // Return data for Redux to store (no localStorage here)
         return {
             success: true,
             message: 'Login successful',
@@ -51,12 +51,9 @@ export const login = async ({ email, password }) => {
 
 /**
  * Logout function
+ * Redux authSlice handles clearing localStorage
  */
 export const logout = async () => {
-    // Remove from localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -66,36 +63,8 @@ export const logout = async () => {
     };
 };
 
-/**
- * Get current user from localStorage
- */
-export const getCurrentUser = () => {
-    const userString = localStorage.getItem('user');
-    const token = localStorage.getItem('authToken');
-
-    if (userString && token) {
-        try {
-            return JSON.parse(userString);
-        } catch (error) {
-            console.error('Error parsing user data:', error);
-            return null;
-        }
-    }
-
-    return null;
-};
-
-/**
- * Check if user is authenticated
- */
-export const isAuthenticated = () => {
-    return !!localStorage.getItem('authToken');
-};
-
 export default {
     login,
     logout,
-    getCurrentUser,
-    isAuthenticated,
     TEMP_CREDENTIALS // Export for reference
 };
