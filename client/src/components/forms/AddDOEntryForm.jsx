@@ -102,6 +102,12 @@ export default function DOEntryForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Date with Calendar */}
+            <DatePickerField
+              name="date"
+              label={t('forms.doEntry.date')}
+            />
+
             {/* Committee/Storage Center Dropdown */}
             <FormField
               control={form.control}
@@ -144,12 +150,6 @@ export default function DOEntryForm() {
                   <FormMessage />
                 </FormItem>
               )}
-            />
-
-            {/* Date with Calendar */}
-            <DatePickerField
-              name="date"
-              label={t('forms.doEntry.date')}
             />
 
             {/* Grain (Coarse) */}
