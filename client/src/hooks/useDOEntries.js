@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchDOEntries, createDOEntry, updateDOEntry, deleteDOEntry } from '../api/doEntriesApi';
+import { fetchDOEntries, createDOEntry, createBulkDOEntries, updateDOEntry, deleteDOEntry } from '../api/doEntriesApi';
 
 export const useDOEntries = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -30,6 +30,14 @@ export const useCreateDOEntry = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: createDOEntry,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['doEntries'] }),
+    });
+};
+
+export const useCreateBulkDOEntries = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createBulkDOEntries,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['doEntries'] }),
     });
 };

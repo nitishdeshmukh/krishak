@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { useCreateRiceInward } from '@/hooks/useRiceInward';
 
 // Form validation schema
 const riceInwardFormSchema = z.object({
@@ -92,7 +93,7 @@ const riceInwardFormSchema = z.object({
 
 export default function AddRiceInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createRiceInward = useCreateRiceInward();
 
   // Sample data - Replace with actual data from API
   const ricePurchases = ['RP-001', 'RP-002', 'RP-003', 'RP-004'];
@@ -149,20 +150,24 @@ export default function AddRiceInwardForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Rice Inward Form Data:', {
+    const formattedData = {
       ...data,
       date: format(data.date, 'dd-MM-yy'),
-    });
+    };
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success(t('forms.riceInward.successMessage') || 'Rice Inward Added Successfully', {
-        description: `Inward for ${data.partyName} has been recorded.`,
-      });
-      setIsLoading(false);
-      form.reset();
-    }, 1500);
+    createRiceInward.mutate(formattedData, {
+      onSuccess: () => {
+        toast.success(t('forms.riceInward.successMessage') || 'Rice Inward Added Successfully', {
+          description: `Inward for ${data.partyName} has been recorded.`,
+        });
+        form.reset();
+      },
+      onError: (error) => {
+        toast.error('Error creating Rice Inward', {
+          description: error.message,
+        });
+      },
+    });
   };
 
   return (
@@ -646,9 +651,9 @@ export default function AddRiceInwardForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createRiceInward.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createRiceInward.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>

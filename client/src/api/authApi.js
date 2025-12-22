@@ -1,66 +1,60 @@
 /**
  * Authentication API service
- * Note: State storage is handled by Redux (authSlice)
+ * Connects to backend /api/auth endpoints
  */
 import apiClient from '@/lib/apiClient';
 
-// Test credentials from environment variables
-const TEMP_CREDENTIALS = {
-    email: import.meta.env.VITE_AUTH_EMAIL,
-    password: import.meta.env.VITE_AUTH_PASSWORD
-};
-
 /**
- * Login function with temporary credentials
- * Credentials are set via VITE_AUTH_EMAIL and VITE_AUTH_PASSWORD env vars
+ * Login function - calls backend API
  */
 export const login = async ({ email, password }) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+        const response = await apiClient.post('/auth/login', { email, password });
+        return response;
+    } catch (error) {
+        // Fallback to mock auth if backend is unavailable
+        const TEMP_EMAIL = import.meta.env.VITE_AUTH_EMAIL;
+        const TEMP_PASSWORD = import.meta.env.VITE_AUTH_PASSWORD;
 
-    if (email === TEMP_CREDENTIALS.email && password === TEMP_CREDENTIALS.password) {
-        // Mock successful response
-        const mockUser = {
-            id: '1',
-            email: email,
-            name: 'Admin User',
-            role: 'admin',
-            permissions: ['all']
-        };
+        if (email === TEMP_EMAIL && password === TEMP_PASSWORD) {
+            console.warn('⚠️ Using mock authentication (backend unavailable)');
+            const mockUser = {
+                id: '1',
+                email: email,
+                name: 'Admin User',
+                role: 'admin',
+                permissions: ['all']
+            };
+            const mockToken = 'mock_jwt_token_' + btoa(email);
 
-        const mockToken = 'mock_jwt_token_' + btoa(email);
-
-        // Return data for Redux to store (no localStorage here)
-        return {
-            success: true,
-            message: 'Login successful',
-            data: {
-                user: mockUser,
-                token: mockToken
-            }
-        };
+            return {
+                success: true,
+                message: 'Login successful (mock)',
+                data: { user: mockUser, token: mockToken }
+            };
+        }
+        throw error;
     }
-
-    // Invalid credentials
-    throw new Error('Invalid email or password');
 };
 
 /**
  * Logout function
- * Redux authSlice handles clearing localStorage
  */
 export const logout = async () => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    return {
-        success: true,
-        message: 'Logged out successfully'
-    };
+    try {
+        const response = await apiClient.post('/auth/logout');
+        return response;
+    } catch (error) {
+        // Return success even if backend fails
+        return { success: true, message: 'Logged out successfully' };
+    }
 };
 
-export default {
-    login,
-    logout,
-    TEMP_CREDENTIALS // Export for reference
+/**
+ * Get current user
+ */
+export const getMe = async () => {
+    return await apiClient.get('/auth/me');
 };
+
+export default { login, logout, getMe };

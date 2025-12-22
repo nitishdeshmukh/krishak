@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { useCreateGovPaddyInward } from '@/hooks/useGovPaddyInward';
 
 // Form validation schema
 const govPaddyInwardFormSchema = z.object({
@@ -88,7 +89,7 @@ const govPaddyInwardFormSchema = z.object({
 
 export default function AddGovPaddyInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createGovPaddyInward = useCreateGovPaddyInward();
 
   // Sample data - Replace with actual data from API
   const doNumbers = ['DO-001', 'DO-002', 'DO-003', 'DO-004'];
@@ -149,20 +150,24 @@ export default function AddGovPaddyInwardForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Government Paddy Inward Form Data:', {
+    const formattedData = {
       ...data,
       date: format(data.date, 'dd-MM-yy'),
-    });
+    };
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success(t('forms.govPaddyInward.successMessage') || 'Government Paddy Inward Added Successfully', {
-        description: `Inward for ${data.doNumber} has been recorded.`,
-      });
-      setIsLoading(false);
-      form.reset();
-    }, 1500);
+    createGovPaddyInward.mutate(formattedData, {
+      onSuccess: () => {
+        toast.success(t('forms.govPaddyInward.successMessage') || 'Government Paddy Inward Added Successfully', {
+          description: `Inward for ${data.doNumber} has been recorded.`,
+        });
+        form.reset();
+      },
+      onError: (error) => {
+        toast.error('Error creating Government Paddy Inward', {
+          description: error.message,
+        });
+      },
+    });
   };
 
   return (
@@ -579,9 +584,9 @@ export default function AddGovPaddyInwardForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createGovPaddyInward.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createGovPaddyInward.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>

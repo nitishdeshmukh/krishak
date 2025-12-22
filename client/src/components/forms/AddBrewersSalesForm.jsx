@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { useCreateBrewersSales } from '@/hooks/useBrewersSales';
 
 // Form validation schema
 const brewersSalesFormSchema = z.object({
@@ -64,7 +65,7 @@ const brewersSalesFormSchema = z.object({
 
 export default function AddBrewersSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const createBrewersSales = useCreateBrewersSales();
 
     // Sample data - Replace with actual data from API
     const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
@@ -120,20 +121,24 @@ export default function AddBrewersSalesForm() {
 
     // Form submission handler
     const onSubmit = async (data) => {
-        setIsLoading(true);
-        console.log('Brewers Sales Form Data:', {
+        const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
-        });
+        };
 
-        // Simulate API call
-        setTimeout(() => {
-            toast.success(t('forms.brewersSales.successMessage') || 'Brewers Sales Added Successfully', {
-                description: `Sale for ${data.partyName} has been recorded.`,
-            });
-            setIsLoading(false);
-            form.reset();
-        }, 1500);
+        createBrewersSales.mutate(formattedData, {
+            onSuccess: () => {
+                toast.success(t('forms.brewersSales.successMessage') || 'Brewers Sales Added Successfully', {
+                    description: `Sale for ${data.partyName} has been recorded.`,
+                });
+                form.reset();
+            },
+            onError: (error) => {
+                toast.error('Error creating Brewers Sales', {
+                    description: error.message,
+                });
+            },
+        });
     };
 
     return (
@@ -382,9 +387,9 @@ export default function AddBrewersSalesForm() {
                             <Button
                                 type="submit"
                                 className="w-full md:w-auto px-8"
-                                disabled={isLoading}
+                                disabled={createBrewersSales.isPending}
                             >
-                                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                                {createBrewersSales.isPending ? t('forms.common.saving') : t('forms.common.submit')}
                             </Button>
                         </div>
                     </form>

@@ -26,6 +26,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { PhoneInputField } from '@/components/ui/phone-input-field';
+import { useCreateParty } from '@/hooks/useParties';
 
 // Form validation schema
 const partyFormSchema = z.object({
@@ -61,7 +62,7 @@ const partyFormSchema = z.object({
 
 export default function AddPartyForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const createPartyMutation = useCreateParty();
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -82,17 +83,17 @@ export default function AddPartyForm() {
 
     // Form submission handler
     const onSubmit = async (data) => {
-        setIsLoading(true);
-        console.log('Party Form Data:', data);
-
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            await createPartyMutation.mutateAsync(data);
             toast.success('Party Added Successfully', {
                 description: `${data.partyName} has been added to the system.`,
             });
-            setIsLoading(false);
             form.reset();
-        }, 1500);
+        } catch (error) {
+            toast.error('Failed to add party', {
+                description: error.message || 'An error occurred while adding the party.',
+            });
+        }
     };
 
     return (
@@ -265,9 +266,9 @@ export default function AddPartyForm() {
                         <Button
                             type="submit"
                             className="w-full sm:w-auto"
-                            disabled={isLoading}
+                            disabled={createPartyMutation.isPending}
                         >
-                            {isLoading ? 'Submitting...' : 'Submit'}
+                            {createPartyMutation.isPending ? 'Submitting...' : 'Submit'}
                         </Button>
                     </form>
                 </Form>
@@ -275,3 +276,4 @@ export default function AddPartyForm() {
         </Card>
     );
 }
+

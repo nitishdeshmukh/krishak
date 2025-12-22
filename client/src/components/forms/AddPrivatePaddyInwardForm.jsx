@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { useCreatePrivatePaddyInward } from '@/hooks/usePrivatePaddyInward';
 
 // Form validation schema
 const privatePaddyInwardFormSchema = z.object({
@@ -102,7 +103,7 @@ const privatePaddyInwardFormSchema = z.object({
 
 export default function AddPrivatePaddyInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createPrivatePaddyInward = useCreatePrivatePaddyInward();
 
   // Sample data - Replace with actual data from API
   const paddyPurchases = ['PP-001', 'PP-002', 'PP-003', 'PP-004'];
@@ -180,20 +181,24 @@ export default function AddPrivatePaddyInwardForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Private Paddy Inward Form Data:', {
+    const formattedData = {
       ...data,
       date: format(data.date, 'dd-MM-yy'),
-    });
+    };
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success(t('forms.privatePaddyInward.successMessage') || 'Private Paddy Inward Added Successfully', {
-        description: `Inward for ${data.partyName} has been recorded.`,
-      });
-      setIsLoading(false);
-      form.reset();
-    }, 1500);
+    createPrivatePaddyInward.mutate(formattedData, {
+      onSuccess: () => {
+        toast.success(t('forms.privatePaddyInward.successMessage') || 'Private Paddy Inward Added Successfully', {
+          description: `Inward for ${data.partyName} has been recorded.`,
+        });
+        form.reset();
+      },
+      onError: (error) => {
+        toast.error('Error creating Private Paddy Inward', {
+          description: error.message,
+        });
+      },
+    });
   };
 
   return (
@@ -787,9 +792,9 @@ export default function AddPrivatePaddyInwardForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createPrivatePaddyInward.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createPrivatePaddyInward.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>

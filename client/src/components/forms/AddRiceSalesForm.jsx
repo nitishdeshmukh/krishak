@@ -26,6 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { useCreateRiceSales } from '@/hooks/useRiceSales';
 
 // Form validation schema
 const riceSalesFormSchema = z.object({
@@ -97,7 +98,7 @@ const riceSalesFormSchema = z.object({
 
 export default function AddRiceSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const createRiceSales = useCreateRiceSales();
 
     // Sample data - Replace with actual data from API
     const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
@@ -181,20 +182,24 @@ export default function AddRiceSalesForm() {
 
     // Form submission handler
     const onSubmit = async (data) => {
-        setIsLoading(true);
-        console.log('Rice Sales Form Data:', {
+        const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
-        });
+        };
 
-        // Simulate API call
-        setTimeout(() => {
-            toast.success(t('forms.riceSales.successMessage') || 'Rice Sales Added Successfully', {
-                description: `Sale for ${data.partyName} has been recorded.`,
-            });
-            setIsLoading(false);
-            form.reset();
-        }, 1500);
+        createRiceSales.mutate(formattedData, {
+            onSuccess: () => {
+                toast.success(t('forms.riceSales.successMessage') || 'Rice Sales Added Successfully', {
+                    description: `Sale for ${data.partyName} has been recorded.`,
+                });
+                form.reset();
+            },
+            onError: (error) => {
+                toast.error('Error creating Rice Sales', {
+                    description: error.message,
+                });
+            },
+        });
     };
 
     return (
@@ -697,9 +702,9 @@ export default function AddRiceSalesForm() {
                             <Button
                                 type="submit"
                                 className="w-full md:w-auto px-8"
-                                disabled={isLoading}
+                                disabled={createRiceSales.isPending}
                             >
-                                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                                {createRiceSales.isPending ? t('forms.common.saving') : t('forms.common.submit')}
                             </Button>
                         </div>
                     </form>

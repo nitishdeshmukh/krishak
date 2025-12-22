@@ -4,9 +4,9 @@
 import apiClient from '@/lib/apiClient';
 
 const DUMMY_DO_ENTRIES = [
-    { _id: '1', doNumber: 'DO-2024-001', partyName: 'Xyz', date: '2024-01-15', quantity: '500', status: 'pending', createdAt: '2024-01-15T10:30:00.000Z' },
-    { _id: '2', doNumber: 'DO-2024-002', partyName: 'Ram Janki', date: '2024-02-20', quantity: '750', status: 'completed', createdAt: '2024-02-20T14:15:00.000Z' },
-    { _id: '3', doNumber: 'DO-2024-003', partyName: 'sarguni industries', date: '2024-03-10', quantity: '600', status: 'pending', createdAt: '2024-03-10T09:45:00.000Z' },
+    { _id: '1', doNumber: 'DO-2024-001', committeeCenter: 'Xyz', date: '2024-01-15', quantity: '500', status: 'pending', createdAt: '2024-01-15T10:30:00.000Z' },
+    { _id: '2', doNumber: 'DO-2024-002', committeeCenter: 'Ram Janki', date: '2024-02-20', quantity: '750', status: 'completed', createdAt: '2024-02-20T14:15:00.000Z' },
+    { _id: '3', doNumber: 'DO-2024-003', committeeCenter: 'sarguni industries', date: '2024-03-10', quantity: '600', status: 'pending', createdAt: '2024-03-10T09:45:00.000Z' },
 ];
 
 const generateDummyResponse = ({ page = 1, pageSize = 10 }) => {
@@ -52,6 +52,25 @@ export const createDOEntry = async (entryData) => {
     }
 };
 
+export const createBulkDOEntries = async (entries) => {
+    try {
+        const data = await apiClient.post('/do-entries/bulk', { entries });
+        return data;
+    } catch (error) {
+        console.warn('⚠️ API not available, simulating bulk create:', error.message);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return {
+            success: true,
+            message: `${entries.length} DO Entries created successfully (SIMULATED)`,
+            data: entries.map((entry, index) => ({
+                ...entry,
+                _id: (Date.now() + index).toString(),
+                createdAt: new Date().toISOString()
+            })),
+        };
+    }
+};
+
 export const updateDOEntry = async (id, entryData) => {
     try {
         const data = await apiClient.put(`/do-entries/${id}`, entryData);
@@ -74,4 +93,4 @@ export const deleteDOEntry = async (id) => {
     }
 };
 
-export default { fetchDOEntries, createDOEntry, updateDOEntry, deleteDOEntry };
+export default { fetchDOEntries, createDOEntry, createBulkDOEntries, updateDOEntry, deleteDOEntry };

@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { useCreateFRKSales } from '@/hooks/useFRKSales';
 
 // Form validation schema
 const frkSalesFormSchema = z.object({
@@ -55,7 +56,7 @@ const frkSalesFormSchema = z.object({
 
 export default function AddFRKSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const createFRKSales = useCreateFRKSales();
 
     // Sample data - Replace with actual data from API
     const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
@@ -97,20 +98,24 @@ export default function AddFRKSalesForm() {
 
     // Form submission handler
     const onSubmit = async (data) => {
-        setIsLoading(true);
-        console.log('FRK Sales Form Data:', {
+        const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
-        });
+        };
 
-        // Simulate API call
-        setTimeout(() => {
-            toast.success(t('forms.frkSales.successMessage') || 'FRK Sales Added Successfully', {
-                description: `Sale for ${data.partyName} has been recorded.`,
-            });
-            setIsLoading(false);
-            form.reset();
-        }, 1500);
+        createFRKSales.mutate(formattedData, {
+            onSuccess: () => {
+                toast.success(t('forms.frkSales.successMessage') || 'FRK Sales Added Successfully', {
+                    description: `Sale for ${data.partyName} has been recorded.`,
+                });
+                form.reset();
+            },
+            onError: (error) => {
+                toast.error('Error creating FRK Sales', {
+                    description: error.message,
+                });
+            },
+        });
     };
 
     return (
@@ -290,9 +295,9 @@ export default function AddFRKSalesForm() {
                             <Button
                                 type="submit"
                                 className="w-full md:w-auto px-8"
-                                disabled={isLoading}
+                                disabled={createFRKSales.isPending}
                             >
-                                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                                {createFRKSales.isPending ? t('forms.common.saving') : t('forms.common.submit')}
                             </Button>
                         </div>
                     </form>

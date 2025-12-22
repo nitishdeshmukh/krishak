@@ -28,6 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { useCreatePaddyPurchase } from '@/hooks/usePaddyPurchases';
 
 // Form validation schema
 const paddyPurchaseFormSchema = z.object({
@@ -93,7 +94,7 @@ const paddyPurchaseFormSchema = z.object({
 
 export default function AddPaddyPurchaseForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createPaddyPurchaseMutation = useCreatePaddyPurchase();
 
   // Sample data - Replace with actual data from API
   const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
@@ -136,20 +137,18 @@ export default function AddPaddyPurchaseForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Paddy Purchase Form Data:', {
-      ...data,
-      date: format(data.date, 'dd-MM-yy'),
-    });
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const submitData = { ...data, date: format(data.date, 'dd-MM-yy') };
+      await createPaddyPurchaseMutation.mutateAsync(submitData);
       toast.success('Paddy Purchase Added Successfully', {
         description: `Purchase for ${data.partyName} has been recorded.`,
       });
-      setIsLoading(false);
       form.reset();
-    }, 1500);
+    } catch (error) {
+      toast.error('Failed to add paddy purchase', {
+        description: error.message || 'An error occurred.',
+      });
+    }
   };
 
   return (
@@ -662,9 +661,9 @@ export default function AddPaddyPurchaseForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createPaddyPurchaseMutation.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createPaddyPurchaseMutation.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>

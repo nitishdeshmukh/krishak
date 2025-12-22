@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { PhoneInputField } from '@/components/ui/phone-input-field';
+import { useCreateBroker } from '@/hooks/useBrokers';
 
 // Form validation schema
 const brokerFormSchema = z.object({
@@ -56,7 +57,7 @@ const brokerFormSchema = z.object({
 
 export default function AddBrokerForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createBrokerMutation = useCreateBroker();
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
@@ -76,17 +77,17 @@ export default function AddBrokerForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Broker Form Data:', data);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await createBrokerMutation.mutateAsync(data);
       toast.success('Broker Added Successfully', {
         description: `${data.brokerName} has been added to the system.`,
       });
-      setIsLoading(false);
       form.reset();
-    }, 1500);
+    } catch (error) {
+      toast.error('Failed to add broker', {
+        description: error.message || 'An error occurred.',
+      });
+    }
   };
 
   return (
@@ -270,9 +271,9 @@ export default function AddBrokerForm() {
             <Button
               type="submit"
               className="w-full md:w-auto"
-              disabled={isLoading}
+              disabled={createBrokerMutation.isPending}
             >
-              {isLoading ? 'Submitting...' : 'Submit'}
+              {createBrokerMutation.isPending ? 'Submitting...' : 'Submit'}
             </Button>
           </form>
         </Form>

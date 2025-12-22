@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { useCreateSackInward } from '@/hooks/useSackInward';
 
 // Form validation schema
 const sackInwardFormSchema = z.object({
@@ -52,7 +53,7 @@ const sackInwardFormSchema = z.object({
 
 export default function AddSackInwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const createSackInward = useCreateSackInward();
 
     // Sample data - Replace with actual data from API
     const sackPurchases = ['SP-001', 'SP-002', 'SP-003', 'SP-004'];
@@ -74,20 +75,24 @@ export default function AddSackInwardForm() {
 
     // Form submission handler
     const onSubmit = async (data) => {
-        setIsLoading(true);
-        console.log('Sack Inward Form Data:', {
+        const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
-        });
+        };
 
-        // Simulate API call
-        setTimeout(() => {
-            toast.success(t('forms.sackInward.successMessage') || 'Sack Inward Added Successfully', {
-                description: `Inward for ${data.partyName} has been recorded.`,
-            });
-            setIsLoading(false);
-            form.reset();
-        }, 1500);
+        createSackInward.mutate(formattedData, {
+            onSuccess: () => {
+                toast.success(t('forms.sackInward.successMessage') || 'Sack Inward Added Successfully', {
+                    description: `Inward for ${data.partyName} has been recorded.`,
+                });
+                form.reset();
+            },
+            onError: (error) => {
+                toast.error('Error creating Sack Inward', {
+                    description: error.message,
+                });
+            },
+        });
     };
 
     return (
@@ -248,9 +253,9 @@ export default function AddSackInwardForm() {
                             <Button
                                 type="submit"
                                 className="w-full md:w-auto px-8"
-                                disabled={isLoading}
+                                disabled={createSackInward.isPending}
                             >
-                                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                                {createSackInward.isPending ? t('forms.common.saving') : t('forms.common.submit')}
                             </Button>
                         </div>
                     </form>

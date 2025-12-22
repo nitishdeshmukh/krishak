@@ -27,6 +27,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { useCreatePaddySale } from '@/hooks/usePaddySales';
 
 // Form validation schema
 const paddySalesFormSchema = z.object({
@@ -58,7 +59,7 @@ const paddySalesFormSchema = z.object({
 
 export default function AddPaddySalesForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createPaddySale = useCreatePaddySale();
 
   // Sample data - Replace with actual data from API
   const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
@@ -81,20 +82,24 @@ export default function AddPaddySalesForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Paddy Sales Form Data:', {
+    const formattedData = {
       ...data,
       date: format(data.date, 'dd-MM-yy'),
-    });
+    };
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Paddy Sales Added Successfully', {
-        description: `Sales for ${data.partyName} has been recorded.`,
-      });
-      setIsLoading(false);
-      form.reset();
-    }, 1500);
+    createPaddySale.mutate(formattedData, {
+      onSuccess: () => {
+        toast.success('Paddy Sales Added Successfully', {
+          description: `Sales for ${data.partyName} has been recorded.`,
+        });
+        form.reset();
+      },
+      onError: (error) => {
+        toast.error('Error creating Paddy Sales', {
+          description: error.message,
+        });
+      },
+    });
   };
 
   return (
@@ -298,9 +303,9 @@ export default function AddPaddySalesForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createPaddySale.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createPaddySale.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>
