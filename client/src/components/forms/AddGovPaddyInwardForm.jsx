@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { useCreateGovPaddyInward } from '@/hooks/useGovPaddyInward';
+import { useCreateGovPaddyInward } from '@/hooks/usePaddyInward';
 
 // Form validation schema
 const govPaddyInwardFormSchema = z.object({

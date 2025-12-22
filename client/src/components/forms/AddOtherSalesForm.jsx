@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { useCreateOtherSale } from '@/hooks/useOtherSales';
+import { useCreateOtherSales } from '@/hooks/useOtherSales';
 
 // Form validation schema
 const otherSalesFormSchema = z.object({
@@ -82,7 +82,7 @@ const otherSalesFormSchema = z.object({
 
 export default function AddOtherSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
-    const createOtherSale = useCreateOtherSale();
+    const createOtherSale = useCreateOtherSales();
 
     // Sample data - Replace with actual data from API
     const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
