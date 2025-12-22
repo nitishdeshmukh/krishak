@@ -7,7 +7,6 @@ import { format } from 'date-fns';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,11 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Label } from '@/components/ui/label';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { useCreateGovPaddyInward } from '@/hooks/useGovPaddyInward';
 
 // Form validation schema
 const govPaddyInwardFormSchema = z.object({
@@ -36,42 +36,75 @@ const govPaddyInwardFormSchema = z.object({
   doNumber: z.string().min(1, {
     message: 'DO number is required.',
   }),
-  packagingNew: z.string().regex(/^\d+$/, {
+  samitiSangrahan: z.string().min(1, {
+    message: 'Please select Samiti/Sangrahan.',
+  }),
+  balDo: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  packagingOld: z.string().regex(/^\d+$/, {
+  }).optional(),
+  gunnyNew: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  packagingPlastic: z.string().regex(/^\d+$/, {
+  }).optional(),
+  gunnyOld: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  totalPackaging: z.string().regex(/^\d+(\.\d+)?$/, {
+  }).optional(),
+  gunnyPlastic: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  plasticPackagingWeight: z.string().regex(/^\d+(\.\d+)?$/, {
+  }).optional(),
+  juteWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  packagingWeightQuintal: z.string().regex(/^\d+(\.\d+)?$/, {
+  }).optional(),
+  plasticWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  vehicleNumber: z.string().min(1, {
-    message: 'Vehicle number is required.',
-  }),
-  rstNumber: z.string().optional(),
-  vehicleWeightQuintal: z.string().regex(/^\d+$/, {
+  }).optional(),
+  gunnyWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
+  }).optional(),
+  truckNo: z.string().min(1, {
+    message: 'Truck number is required.',
   }),
-  grainType: z.enum(['coarse', 'fine', 'common', 'maharaja', 'rb-gold'], {
-    required_error: 'Please select grain type.',
+  rstNo: z.string().optional(),
+  truckLoadWeight: z.string().regex(/^\d*\.?\d*$/, {
+    message: 'Must be a valid number.',
+  }).optional(),
+  dhanType: z.string().min(1, {
+    message: 'Please select paddy type.',
   }),
+  dhanMota: z.string().regex(/^\d*\.?\d*$/, {
+    message: 'Must be a valid number.',
+  }).optional(),
+  dhanPatla: z.string().regex(/^\d*\.?\d*$/, {
+    message: 'Must be a valid number.',
+  }).optional(),
+  dhanSarna: z.string().regex(/^\d*\.?\d*$/, {
+    message: 'Must be a valid number.',
+  }).optional(),
+  dhanMaha: z.string().regex(/^\d*\.?\d*$/, {
+    message: 'Must be a valid number.',
+  }).optional(),
+  dhanRb: z.string().regex(/^\d*\.?\d*$/, {
+    message: 'Must be a valid number.',
+  }).optional(),
 });
 
 export default function AddGovPaddyInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createGovPaddyInward = useCreateGovPaddyInward();
 
-  // Sample DO numbers - Replace with actual data from API
-  const doNumbers = ['DO001', 'DO002', 'DO003', 'DO004'];
+  // Sample data - Replace with actual data from API
+  const doNumbers = ['DO-001', 'DO-002', 'DO-003', 'DO-004'];
+  const samitiOptions = [
+    { value: 'samiti1', label: 'समिति 1' },
+    { value: 'samiti2', label: 'समिति 2' },
+    { value: 'sangrahan1', label: 'संग्रहण केंद्र 1' },
+    { value: 'sangrahan2', label: 'संग्रहण केंद्र 2' },
+  ];
+  const dhanTypes = [
+    { value: 'mota', label: t('forms.govPaddyInward.dhanTypes.mota') || 'धान(मोटा)' },
+    { value: 'patla', label: t('forms.govPaddyInward.dhanTypes.patla') || 'धान(पतला)' },
+    { value: 'sarna', label: t('forms.govPaddyInward.dhanTypes.sarna') || 'धान(सरना)' },
+    { value: 'mahamaya', label: t('forms.govPaddyInward.dhanTypes.mahamaya') || 'धान(महामाया)' },
+  ];
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
@@ -79,56 +112,62 @@ export default function AddGovPaddyInwardForm() {
     defaultValues: {
       date: new Date(),
       doNumber: '',
-      packagingNew: '0',
-      packagingOld: '0',
-      packagingPlastic: '0',
-      totalPackaging: '.58',
-      plasticPackagingWeight: '0.2',
-      packagingWeightQuintal: '0.00000',
-      vehicleNumber: '',
-      rstNumber: '',
-      vehicleWeightQuintal: '0',
-      grainType: 'coarse',
+      samitiSangrahan: '',
+      balDo: '',
+      gunnyNew: '',
+      gunnyOld: '',
+      gunnyPlastic: '',
+      juteWeight: '',
+      plasticWeight: '',
+      gunnyWeight: '',
+      truckNo: '',
+      rstNo: '',
+      truckLoadWeight: '',
+      dhanType: 'mota',
+      dhanMota: '',
+      dhanPatla: '',
+      dhanSarna: '',
+      dhanMaha: '',
+      dhanRb: '',
     },
   });
 
-  // Watch packaging values for auto-calculation
-  const packagingNew = form.watch('packagingNew');
-  const packagingOld = form.watch('packagingOld');
-  const packagingPlastic = form.watch('packagingPlastic');
-  const totalPackaging = form.watch('totalPackaging');
-  const plasticPackagingWeight = form.watch('plasticPackagingWeight');
+  // Watch fields for auto-calculation
+  const watchedFields = form.watch(['juteWeight', 'plasticWeight']);
 
-  // Auto-calculate packaging weight in quintal
   React.useEffect(() => {
-    const newBags = parseInt(packagingNew) || 0;
-    const oldBags = parseInt(packagingOld) || 0;
-    const plasticBags = parseInt(packagingPlastic) || 0;
-    const totalWeight = parseFloat(totalPackaging) || 0;
-    const plasticWeight = parseFloat(plasticPackagingWeight) || 0;
+    const [juteWeight, plasticWeight] = watchedFields;
+    const jute = parseFloat(juteWeight) || 0;
+    const plastic = parseFloat(plasticWeight) || 0;
 
-    // Formula: ((new + old) * totalWeight + plastic * plasticWeight) / 100
-    const totalWeightQuintal = ((newBags + oldBags) * totalWeight + plasticBags * plasticWeight) / 100;
+    // Calculate total gunny weight
+    const gunnyWeight = jute + plastic;
 
-    form.setValue('packagingWeightQuintal', totalWeightQuintal.toFixed(5));
-  }, [packagingNew, packagingOld, packagingPlastic, totalPackaging, plasticPackagingWeight]);
+    if (gunnyWeight > 0) {
+      form.setValue('gunnyWeight', gunnyWeight.toFixed(2));
+    }
+  }, [watchedFields, form]);
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Government Paddy Inward Form Data:', {
+    const formattedData = {
       ...data,
       date: format(data.date, 'dd-MM-yy'),
-    });
+    };
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Government Paddy Inward Added Successfully', {
-        description: `Inward for DO ${data.doNumber} has been recorded.`,
-      });
-      setIsLoading(false);
-      form.reset();
-    }, 1500);
+    createGovPaddyInward.mutate(formattedData, {
+      onSuccess: () => {
+        toast.success(t('forms.govPaddyInward.successMessage') || 'Government Paddy Inward Added Successfully', {
+          description: `Inward for ${data.doNumber} has been recorded.`,
+        });
+        form.reset();
+      },
+      onError: (error) => {
+        toast.error('Error creating Government Paddy Inward', {
+          description: error.message,
+        });
+      },
+    });
   };
 
   return (
@@ -162,9 +201,9 @@ export default function AddGovPaddyInwardForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {doNumbers.map((doNum) => (
-                        <SelectItem key={doNum} value={doNum}>
-                          {doNum}
+                      {doNumbers.map((doNo) => (
+                        <SelectItem key={doNo} value={doNo}>
+                          {doNo}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -174,146 +213,193 @@ export default function AddGovPaddyInwardForm() {
               )}
             />
 
-            {/* Packaging (New) */}
+            {/* Samiti/Sangrahan Dropdown */}
             <FormField
               control={form.control}
-              name="packagingNew"
+              name="samitiSangrahan"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.packagingNew')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.samitiSangrahan')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {samitiOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Packaging (Old) */}
+            {/* Bal DO (Balance DO) */}
             <FormField
               control={form.control}
-              name="packagingOld"
+              name="balDo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.packagingOld')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Packaging (Plastic) */}
-            <FormField
-              control={form.control}
-              name="packagingPlastic"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.packagingPlastic')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Total Packaging */}
-            <FormField
-              control={form.control}
-              name="totalPackaging"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.totalPackaging')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.balDo')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.01"
-                      placeholder=".58"
+                      placeholder="0"
                       {...field}
                       className="placeholder:text-gray-400"
                     />
                   </FormControl>
-                  <FormDescription className="text-xs">
-                    बारदाना वजन कि.ग्रा. में बदलें करें (200 ग्राम=0.2 कि.ग्रा.)
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Plastic Packaging Weight */}
+            {/* Gunny New */}
             <FormField
               control={form.control}
-              name="plasticPackagingWeight"
+              name="gunnyNew"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.plasticPackagingWeight')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.gunnyNew')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="1"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny Old */}
+            <FormField
+              control={form.control}
+              name="gunnyOld"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.gunnyOld')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="1"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny Plastic */}
+            <FormField
+              control={form.control}
+              name="gunnyPlastic"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.gunnyPlastic')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="1"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Jute Weight */}
+            <FormField
+              control={form.control}
+              name="juteWeight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.juteWeight')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       step="0.01"
-                      placeholder="0.2"
+                      placeholder="0"
                       {...field}
                       className="placeholder:text-gray-400"
                     />
                   </FormControl>
-                  <FormDescription className="text-xs">
-                    बारदाना वजन कि.ग्रा. में बदलें करें (200 ग्राम=0.2 कि.ग्रा.)
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Packaging Weight (Quintal) - Auto-calculated */}
+            {/* Plastic Weight */}
             <FormField
               control={form.control}
-              name="packagingWeightQuintal"
+              name="plasticWeight"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.packagingWeightQuintal')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.plasticWeight')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny Weight (Auto-calculated) */}
+            <FormField
+              control={form.control}
+              name="gunnyWeight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.gunnyWeight')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400 bg-muted"
+                      readOnly
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Truck Number */}
+            <FormField
+              control={form.control}
+              name="truckNo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.truckNo')}</FormLabel>
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="0.00000"
+                      placeholder="MH12AB1234"
                       {...field}
-                      disabled
-                      className="bg-gray-50 placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Vehicle Number */}
-            <FormField
-              control={form.control}
-              name="vehicleNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.vehicleNumber')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder=""
-                      {...field}
+                      className="placeholder:text-gray-400"
                     />
                   </FormControl>
                   <FormMessage />
@@ -324,14 +410,16 @@ export default function AddGovPaddyInwardForm() {
             {/* RST Number */}
             <FormField
               control={form.control}
-              name="rstNumber"
+              name="rstNo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.rstNumber')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.rstNo')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder=""
+                      type="text"
+                      placeholder="RST-001"
                       {...field}
+                      className="placeholder:text-gray-400"
                     />
                   </FormControl>
                   <FormMessage />
@@ -339,73 +427,152 @@ export default function AddGovPaddyInwardForm() {
               )}
             />
 
-            {/* Vehicle Weight (Quintal) */}
+            {/* Truck Load Weight */}
             <FormField
               control={form.control}
-              name="vehicleWeightQuintal"
+              name="truckLoadWeight"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.vehicleWeightQuintal')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.truckLoadWeight')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
+                      step="0.01"
                       placeholder="0"
                       {...field}
                       className="placeholder:text-gray-400"
                     />
                   </FormControl>
-                  <FormDescription className="text-xs">
-                    मात्रा (क्विंटल में.)
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Grain Type Radio Buttons */}
+            {/* Dhan Type Dropdown */}
             <FormField
               control={form.control}
-              name="grainType"
+              name="dhanType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.grainType')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanType')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {dhanTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dhan Mota Net Weight */}
+            <FormField
+              control={form.control}
+              name="dhanMota"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanMota')}</FormLabel>
                   <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="grid grid-cols-2 gap-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="coarse" id="coarse" />
-                        <Label htmlFor="coarse" className="font-normal cursor-pointer">
-                          धान(मोटा)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="fine" id="fine" />
-                        <Label htmlFor="fine" className="font-normal cursor-pointer">
-                          धान(पतला)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="common" id="common" />
-                        <Label htmlFor="common" className="font-normal cursor-pointer">
-                          धान(सरना)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="maharaja" id="maharaja" />
-                        <Label htmlFor="maharaja" className="font-normal cursor-pointer">
-                          धान(महामाया)
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="rb-gold" id="rb-gold" />
-                        <Label htmlFor="rb-gold" className="font-normal cursor-pointer">
-                          धान(RB GOLD)
-                        </Label>
-                      </div>
-                    </RadioGroup>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dhan Patla Net Weight */}
+            <FormField
+              control={form.control}
+              name="dhanPatla"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanPatla')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dhan Sarna Net Weight */}
+            <FormField
+              control={form.control}
+              name="dhanSarna"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanSarna')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dhan Mahamaya Net Weight */}
+            <FormField
+              control={form.control}
+              name="dhanMaha"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanMaha')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dhan RB Gold Net Weight */}
+            <FormField
+              control={form.control}
+              name="dhanRb"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanRb')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -417,9 +584,9 @@ export default function AddGovPaddyInwardForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createGovPaddyInward.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createGovPaddyInward.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>

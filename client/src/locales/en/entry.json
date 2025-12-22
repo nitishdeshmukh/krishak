@@ -7,7 +7,7 @@
             "addParty": "Add Party",
             "addTransporter": "Add Transporters",
             "addWorker": "Add Brokers",
-            "propertyManagement": "Committee Structure",
+            "propertyManagement": "Committee Procurement",
             "doEntry": "DO Entry"
         },
         "purchaseDeals": {
@@ -29,23 +29,58 @@
             "addParty": "Add Party",
             "addTransporters": "Add Transporters",
             "addBrokers": "Add Brokers",
-            "addCommittee": "Add Committee Structure",
+            "addCommittee": "Add Committee Procurement",
             "doEntry": "DO Entry"
         },
         "purchase": {
             "title": "Purchase Deals",
             "paddy": "Paddy Purchase Deal",
-            "rice": "Rice Purchase Deal"
+            "rice": "Rice Purchase Deal",
+            "sack": "Sack Purchase Deal",
+            "frk": "FRK Purchase Deal",
+            "other": "Other Purchase Deal"
         },
         "sales": {
             "title": "Sales Deals",
-            "paddy": "Paddy Deals"
+            "paddy": "Paddy Deals",
+            "rice": "Rice Sales Deal",
+            "sack": "Sack Sales Deal",
+            "frk": "FRK Sales Deal",
+            "brokens": "Brokens Sales Deal",
+            "brewers": "Brewers Sales Deal",
+            "husk": "Husk Sales Deal",
+            "ricebran": "Rice Bran Sales Deal",
+            "whitebran": "White Bran Sales Deal",
+            "other": "Other Sales Deal"
         },
         "inward": {
             "title": "Inward",
             "govtPaddy": "Government Paddy Inward",
             "privatePaddy": "Private Paddy Inward",
-            "rice": "Rice Inward / Lot Deposit"
+            "rice": "Rice Inward / Lot Deposit",
+            "sack": "Sack Inward",
+            "frk": "FRK Inward",
+            "other": "Other Inward"
+        },
+        "outward": {
+            "title": "Outward",
+            "privatePaddy": "Private Paddy Outward",
+            "govtRice": "Govt Rice Outward",
+            "privateRice": "Private Rice Outward",
+            "govtSack": "Govt Sack Outward",
+            "privateSack": "Private Sack Outward",
+            "frk": "FRK Outward",
+            "brokens": "Brokens Outward",
+            "brewers": "Brewers Outward",
+            "husk": "Husk Outward",
+            "riceBran": "Rice Bran Outward",
+            "whiteBran": "White Bran Outward",
+            "other": "Other Outward"
+        },
+        "milling": {
+            "title": "Milling",
+            "paddy": "Paddy Milling",
+            "rice": "Rice Milling"
         }
     },
     "nav": {
@@ -53,7 +88,9 @@
         "reports": "Reports",
         "purchase": "Purchase Deals",
         "sales": "Sales Deals",
-        "inward": "Inward"
+        "inward": "Inward",
+        "outward": "Outward",
+        "milling": "Milling"
     },
     "dashboard": {
         "entry": "Entry",

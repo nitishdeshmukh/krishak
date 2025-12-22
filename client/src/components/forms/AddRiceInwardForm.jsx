@@ -7,7 +7,6 @@ import { format } from 'date-fns';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,125 +21,153 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Label } from '@/components/ui/label';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { useCreateRiceInward } from '@/hooks/useRiceInward';
 
 // Form validation schema
 const riceInwardFormSchema = z.object({
   date: z.date({
     required_error: 'Date is required.',
   }),
-  purchaseSource: z.string().min(1, {
-    message: 'Please select a rice purchase source.',
+  ricePurchaseNumber: z.string().min(1, {
+    message: 'Please select rice purchase.',
   }),
-  fciNan: z.enum(['fci', 'nan'], {
-    required_error: 'Please select FCI or NAN.',
+  partyName: z.string().min(1, {
+    message: 'Please select a party.',
   }),
-  packaging: z.enum(['with-packaging', 'return-packaging'], {
-    required_error: 'Please select packaging option.',
+  brokerName: z.string().min(1, {
+    message: 'Please select a broker.',
   }),
-  packagingNew: z.string().regex(/^\d+$/, {
+  riceType: z.string().min(1, {
+    message: 'Please select rice type.',
+  }),
+  awakBalance: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
+  }).optional(),
+  lotType: z.enum(['lot-purchase', 'rice-purchase'], {
+    required_error: 'Please select inward/LOT type.',
   }),
-  packagingOld: z.string().regex(/^\d+$/, {
+  lotNo: z.string().optional(),
+  frkNon: z.enum(['frk', 'non-frk'], {
+    required_error: 'Please select FRK/NON FRK.',
+  }),
+  gunnyOption: z.enum(['with-sack', 'give-sack'], {
+    required_error: 'Please select sack option.',
+  }),
+  gunnyNew: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  packagingPlastic: z.string().regex(/^\d+$/, {
+  }).optional(),
+  gunnyOld: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  totalPackaging: z.string().regex(/^\d+(\.\d+)?$/, {
+  }).optional(),
+  gunnyPlastic: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  plasticPackagingWeight: z.string().regex(/^\d+(\.\d+)?$/, {
+  }).optional(),
+  juteWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  packagingWeight: z.string().regex(/^\d+(\.\d+)?$/, {
+  }).optional(),
+  plasticWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  vehicleNumber: z.string().min(1, {
-    message: 'Vehicle number is required.',
-  }),
-  rstNumber: z.string().optional(),
-  vehicleWeight: z.string().regex(/^\d+$/, {
+  }).optional(),
+  gunnyWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
+  }).optional(),
+  truckNo: z.string().min(1, {
+    message: 'Truck number is required.',
   }),
-  riceCoarseNetWeight: z.string().regex(/^\d+$/, {
+  rstNo: z.string().optional(),
+  truckLoadWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
-  riceFineNetWeight: z.string().regex(/^\d+$/, {
+  }).optional(),
+  riceMota: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
-  }),
+  }).optional(),
+  ricePatla: z.string().regex(/^\d*\.?\d*$/, {
+    message: 'Must be a valid number.',
+  }).optional(),
 });
 
 export default function AddRiceInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createRiceInward = useCreateRiceInward();
 
-  // Sample rice purchase sources - Replace with actual data from API
-  const ricePurchaseSources = ['चावल खरीदी स्रोत 1', 'चावल खरीदी स्रोत 2', 'चावल खरीदी स्रोत 3'];
+  // Sample data - Replace with actual data from API
+  const ricePurchases = ['RP-001', 'RP-002', 'RP-003', 'RP-004'];
+  const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
+  const brokers = ['ब्रोकर 1', 'ब्रोकर 2', 'ब्रोकर 3'];
+  const riceTypes = [
+    { value: 'mota', label: t('forms.riceInward.riceTypes.mota') || 'चावल(मोटा)' },
+    { value: 'patla', label: t('forms.riceInward.riceTypes.patla') || 'चावल(पतला)' },
+  ];
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
     resolver: zodResolver(riceInwardFormSchema),
     defaultValues: {
       date: new Date(),
-      purchaseSource: '',
-      fciNan: 'fci',
-      packaging: 'with-packaging',
-      packagingNew: '0',
-      packagingOld: '0',
-      packagingPlastic: '0',
-      totalPackaging: '.58',
-      plasticPackagingWeight: '0.2',
-      packagingWeight: '0.0000',
-      vehicleNumber: '',
-      rstNumber: '',
-      vehicleWeight: '0',
-      riceCoarseNetWeight: '0',
-      riceFineNetWeight: '0',
+      ricePurchaseNumber: '',
+      partyName: '',
+      brokerName: '',
+      riceType: 'mota',
+      awakBalance: '',
+      lotType: 'lot-purchase',
+      lotNo: '',
+      frkNon: 'frk',
+      gunnyOption: 'with-sack',
+      gunnyNew: '',
+      gunnyOld: '',
+      gunnyPlastic: '',
+      juteWeight: '',
+      plasticWeight: '',
+      gunnyWeight: '',
+      truckNo: '',
+      rstNo: '',
+      truckLoadWeight: '',
+      riceMota: '',
+      ricePatla: '',
     },
   });
 
-  // Watch packaging values for auto-calculation
-  const packagingNew = form.watch('packagingNew');
-  const packagingOld = form.watch('packagingOld');
-  const packagingPlastic = form.watch('packagingPlastic');
-  const totalPackaging = form.watch('totalPackaging');
-  const plasticPackagingWeight = form.watch('plasticPackagingWeight');
+  // Watch fields for auto-calculation
+  const watchedFields = form.watch(['juteWeight', 'plasticWeight']);
 
-  // Auto-calculate packaging weight
   React.useEffect(() => {
-    const newBags = parseInt(packagingNew) || 0;
-    const oldBags = parseInt(packagingOld) || 0;
-    const plasticBags = parseInt(packagingPlastic) || 0;
-    const totalWeight = parseFloat(totalPackaging) || 0;
-    const plasticWeight = parseFloat(plasticPackagingWeight) || 0;
+    const [juteWeight, plasticWeight] = watchedFields;
+    const jute = parseFloat(juteWeight) || 0;
+    const plastic = parseFloat(plasticWeight) || 0;
 
-    // Formula: ((new + old) * totalWeight + plastic * plasticWeight) / 100
-    const totalWeightQuintal = ((newBags + oldBags) * totalWeight + plasticBags * plasticWeight) / 100;
+    // Calculate total gunny weight
+    const gunnyWeight = jute + plastic;
 
-    form.setValue('packagingWeight', totalWeightQuintal.toFixed(4));
-  }, [packagingNew, packagingOld, packagingPlastic, totalPackaging, plasticPackagingWeight]);
+    if (gunnyWeight > 0) {
+      form.setValue('gunnyWeight', gunnyWeight.toFixed(2));
+    }
+  }, [watchedFields, form]);
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Rice Inward Form Data:', {
+    const formattedData = {
       ...data,
       date: format(data.date, 'dd-MM-yy'),
-    });
+    };
 
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Rice Inward Added Successfully', {
-        description: `Inward from ${data.purchaseSource} has been recorded.`,
-      });
-      setIsLoading(false);
-      form.reset();
-    }, 1500);
+    createRiceInward.mutate(formattedData, {
+      onSuccess: () => {
+        toast.success(t('forms.riceInward.successMessage') || 'Rice Inward Added Successfully', {
+          description: `Inward for ${data.partyName} has been recorded.`,
+        });
+        form.reset();
+      },
+      onError: (error) => {
+        toast.error('Error creating Rice Inward', {
+          description: error.message,
+        });
+      },
+    });
   };
 
   return (
@@ -160,13 +187,13 @@ export default function AddRiceInwardForm() {
               label={t('forms.common.date')}
             />
 
-            {/* Rice Purchase Source Dropdown */}
+            {/* Rice Purchase Number Dropdown */}
             <FormField
               control={form.control}
-              name="purchaseSource"
+              name="ricePurchaseNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.purchaseSource')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.ricePurchaseNumber')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">
@@ -174,9 +201,9 @@ export default function AddRiceInwardForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {ricePurchaseSources.map((source) => (
-                        <SelectItem key={source} value={source}>
-                          {source}
+                      {ricePurchases.map((rp) => (
+                        <SelectItem key={rp} value={rp}>
+                          {rp}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -186,30 +213,125 @@ export default function AddRiceInwardForm() {
               )}
             />
 
-            {/* FCI/NAN Radio Buttons */}
+            {/* Party Name Dropdown */}
             <FormField
               control={form.control}
-              name="fciNan"
+              name="partyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.fciNan')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.partyName')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {parties.map((party) => (
+                        <SelectItem key={party} value={party}>
+                          {party}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Broker Name Dropdown */}
+            <FormField
+              control={form.control}
+              name="brokerName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.brokerName')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {brokers.map((broker) => (
+                        <SelectItem key={broker} value={broker}>
+                          {broker}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Rice Type Dropdown */}
+            <FormField
+              control={form.control}
+              name="riceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.riceType')}</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {riceTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Awak Balance / LOT Jama Shesh */}
+            <FormField
+              control={form.control}
+              name="awakBalance"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.awakBalance')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* LOT Type Radio */}
+            <FormField
+              control={form.control}
+              name="lotType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.lotType')}</FormLabel>
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="flex items-center gap-6"
+                      className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="fci" id="fci" />
-                        <Label htmlFor="fci" className="font-normal cursor-pointer">
-                          FCI
-                        </Label>
+                        <RadioGroupItem value="lot-purchase" id="lot-purchase" />
+                        <Label htmlFor="lot-purchase">{t('forms.riceInward.lotTypes.lotPurchase') || 'LOT खरीदी'}</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="nan" id="nan" />
-                        <Label htmlFor="nan" className="font-normal cursor-pointer">
-                          NAN
-                        </Label>
+                        <RadioGroupItem value="rice-purchase" id="rice-purchase" />
+                        <Label htmlFor="rice-purchase">{t('forms.riceInward.lotTypes.ricePurchase') || 'चावल खरीदी'}</Label>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -218,160 +340,19 @@ export default function AddRiceInwardForm() {
               )}
             />
 
-            {/* Packaging Radio Buttons */}
+            {/* LOT No */}
             <FormField
               control={form.control}
-              name="packaging"
+              name="lotNo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.packaging')}</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex items-center gap-6"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="with-packaging" id="with-packaging" />
-                        <Label htmlFor="with-packaging" className="font-normal cursor-pointer">
-                          बारदाना सहित
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="return-packaging" id="return-packaging" />
-                        <Label htmlFor="return-packaging" className="font-normal cursor-pointer">
-                          बारदाना देना है
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Packaging (New) */}
-            <FormField
-              control={form.control}
-              name="packagingNew"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.packagingNew')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Packaging (Old) */}
-            <FormField
-              control={form.control}
-              name="packagingOld"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.packagingOld')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Packaging (Plastic) */}
-            <FormField
-              control={form.control}
-              name="packagingPlastic"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.packagingPlastic')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Total Packaging */}
-            <FormField
-              control={form.control}
-              name="totalPackaging"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.totalPackaging')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder=".58"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    बारदाना वजन कि.ग्रा. में बदलें करें (200 ग्राम=0.2 कि.ग्रा.)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Plastic Packaging Weight */}
-            <FormField
-              control={form.control}
-              name="plasticPackagingWeight"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.plasticPackagingWeight')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.2"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    बारदाना वजन कि.ग्रा. में बदलें करें (200 ग्राम=0.2 कि.ग्रा.)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Packaging Weight - Auto-calculated */}
-            <FormField
-              control={form.control}
-              name="packagingWeight"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.packagingWeight')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.lotNo')}</FormLabel>
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="0.0000"
+                      placeholder="LOT No."
                       {...field}
-                      disabled
-                      className="bg-gray-50 placeholder:text-gray-400"
+                      className="placeholder:text-gray-400"
                     />
                   </FormControl>
                   <FormMessage />
@@ -379,17 +360,202 @@ export default function AddRiceInwardForm() {
               )}
             />
 
-            {/* Vehicle Number */}
+            {/* FRK / NON FRK Radio */}
             <FormField
               control={form.control}
-              name="vehicleNumber"
+              name="frkNon"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.vehicleNumber')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.frkNon')}</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-wrap gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="frk" id="frk" />
+                        <Label htmlFor="frk">{t('forms.riceInward.frkOptions.frk') || 'FRK'}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="non-frk" id="non-frk" />
+                        <Label htmlFor="non-frk">{t('forms.riceInward.frkOptions.nonFrk') || 'NON FRK'}</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny Option Radio */}
+            <FormField
+              control={form.control}
+              name="gunnyOption"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.gunnyOption')}</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-wrap gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="with-sack" id="with-sack" />
+                        <Label htmlFor="with-sack">{t('forms.riceInward.gunnyOptions.withSack') || 'बारदाना सहित'}</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="give-sack" id="give-sack" />
+                        <Label htmlFor="give-sack">{t('forms.riceInward.gunnyOptions.giveSack') || 'बारदाना देना है'}</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny New */}
+            <FormField
+              control={form.control}
+              name="gunnyNew"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.gunnyNew')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder=""
+                      type="number"
+                      step="1"
+                      placeholder="0"
                       {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny Old */}
+            <FormField
+              control={form.control}
+              name="gunnyOld"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.gunnyOld')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="1"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny Plastic */}
+            <FormField
+              control={form.control}
+              name="gunnyPlastic"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.gunnyPlastic')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="1"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Jute Weight */}
+            <FormField
+              control={form.control}
+              name="juteWeight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.juteWeight')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Plastic Weight */}
+            <FormField
+              control={form.control}
+              name="plasticWeight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.plasticWeight')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Gunny Weight (Auto-calculated) */}
+            <FormField
+              control={form.control}
+              name="gunnyWeight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.gunnyWeight')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      {...field}
+                      className="placeholder:text-gray-400 bg-muted"
+                      readOnly
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Truck Number */}
+            <FormField
+              control={form.control}
+              name="truckNo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">{t('forms.riceInward.truckNo')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="MH12AB1234"
+                      {...field}
+                      className="placeholder:text-gray-400"
                     />
                   </FormControl>
                   <FormMessage />
@@ -400,14 +566,16 @@ export default function AddRiceInwardForm() {
             {/* RST Number */}
             <FormField
               control={form.control}
-              name="rstNumber"
+              name="rstNo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.rstNumber')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.rstNo')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder=""
+                      type="text"
+                      placeholder="RST-001"
                       {...field}
+                      className="placeholder:text-gray-400"
                     />
                   </FormControl>
                   <FormMessage />
@@ -415,16 +583,17 @@ export default function AddRiceInwardForm() {
               )}
             />
 
-            {/* Vehicle Weight */}
+            {/* Truck Load Weight */}
             <FormField
               control={form.control}
-              name="vehicleWeight"
+              name="truckLoadWeight"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.vehicleWeight')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.truckLoadWeight')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
+                      step="0.01"
                       placeholder="0"
                       {...field}
                       className="placeholder:text-gray-400"
@@ -435,16 +604,17 @@ export default function AddRiceInwardForm() {
               )}
             />
 
-            {/* Rice (Coarse) Net Weight */}
+            {/* Rice Mota Net Weight */}
             <FormField
               control={form.control}
-              name="riceCoarseNetWeight"
+              name="riceMota"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.riceCoarseNetWeight')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.riceMota')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
+                      step="0.01"
                       placeholder="0"
                       {...field}
                       className="placeholder:text-gray-400"
@@ -455,16 +625,17 @@ export default function AddRiceInwardForm() {
               )}
             />
 
-            {/* Rice (Fine) Net Weight */}
+            {/* Rice Patla Net Weight */}
             <FormField
               control={form.control}
-              name="riceFineNetWeight"
+              name="ricePatla"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.riceInward.riceFineNetWeight')}</FormLabel>
+                  <FormLabel className="text-base">{t('forms.riceInward.ricePatla')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
+                      step="0.01"
                       placeholder="0"
                       {...field}
                       className="placeholder:text-gray-400"
@@ -480,9 +651,9 @@ export default function AddRiceInwardForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createRiceInward.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createRiceInward.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>

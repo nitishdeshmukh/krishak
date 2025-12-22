@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { PhoneInputField } from '@/components/ui/phone-input-field';
+import { useCreateTransporter } from '@/hooks/useTransporters';
 
 // Form validation schema
 const transporterFormSchema = z.object({
@@ -59,7 +60,7 @@ const transporterFormSchema = z.object({
 
 export default function AddTransportersForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createTransporterMutation = useCreateTransporter();
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
@@ -80,17 +81,17 @@ export default function AddTransportersForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Transporter Form Data:', data);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await createTransporterMutation.mutateAsync(data);
       toast.success('Transporter Added Successfully', {
         description: `${data.transporterName} has been added to the system.`,
       });
-      setIsLoading(false);
       form.reset();
-    }, 1500);
+    } catch (error) {
+      toast.error('Failed to add transporter', {
+        description: error.message || 'An error occurred.',
+      });
+    }
   };
 
   return (
@@ -292,9 +293,9 @@ export default function AddTransportersForm() {
             <Button
               type="submit"
               className="w-full md:w-auto"
-              disabled={isLoading}
+              disabled={createTransporterMutation.isPending}
             >
-              {isLoading ? 'Submitting...' : 'Submit'}
+              {createTransporterMutation.isPending ? 'Submitting...' : 'Submit'}
             </Button>
           </form>
         </Form>
