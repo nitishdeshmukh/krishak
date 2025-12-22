@@ -1,23 +1,35 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const { errorHandler } = require('./middlewares/errorHandler');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { errorHandler } from './middlewares/errorHandler.js';
+import routes from './routes/index.js';
 
 const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true,
+}));
 app.use(helmet());
 app.use(morgan('dev'));
 
-// Routes
+// API Routes
+app.use('/api', routes);
+
+// Health check
 app.get('/', (req, res) => {
-  res.json({ message: 'API is running...' });
+  res.json({
+    message: 'Krishak API is running...',
+    version: '1.0.0',
+    endpoints: '/api'
+  });
 });
 
 // Error Handler
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

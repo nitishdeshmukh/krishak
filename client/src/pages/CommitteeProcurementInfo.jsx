@@ -18,7 +18,7 @@ import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
 
-export default function CommitteeStructureInfo() {
+export default function CommitteeProcurementInfo() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
@@ -159,7 +159,7 @@ export default function CommitteeStructureInfo() {
             <div className="flex items-center justify-center h-64 bg-card rounded-xl border">
                 <div className="flex flex-col items-center gap-3">
                     <ArrowPathIcon className="h-8 w-8 animate-spin text-muted-foreground" />
-                    <p className="text-muted-foreground text-sm">Loading committee structure...</p>
+                    <p className="text-muted-foreground text-sm">Loading committee procurement...</p>
                 </div>
             </div>
         );

@@ -26,7 +26,7 @@
             "title": "पार्टियां",
             "partyName": "पार्टी का नाम",
             "phone": "फोन",
-            "email": "ईमेल",
+            "email": "Email",
             "partyType": "प्रकार",
             "gstNumber": "GST नंबर",
             "city": "शहर",
@@ -37,7 +37,7 @@
             "title": "ब्रोकर",
             "brokerName": "ब्रोकर का नाम",
             "phone": "फोन",
-            "email": "ईमेल",
+            "email": "Email",
             "gstn": "GSTN",
             "city": "शहर",
             "state": "राज्य"
@@ -46,7 +46,7 @@
             "title": "परिवहनकर्ता",
             "transporterName": "परिवहनकर्ता का नाम",
             "phone": "फोन",
-            "email": "ईमेल",
+            "email": "Email",
             "vehicleNumber": "गाड़ी नंबर",
             "city": "शहर",
             "state": "राज्य"

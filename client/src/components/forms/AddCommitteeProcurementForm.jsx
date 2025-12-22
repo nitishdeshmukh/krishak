@@ -17,9 +17,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
+import { useCreateCommitteeMember } from '@/hooks/useCommittee';
 
 // Form validation schema
-const committeeStructureFormSchema = z.object({
+const committeeProcurementFormSchema = z.object({
   type: z.enum(['committee-production', 'storage'], {
     required_error: 'Please select a type.',
   }),
@@ -28,13 +29,13 @@ const committeeStructureFormSchema = z.object({
   }),
 });
 
-export default function AddCommitteeStructureForm() {
+export default function AddCommitteeProcurementForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const createCommitteeMemberMutation = useCreateCommitteeMember();
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
-    resolver: zodResolver(committeeStructureFormSchema),
+    resolver: zodResolver(committeeProcurementFormSchema),
     defaultValues: {
       type: 'committee-production',
       name: '',
@@ -43,18 +44,18 @@ export default function AddCommitteeStructureForm() {
 
   // Form submission handler
   const onSubmit = async (data) => {
-    setIsLoading(true);
-    console.log('Committee Structure Form Data:', data);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await createCommitteeMemberMutation.mutateAsync(data);
       const typeLabel = data.type === 'committee-production' ? 'समिति-उपार्जन केंद्र' : 'संग्रहण केंद्र';
-      toast.success('Committee Structure Added Successfully', {
+      toast.success('Committee Procurement Added Successfully', {
         description: `${data.name} (${typeLabel}) has been added to the system.`,
       });
-      setIsLoading(false);
       form.reset();
-    }, 1500);
+    } catch (error) {
+      toast.error('Failed to add committee', {
+        description: error.message || 'An error occurred.',
+      });
+    }
   };
 
   return (
@@ -123,9 +124,9 @@ export default function AddCommitteeStructureForm() {
               <Button
                 type="submit"
                 className="w-full md:w-auto px-8"
-                disabled={isLoading}
+                disabled={createCommitteeMemberMutation.isPending}
               >
-                {isLoading ? t('forms.common.saving') : t('forms.common.submit')}
+                {createCommitteeMemberMutation.isPending ? t('forms.common.saving') : t('forms.common.submit')}
               </Button>
             </div>
           </form>

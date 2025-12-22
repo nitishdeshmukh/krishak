@@ -4,8 +4,54 @@
 import apiClient from '@/lib/apiClient';
 
 const DUMMY_RICE_PURCHASES = [
-    { _id: '1', dealNumber: 'RD-2024-001', partyName: 'Ram Janki', dealDate: '2024-02-10', quantity: '300', rate: '4000', totalAmount: 1200000, status: 'active', createdAt: '2024-02-10T10:30:00.000Z' },
-    { _id: '2', dealNumber: 'RD-2024-002', partyName: 'sarguni industries', dealDate: '2024-03-05', quantity: '450', rate: '4200', totalAmount: 1890000, status: 'pending', createdAt: '2024-03-05T10:30:00.000Z' },
+    {
+        _id: '1',
+        dealNumber: 'RD-2024-001',
+        partyName: 'Ram Janki',
+        brokerName: 'ब्रोकर 1',
+        dealDate: '2024-02-10',
+        quantity: '300',
+        rate: '4000',
+        wastagePercent: '1.5',
+        brokerage: '15',
+        totalAmount: 1200000,
+        purchaseType: 'lot-purchase',
+        packaging: 'with-packaging',
+        newPackagingRate: '60',
+        oldPackagingRate: '40',
+        plasticPackagingRate: '30',
+        frk: 'frk-included',
+        frkRate: '5',
+        lotNumber: 'LOT-2024-001',
+        riceInward: '150',
+        riceInwardBalance: '150',
+        status: 'active',
+        createdAt: '2024-02-10T10:30:00.000Z'
+    },
+    {
+        _id: '2',
+        dealNumber: 'RD-2024-002',
+        partyName: 'sarguni industries',
+        brokerName: 'ब्रोकर 2',
+        dealDate: '2024-03-05',
+        quantity: '450',
+        rate: '4200',
+        wastagePercent: '2',
+        brokerage: '18',
+        totalAmount: 1890000,
+        purchaseType: 'other-purchase',
+        packaging: 'without-packaging',
+        newPackagingRate: '65',
+        oldPackagingRate: '45',
+        plasticPackagingRate: '35',
+        frk: 'frk-give',
+        frkRate: '6',
+        lotNumber: '',
+        riceInward: '200',
+        riceInwardBalance: '250',
+        status: 'pending',
+        createdAt: '2024-03-05T10:30:00.000Z'
+    },
 ];
 
 const generateDummyResponse = ({ page = 1, pageSize = 10 }) => {

@@ -28,7 +28,7 @@
             "phone": "Phone",
             "email": "Email",
             "partyType": "Type",
-            "gstNumber": "GST Number",
+            "gstNumber": "GSTN",
             "city": "City",
             "state": "State",
             "address": "Address"
@@ -132,7 +132,7 @@
             "status": "Status"
         },
         "committee": {
-            "title": "Committee Structure",
+            "title": "Committee Procurement",
             "name": "Name",
             "type": "Type",
             "location": "Location",

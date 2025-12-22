@@ -4,8 +4,54 @@
 import apiClient from '@/lib/apiClient';
 
 const DUMMY_PADDY_INWARD = [
-    { _id: '1', inwardNumber: 'IN-P-001', partyName: 'Xyz', inwardDate: '2024-01-20', vehicleNumber: 'MH12AB1234', quantity: '500', transporterName: 'Swift Logistics', createdAt: '2024-01-20T10:30:00.000Z' },
-    { _id: '2', inwardNumber: 'IN-P-002', partyName: 'Ram Janki', inwardDate: '2024-02-15', vehicleNumber: 'UP16CD5678', quantity: '600', transporterName: 'Rama Transport', createdAt: '2024-02-15T10:30:00.000Z' },
+    {
+        _id: '1',
+        inwardNumber: 'IN-P-001',
+        doNumber: 'DO-001',
+        samitiSangrahan: 'samiti1',
+        balDo: '500',
+        gunnyNew: '100',
+        gunnyOld: '50',
+        gunnyPlastic: '30',
+        juteWeight: '5',
+        plasticWeight: '3',
+        gunnyWeight: '8',
+        truckNo: 'MH12AB1234',
+        rstNo: 'RST-001',
+        truckLoadWeight: '200',
+        dhanType: 'mota',
+        dhanMota: '150',
+        dhanPatla: '0',
+        dhanSarna: '0',
+        dhanMaha: '0',
+        dhanRb: '0',
+        inwardDate: '2024-01-20',
+        createdAt: '2024-01-20T10:30:00.000Z'
+    },
+    {
+        _id: '2',
+        inwardNumber: 'IN-P-002',
+        doNumber: 'DO-002',
+        samitiSangrahan: 'samiti2',
+        balDo: '600',
+        gunnyNew: '120',
+        gunnyOld: '60',
+        gunnyPlastic: '40',
+        juteWeight: '6',
+        plasticWeight: '4',
+        gunnyWeight: '10',
+        truckNo: 'UP16CD5678',
+        rstNo: 'RST-002',
+        truckLoadWeight: '250',
+        dhanType: 'patla',
+        dhanMota: '0',
+        dhanPatla: '180',
+        dhanSarna: '0',
+        dhanMaha: '0',
+        dhanRb: '0',
+        inwardDate: '2024-02-15',
+        createdAt: '2024-02-15T10:30:00.000Z'
+    },
 ];
 
 const generateDummyResponse = ({ page = 1, pageSize = 10 }) => {
