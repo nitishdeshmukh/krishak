@@ -14,17 +14,23 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreatePaddyMilling } from '@/hooks/usePaddyMilling';
+import { paddyTypeOptions, riceTypeOptions } from '@/lib/constants';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const paddyMillingFormSchema = z.object({
@@ -81,10 +87,6 @@ const paddyMillingFormSchema = z.object({
 export default function AddPaddyMillingForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createPaddyMilling = useCreatePaddyMilling();
-
-    // Sample data - Replace with actual data from API
-    const paddyTypes = ['धान(मोटा)', 'धान(पतला)', 'धान(सरना)', 'धान(महामाया)', 'धान(RB GOLD)'];
-    const riceTypes = ['चावल (पतला)', 'चावल (मोटा)'];
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -143,8 +145,8 @@ export default function AddPaddyMillingForm() {
         }
     }, [watchedFields, form]);
 
-    // Form submission handler
-    const onSubmit = async (data) => {
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
@@ -163,6 +165,17 @@ export default function AddPaddyMillingForm() {
                 });
             },
         });
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'paddy-milling',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
     };
 
     return (
@@ -189,20 +202,14 @@ export default function AddPaddyMillingForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.paddyMilling.paddyType')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {paddyTypes.map((item) => (
-                                                <SelectItem key={item} value={item}>
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={paddyTypeOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -257,20 +264,14 @@ export default function AddPaddyMillingForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.paddyMilling.riceType')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {riceTypes.map((item) => (
-                                                <SelectItem key={item} value={item}>
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={riceTypeOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -525,6 +526,26 @@ export default function AddPaddyMillingForm() {
                         </div>
                     </form>
                 </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );

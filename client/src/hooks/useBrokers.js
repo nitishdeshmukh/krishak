@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchBrokers, createBroker, updateBroker, deleteBroker } from '../api/brokersApi';
+import { fetchBrokers, createBroker, updateBroker, deleteBroker, fetchAllBrokers } from '../api/brokersApi';
 
 export const useBrokers = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -48,6 +48,23 @@ export const useDeleteBroker = () => {
         mutationFn: deleteBroker,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['brokers'] }),
     });
+};
+
+/**
+ * Hook for fetching all brokers for dropdown usage
+ */
+export const useAllBrokers = () => {
+    const query = useQuery({
+        queryKey: ['brokers', 'all'],
+        queryFn: fetchAllBrokers,
+        staleTime: 60000, // 1 minute
+        refetchOnMount: 'always',
+    });
+
+    return {
+        ...query,
+        brokers: query.data?.data?.brokers || [],
+    };
 };
 
 export default useBrokers;

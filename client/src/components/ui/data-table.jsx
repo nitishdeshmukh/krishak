@@ -216,9 +216,9 @@ export function DataTable({
             )}
 
             {/* Table with horizontal scroll on mobile */}
-            <div className="rounded-lg border border-border shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <Table className="min-w-[600px]">
+            <div className="rounded-lg border border-border shadow-sm w-full max-w-full overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                    <Table className="min-w-[600px] w-full">
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id} className="bg-muted/70">

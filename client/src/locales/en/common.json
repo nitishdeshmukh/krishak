@@ -6,7 +6,10 @@
         "edit": "Edit",
         "view": "View",
         "retry": "Retry",
-        "search": "Search"
+        "search": "Search",
+        "submit": "Submit",
+        "remove": "Remove",
+        "processing": "Processing..."
     },
     "pagination": {
         "page": "Page",
@@ -26,6 +29,33 @@
     "languages": {
         "english": "English",
         "hindi": "हिंदी"
+    },
+    "doEntry": {
+        "excelUpload": "Excel Upload",
+        "manualEntry": "Manual Entry",
+        "dropFileHere": "Drop Excel file here",
+        "orClickToBrowse": "or click to browse",
+        "fileFormat": "Format: .xlsx, .xls",
+        "previewData": "Preview Data",
+        "totalEntries": "Total: {{count}} entries",
+        "submitEntries": "Submit {{count}} Entries",
+        "tableHeaders": {
+            "committee": "Committee",
+            "doNumber": "DO No.",
+            "date": "Date",
+            "coarse": "Coarse",
+            "fine": "Fine",
+            "common": "Common",
+            "total": "Total"
+        },
+        "total": "Total",
+        "successSingle": "DO Entry submitted successfully",
+        "successBulk": "{{count}} entries submitted successfully",
+        "errorSubmit": "Error: DO could not be submitted",
+        "errorBulk": "Bulk Upload Failed",
+        "noValidData": "No valid data found in file.",
+        "invalidFile": "Please upload a valid Excel file (.xlsx)",
+        "parseError": "Failed to read Excel file. Please upload a valid .xlsx file."
     },
     "uiGuide": "UI Guide",
     "profile": "Profile",

@@ -63,3 +63,21 @@ export const deleteCommittee = asyncHandler(async (req, res) => {
     }
     res.status(200).json({ success: true, message: 'Committee deleted successfully' });
 });
+
+// @desc    Get distinct committees for dropdown
+// @route   GET /api/committees/distinct
+export const getDistinctCommittees = asyncHandler(async (req, res) => {
+    const committees = await Committee.aggregate([
+        { $match: { isActive: { $ne: false } } },
+        { $group: { _id: '$committeeName', doc: { $first: '$$ROOT' } } },
+        { $replaceRoot: { newRoot: '$doc' } },
+        { $sort: { committeeName: 1 } },
+        { $project: { _id: 1, committeeName: 1, type: 1 } }
+    ]);
+
+    res.status(200).json({
+        success: true,
+        message: 'Distinct committees retrieved successfully',
+        data: { committees },
+    });
+});

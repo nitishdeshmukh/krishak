@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,19 +14,25 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { useCreateGovPaddyInward } from '@/hooks/usePaddyInward';
+import { useAllCommittees } from '@/hooks/useCommittee';
+import { useAllDOEntries } from '@/hooks/useDOEntries';
+import { paddyTypeOptions } from '@/lib/constants';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const govPaddyInwardFormSchema = z.object({
@@ -70,19 +76,7 @@ const govPaddyInwardFormSchema = z.object({
   dhanType: z.string().min(1, {
     message: 'Please select paddy type.',
   }),
-  dhanMota: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanPatla: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanSarna: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanMaha: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanRb: z.string().regex(/^\d*\.?\d*$/, {
+  dhanNetWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
   }).optional(),
 });
@@ -90,21 +84,26 @@ const govPaddyInwardFormSchema = z.object({
 export default function AddGovPaddyInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
   const createGovPaddyInward = useCreateGovPaddyInward();
+  const { committees, isLoading: isLoadingCommittees } = useAllCommittees();
+  const { doEntries, isLoading: isLoadingDO } = useAllDOEntries();
 
-  // Sample data - Replace with actual data from API
-  const doNumbers = ['DO-001', 'DO-002', 'DO-003', 'DO-004'];
-  const samitiOptions = [
-    { value: 'samiti1', label: 'समिति 1' },
-    { value: 'samiti2', label: 'समिति 2' },
-    { value: 'sangrahan1', label: 'संग्रहण केंद्र 1' },
-    { value: 'sangrahan2', label: 'संग्रहण केंद्र 2' },
-  ];
-  const dhanTypes = [
-    { value: 'mota', label: t('forms.govPaddyInward.dhanTypes.mota') || 'धान(मोटा)' },
-    { value: 'patla', label: t('forms.govPaddyInward.dhanTypes.patla') || 'धान(पतला)' },
-    { value: 'sarna', label: t('forms.govPaddyInward.dhanTypes.sarna') || 'धान(सरना)' },
-    { value: 'mahamaya', label: t('forms.govPaddyInward.dhanTypes.mahamaya') || 'धान(महामाया)' },
-  ];
+  // Memoized options for committees/samiti dropdown
+  const samitiOptions = useMemo(() => {
+    if (!committees || committees.length === 0) return [];
+    return committees.map(committee => ({
+      value: committee._id || committee.id,
+      label: committee.name || committee.committeeName
+    }));
+  }, [committees]);
+
+  // Memoized options for DO number dropdown
+  const doNumberOptions = useMemo(() => {
+    if (!doEntries || doEntries.length === 0) return [];
+    return doEntries.map(entry => ({
+      value: entry._id || entry.id,
+      label: entry.doNumber || entry.doNo
+    }));
+  }, [doEntries]);
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
@@ -117,20 +116,19 @@ export default function AddGovPaddyInwardForm() {
       gunnyNew: '',
       gunnyOld: '',
       gunnyPlastic: '',
-      juteWeight: '',
-      plasticWeight: '',
+      juteWeight: '0.58',
+      plasticWeight: '0.135',
       gunnyWeight: '',
       truckNo: '',
       rstNo: '',
       truckLoadWeight: '',
-      dhanType: 'mota',
-      dhanMota: '',
-      dhanPatla: '',
-      dhanSarna: '',
-      dhanMaha: '',
-      dhanRb: '',
+      dhanType: '',
+      dhanNetWeight: '',
     },
   });
+
+  // Watch dhanType for conditional net weight field
+  const selectedDhanType = form.watch('dhanType');
 
   // Watch fields for auto-calculation
   const watchedFields = form.watch(['juteWeight', 'plasticWeight']);
@@ -148,11 +146,11 @@ export default function AddGovPaddyInwardForm() {
     }
   }, [watchedFields, form]);
 
-  // Form submission handler
-  const onSubmit = async (data) => {
+  // Actual submit function after confirmation
+  const handleConfirmedSubmit = (data) => {
     const formattedData = {
       ...data,
-      date: format(data.date, 'dd-MM-yy'),
+      date: format(data.date, 'yyyy-MM-dd'),
     };
 
     createGovPaddyInward.mutate(formattedData, {
@@ -168,6 +166,17 @@ export default function AddGovPaddyInwardForm() {
         });
       },
     });
+  };
+
+  // Hook for confirmation dialog
+  const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+    'gov-paddy-inward',
+    handleConfirmedSubmit
+  );
+
+  // Form submission handler - shows confirmation dialog first
+  const onSubmit = async (data) => {
+    openDialog(data);
   };
 
   return (
@@ -194,20 +203,14 @@ export default function AddGovPaddyInwardForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.govPaddyInward.doNumber')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {doNumbers.map((doNo) => (
-                        <SelectItem key={doNo} value={doNo}>
-                          {doNo}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={doNumberOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -220,20 +223,14 @@ export default function AddGovPaddyInwardForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.govPaddyInward.samitiSangrahan')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {samitiOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={samitiOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -455,129 +452,43 @@ export default function AddGovPaddyInwardForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.govPaddyInward.dhanType')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SearchableSelect
+                      options={paddyTypeOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="धान प्रकार चुनें"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dynamic Dhan Net Weight - Shows based on selected dhanType */}
+            {selectedDhanType && (
+              <FormField
+                control={form.control}
+                name="dhanNetWeight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">
+                      {selectedDhanType} नेट वजन (क्विंटल में)
+                    </FormLabel>
                     <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0"
+                        {...field}
+                        className="placeholder:text-gray-400"
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {dhanTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Mota Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanMota"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanMota')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Patla Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanPatla"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanPatla')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Sarna Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanSarna"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanSarna')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Mahamaya Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanMaha"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanMaha')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan RB Gold Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanRb"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.govPaddyInward.dhanRb')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Submit Button */}
             <div className="flex justify-center">
@@ -591,6 +502,26 @@ export default function AddGovPaddyInwardForm() {
             </div>
           </form>
         </Form>
+
+        {/* Confirmation Dialog */}
+        <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('forms.common.confirmMessage')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {t('forms.common.confirmNo')}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirm}>
+                {t('forms.common.confirmYes')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

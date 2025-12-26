@@ -14,19 +14,25 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useCreateGovtRiceOutward } from '@/hooks/useGovtRiceOutward';
+import { riceTypeOptions } from '@/lib/constants';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const govtRiceOutwardFormSchema = z.object({
@@ -70,15 +76,14 @@ export default function AddGovtRiceOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createGovtRiceOutward = useCreateGovtRiceOutward();
 
-    // Sample data - Replace with actual data from API
-    const lotNumbers = ['LOT-001', 'LOT-002', 'LOT-003'];
+    const lotNumberOptions = [
+        { value: 'LOT-001', label: 'LOT-001' },
+        { value: 'LOT-002', label: 'LOT-002' },
+        { value: 'LOT-003', label: 'LOT-003' },
+    ];
     const fciNanOptions = [
         { value: 'fci', label: 'FCI' },
         { value: 'nan', label: 'NAN' },
-    ];
-    const riceTypes = [
-        { value: 'mota', label: t('forms.govtRiceOutward.riceTypes.mota') || 'चावल(मोटा)' },
-        { value: 'patla', label: t('forms.govtRiceOutward.riceTypes.patla') || 'चावल(पतला)' },
     ];
 
     // Initialize form with react-hook-form and zod validation
@@ -118,8 +123,8 @@ export default function AddGovtRiceOutwardForm() {
         }
     }, [watchedFields, form]);
 
-    // Form submission handler
-    const onSubmit = async (data) => {
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
@@ -138,6 +143,17 @@ export default function AddGovtRiceOutwardForm() {
                 });
             },
         });
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'govt-rice-outward',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
     };
 
     return (
@@ -164,20 +180,14 @@ export default function AddGovtRiceOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.govtRiceOutward.lotNo')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {lotNumbers.map((lot) => (
-                                                <SelectItem key={lot} value={lot}>
-                                                    {lot}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={lotNumberOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -216,20 +226,14 @@ export default function AddGovtRiceOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.govtRiceOutward.riceType')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {riceTypes.map((type) => (
-                                                <SelectItem key={type.value} value={type.value}>
-                                                    {type.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={riceTypeOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -415,6 +419,26 @@ export default function AddGovtRiceOutwardForm() {
                         </div>
                     </form>
                 </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );

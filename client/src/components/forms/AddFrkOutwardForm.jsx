@@ -14,17 +14,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateFrkOutward } from '@/hooks/useFrkOutward';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const frkOutwardFormSchema = z.object({
@@ -62,9 +67,16 @@ export default function AddFrkOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createFrkOutward = useCreateFrkOutward();
 
-    // Sample data - Replace with actual data from API
-    const frkSales = ['FRK-001', 'FRK-002', 'FRK-003'];
-    const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
+    const frkSaleOptions = [
+        { value: 'FRK-001', label: 'FRK-001' },
+        { value: 'FRK-002', label: 'FRK-002' },
+        { value: 'FRK-003', label: 'FRK-003' },
+    ];
+    const partyOptions = [
+        { value: 'पार्टी 1', label: 'पार्टी 1' },
+        { value: 'पार्टी 2', label: 'पार्टी 2' },
+        { value: 'पार्टी 3', label: 'पार्टी 3' },
+    ];
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -101,8 +113,8 @@ export default function AddFrkOutwardForm() {
         }
     }, [watchedFields, form]);
 
-    // Form submission handler
-    const onSubmit = async (data) => {
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
@@ -121,6 +133,17 @@ export default function AddFrkOutwardForm() {
                 });
             },
         });
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'frk-outward',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
     };
 
     return (
@@ -147,20 +170,14 @@ export default function AddFrkOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.frkOutward.frkSaleNumber')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {frkSales.map((item) => (
-                                                <SelectItem key={item} value={item}>
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={frkSaleOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -173,20 +190,14 @@ export default function AddFrkOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.frkOutward.partyName')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {parties.map((party) => (
-                                                <SelectItem key={party} value={party}>
-                                                    {party}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={partyOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -351,6 +362,26 @@ export default function AddFrkOutwardForm() {
                         </div>
                     </form>
                 </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );

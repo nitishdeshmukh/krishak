@@ -14,19 +14,24 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useCreateOtherInward } from '@/hooks/useOtherInward';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const otherInwardFormSchema = z.object({
@@ -85,11 +90,22 @@ export default function AddOtherInwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createOtherInward = useCreateOtherInward();
 
-    // Sample data - Replace with actual data from API
-    const otherPurchases = ['OP-001', 'OP-002', 'OP-003'];
-    const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
-    const brokers = ['ब्रोकर 1', 'ब्रोकर 2', 'ब्रोकर 3'];
-    const quantityTypes = [
+    const otherPurchaseOptions = [
+        { value: 'OP-001', label: 'OP-001' },
+        { value: 'OP-002', label: 'OP-002' },
+        { value: 'OP-003', label: 'OP-003' },
+    ];
+    const partyOptions = [
+        { value: 'पार्टी 1', label: 'पार्टी 1' },
+        { value: 'पार्टी 2', label: 'पार्टी 2' },
+        { value: 'पार्टी 3', label: 'पार्टी 3' },
+    ];
+    const brokerOptions = [
+        { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
+        { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
+        { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
+    ];
+    const quantityTypeOptions = [
         { value: 'kg', label: t('forms.otherInward.quantityTypes.kg') || 'कि.ग्रा.' },
         { value: 'quintal', label: t('forms.otherInward.quantityTypes.quintal') || 'क्विंटल' },
         { value: 'ton', label: t('forms.otherInward.quantityTypes.ton') || 'टन' },
@@ -140,8 +156,8 @@ export default function AddOtherInwardForm() {
         }
     }, [watchedFields, form]);
 
-    // Form submission handler
-    const onSubmit = async (data) => {
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
@@ -160,6 +176,17 @@ export default function AddOtherInwardForm() {
                 });
             },
         });
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'other-inward',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
     };
 
     return (
@@ -186,20 +213,14 @@ export default function AddOtherInwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.otherInward.otherPurchaseNumber')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {otherPurchases.map((op) => (
-                                                <SelectItem key={op} value={op}>
-                                                    {op}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={otherPurchaseOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -279,20 +300,14 @@ export default function AddOtherInwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.otherInward.partyName')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {parties.map((party) => (
-                                                <SelectItem key={party} value={party}>
-                                                    {party}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={partyOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -305,20 +320,14 @@ export default function AddOtherInwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.otherInward.brokerName')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {brokers.map((broker) => (
-                                                <SelectItem key={broker} value={broker}>
-                                                    {broker}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={brokerOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -546,6 +555,26 @@ export default function AddOtherInwardForm() {
                         </div>
                     </form>
                 </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );

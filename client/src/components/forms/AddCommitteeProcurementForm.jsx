@@ -18,13 +18,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { useCreateCommitteeMember } from '@/hooks/useCommittee';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const committeeProcurementFormSchema = z.object({
   type: z.enum(['committee-production', 'storage'], {
     required_error: 'Please select a type.',
   }),
-  name: z.string().min(2, {
+  committeeName: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
   }),
 });
@@ -38,17 +49,18 @@ export default function AddCommitteeProcurementForm() {
     resolver: zodResolver(committeeProcurementFormSchema),
     defaultValues: {
       type: 'committee-production',
-      name: '',
+      committeeName: '',
     },
   });
 
   // Form submission handler
-  const onSubmit = async (data) => {
+  // Form submission handler - confirmed
+  const handleConfirmedSubmit = async (data) => {
     try {
       await createCommitteeMemberMutation.mutateAsync(data);
       const typeLabel = data.type === 'committee-production' ? 'समिति-उपार्जन केंद्र' : 'संग्रहण केंद्र';
       toast.success('Committee Procurement Added Successfully', {
-        description: `${data.name} (${typeLabel}) has been added to the system.`,
+        description: `${data.committeeName} (${typeLabel}) has been added to the system.`,
       });
       form.reset();
     } catch (error) {
@@ -56,6 +68,17 @@ export default function AddCommitteeProcurementForm() {
         description: error.message || 'An error occurred.',
       });
     }
+  };
+
+  // Hook for confirmation dialog
+  const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+    'committee-procurement',
+    handleConfirmedSubmit
+  );
+
+  // Form submission handler
+  const onSubmit = async (data) => {
+    openDialog(data);
   };
 
   return (
@@ -104,7 +127,7 @@ export default function AddCommitteeProcurementForm() {
             {/* Name Input */}
             <FormField
               control={form.control}
-              name="name"
+              name="committeeName"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.committee.name')}</FormLabel>
@@ -132,6 +155,26 @@ export default function AddCommitteeProcurementForm() {
           </form>
         </Form>
       </CardContent>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('forms.common.confirmMessage')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('forms.common.confirmNo')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              {t('forms.common.confirmYes')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
