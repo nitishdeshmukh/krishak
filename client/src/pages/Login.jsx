@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { BuildingOfficeIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { BuildingOfficeIcon, EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
     const loginMutation = useLogin();
+    const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm({
         resolver: zodResolver(loginSchema),
@@ -104,11 +105,27 @@ export default function LoginPage() {
                                             <div className="relative">
                                                 <LockClosedIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
                                                 <Input
-                                                    type="password"
+                                                    type={showPassword ? "text" : "password"}
                                                     placeholder="Enter your password"
-                                                    className="pl-10 h-11 bg-background"
+                                                    className="pl-10 pr-10 h-11 bg-background"
                                                     {...field}
+                                                    style={{
+                                                        // Remove browser default password toggle
+                                                        msReveal: 'none',
+                                                        WebkitTextSecurity: 'none'
+                                                    }}
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeSlashIcon className="size-5" />
+                                                    ) : (
+                                                        <EyeIcon className="size-5" />
+                                                    )}
+                                                </button>
                                             </div>
                                         </FormControl>
                                         <FormMessage />

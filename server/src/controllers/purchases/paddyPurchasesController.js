@@ -20,6 +20,17 @@ export const getPaddyPurchases = asyncHandler(async (req, res) => {
     });
 });
 
+export const getAllPaddyPurchases = asyncHandler(async (req, res) => {
+    const purchases = await PaddyPurchase.find({ isActive: { $ne: false } })
+        .select('_id paddyPurchaseNumber partyName')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: purchases,
+    });
+});
+
 export const getPaddyPurchaseById = asyncHandler(async (req, res) => {
     const record = await PaddyPurchase.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
@@ -27,7 +38,35 @@ export const getPaddyPurchaseById = asyncHandler(async (req, res) => {
 });
 
 export const createPaddyPurchase = asyncHandler(async (req, res) => {
-    const record = await PaddyPurchase.create(req.body);
+    // Generate Paddy Purchase Number
+    const date = new Date();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    const dateStr = `${day}${month}${year}`;
+
+    const prefix = `PP-${dateStr}-`;
+
+    // Find the last purchase created today (matching the prefix)
+    const lastPurchase = await PaddyPurchase.findOne({
+        paddyPurchaseNumber: { $regex: `^${prefix}` }
+    }).sort({ createdAt: -1 });
+
+    let counter = 1;
+    if (lastPurchase && lastPurchase.paddyPurchaseNumber) {
+        const parts = lastPurchase.paddyPurchaseNumber.split('-');
+        const lastCounter = parseInt(parts[2], 10);
+        if (!isNaN(lastCounter)) {
+            counter = lastCounter + 1;
+        }
+    }
+
+    const paddyPurchaseNumber = `${prefix}${counter}`;
+
+    const record = await PaddyPurchase.create({
+        ...req.body,
+        paddyPurchaseNumber
+    });
     res.status(201).json({ success: true, message: 'Created successfully', data: record });
 });
 

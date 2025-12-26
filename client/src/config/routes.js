@@ -31,6 +31,8 @@ const AddTransporters = lazy(() => import('@/pages/AddTransporters'));
 const AddBroker = lazy(() => import('@/pages/AddBroker'));
 const AddCommitteeProcurement = lazy(() => import('@/pages/AddCommitteeProcurement'));
 const AddDOEntry = lazy(() => import('@/pages/AddDOEntry'));
+const AddTruckForm = lazy(() => import('@/components/forms/AddTruckForm'));
+const AddStaffForm = lazy(() => import('@/components/forms/AddStaffForm'));
 const AddPaddyPurchase = lazy(() => import('@/pages/AddPaddyPurchase'));
 const AddRicePurchase = lazy(() => import('@/pages/AddRicePurchase'));
 const AddSackPurchase = lazy(() => import('@/pages/AddSackPurchase'));
@@ -116,6 +118,20 @@ export const routes = [
                 component: AddDOEntry,
                 title: 'DO Entry',
                 titleKey: 'entry:sections.entry.doEntry',
+                showInSidebar: true,
+            },
+            {
+                path: '/entry/trucks',
+                component: AddTruckForm,
+                title: 'Add Truck',
+                titleKey: 'entry:sections.entry.addTruck',
+                showInSidebar: true,
+            },
+            {
+                path: '/entry/staff',
+                component: AddStaffForm,
+                title: 'Add Staff',
+                titleKey: 'entry:sections.entry.addStaff',
                 showInSidebar: true,
             },
         ],

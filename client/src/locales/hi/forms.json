@@ -12,7 +12,11 @@
             "selectPlaceholder": "चुनें...",
             "date": "दिनांक",
             "success": "सफलतापूर्वक सेव हो गया!",
-            "error": "कोई त्रुटि हुई"
+            "error": "कोई त्रुटि हुई",
+            "confirmTitle": "पुष्टि करें",
+            "confirmMessage": "क्या आप निश्चित रूप से सेव करना चाहते हैं?",
+            "confirmYes": "हाँ, सेव करें",
+            "confirmNo": "रद्द करें"
         },
         "party": {
             "title": "नई पार्टी जोड़ें",
@@ -64,6 +68,20 @@
             "state": "राज्य",
             "pincode": "पिन कोड"
         },
+        "truck": {
+            "title": "नया वाहन जोड़ें",
+            "description": "वाहन का विवरण भरें",
+            "truckNumber": "गाड़ी नंबर"
+        },
+        "staff": {
+            "title": "मिल स्टाफ जोड़ें",
+            "description": "स्टाफ का विवरण भरें",
+            "name": "नाम",
+            "post": "पदनाम",
+            "phone": "फ़ोन न.",
+            "email": "ईमेल",
+            "address": "पता"
+        },
         "committee": {
             "title": "समिति संग्रहण जोड़ें",
             "description": "समिति/उपार्जन केंद्र का विवरण",
@@ -81,9 +99,9 @@
             "date": "दिनांक",
             "committeeCenter": "समिति / संग्रहण केंद्र",
             "doNumber": "DO क्रमांक",
-            "grainCoarse": "धान (मोटा)",
-            "grainFine": "धान (पतला)",
-            "grainCommon": "धान (सरना)"
+            "grainCoarse": "मोटा (क्विंटल में)",
+            "grainFine": "पतला (क्विंटल में)",
+            "grainCommon": "सरना (क्विंटल में)"
         },
         "govPaddyInward": {
             "title": "शासकीय धान आवक",
@@ -94,8 +112,8 @@
             "gunnyNew": "बारदाना (नया)",
             "gunnyOld": "बारदाना (पुराना)",
             "gunnyPlastic": "बारदाना (प्लास्टिक)",
-            "juteWeight": "जुट बारदाना वजन",
-            "plasticWeight": "प्लास्टिक बारदाना वजन",
+            "juteWeight": "जुट बारदाना वजन (kg में)",
+            "plasticWeight": "प्लास्टिक बारदाना वजन (kg में)",
             "gunnyWeight": "बारदाना वजन (क्विंटल में)",
             "truckNo": "गाड़ी नंबर",
             "rstNo": "RST No.",
@@ -139,8 +157,8 @@
             "gunnyNew": "बारदाना (नया)",
             "gunnyOld": "बारदाना (पुराना)",
             "gunnyPlastic": "बारदाना (प्लास्टिक)",
-            "juteWeight": "जुट बारदाना वजन",
-            "plasticWeight": "प्लास्टिक बारदाना वजन",
+            "juteWeight": "जुट बारदाना वजन (kg में)",
+            "plasticWeight": "प्लास्टिक बारदाना वजन (kg में)",
             "gunnyWeight": "बारदाना वजन (क्विंटल में)",
             "truckNo": "गाड़ी नंबर",
             "rstNo": "RST No.",
@@ -644,7 +662,7 @@
             "saleType": "FCI/NAN",
             "riceType": "चावल का प्रकार",
             "quantity": "मात्रा (क्विंटल में.)",
-            "rate": "दर",
+            "rate": "चावल का भाव/दर",
             "amount": "राशी",
             "discountPercent": "बटाव %",
             "discountAmount": "बटाव राशी",

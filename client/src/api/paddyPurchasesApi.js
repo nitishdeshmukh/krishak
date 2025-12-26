@@ -23,8 +23,6 @@ const DUMMY_PADDY_PURCHASES = [
         newPackagingRate: '50',
         oldPackagingRate: '30',
         plasticPackagingRate: '25',
-        lifting: '100',
-        liftingBalance: '400',
         status: 'active',
         createdAt: '2024-01-15T10:30:00.000Z'
     },
@@ -44,8 +42,6 @@ const DUMMY_PADDY_PURCHASES = [
         newPackagingRate: '55',
         oldPackagingRate: '35',
         plasticPackagingRate: '28',
-        lifting: '200',
-        liftingBalance: '550',
         status: 'completed',
         createdAt: '2024-02-10T10:30:00.000Z'
     },
@@ -63,6 +59,17 @@ const generateDummyResponse = ({ page = 1, pageSize = 10 }) => {
         message: 'Paddy purchases retrieved successfully (DUMMY DATA)',
         data: { paddyPurchases: paginatedData, totalPaddyPurchases: total, pageSize, currentPage: page, totalPages, hasPrev: page > 1, hasNext: page < totalPages },
     };
+};
+
+export const fetchAllPaddyPurchases = async () => {
+    try {
+        const response = await apiClient.get('/purchases/paddy/all');
+        return response?.data || [];
+    } catch (error) {
+        console.warn('⚠️ API not available, using dummy data');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return DUMMY_PADDY_PURCHASES;
+    }
 };
 
 export const fetchPaddyPurchases = async ({ page = 1, pageSize = 10, filters = [], sorting = [] }) => {
@@ -94,4 +101,4 @@ export const createPaddyPurchase = async (purchaseData) => {
     }
 };
 
-export default { fetchPaddyPurchases, createPaddyPurchase };
+export default { fetchPaddyPurchases, fetchAllPaddyPurchases, createPaddyPurchase };

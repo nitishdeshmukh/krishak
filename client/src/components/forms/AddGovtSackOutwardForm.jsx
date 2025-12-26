@@ -14,17 +14,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateGovtSackOutward } from '@/hooks/useGovtSackOutward';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const govtSackOutwardFormSchema = z.object({
@@ -52,8 +57,12 @@ export default function AddGovtSackOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createGovtSackOutward = useCreateGovtSackOutward();
 
-    // Sample data - Replace with actual data from API
-    const samitiSangrahans = ['समिति 1', 'समिति 2', 'संग्रहण 1', 'संग्रहण 2'];
+    const samitiSangrahanOptions = [
+        { value: 'समिति 1', label: 'समिति 1' },
+        { value: 'समिति 2', label: 'समिति 2' },
+        { value: 'संग्रहण 1', label: 'संग्रहण 1' },
+        { value: 'संग्रहण 2', label: 'संग्रहण 2' },
+    ];
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -68,8 +77,8 @@ export default function AddGovtSackOutwardForm() {
         },
     });
 
-    // Form submission handler
-    const onSubmit = async (data) => {
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
@@ -88,6 +97,17 @@ export default function AddGovtSackOutwardForm() {
                 });
             },
         });
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'govt-sack-outward',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
     };
 
     return (
@@ -134,20 +154,14 @@ export default function AddGovtSackOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.govtSackOutward.samitiSangrahan')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {samitiSangrahans.map((item) => (
-                                                <SelectItem key={item} value={item}>
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={samitiSangrahanOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -227,6 +241,26 @@ export default function AddGovtSackOutwardForm() {
                         </div>
                     </form>
                 </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -16,19 +16,28 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreatePaddyPurchase } from '@/hooks/usePaddyPurchases';
+import { useAllParties } from '@/hooks/useParties';
+import { useAllBrokers } from '@/hooks/useBrokers';
+import { useAllCommittees } from '@/hooks/useCommittee';
+import { paddyTypeOptions } from '@/lib/constants';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const paddyPurchaseFormSchema = z.object({
@@ -44,9 +53,7 @@ const paddyPurchaseFormSchema = z.object({
   delivery: z.enum(['pickup', 'delivery'], {
     required_error: 'Please select delivery option.',
   }),
-  grainType: z.string().min(1, {
-    message: 'Please select grain type.',
-  }),
+  grainType: z.string().optional(),
   quantity: z.string().regex(/^\d+$/, {
     message: 'Must be a valid number.',
   }).refine((val) => parseInt(val) > 0, {
@@ -84,23 +91,40 @@ const paddyPurchaseFormSchema = z.object({
   plasticPackagingRate: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
   }).optional(),
-  lifting: z.string().regex(/^\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  liftingBalance: z.string().regex(/^\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
+}).superRefine((data, ctx) => {
+  if (data.purchaseType === 'other-purchase' && !data.grainType) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Please select grain type.',
+      path: ['grainType'],
+    });
+  }
 });
 
 export default function AddPaddyPurchaseForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
   const createPaddyPurchaseMutation = useCreatePaddyPurchase();
 
-  // Sample data - Replace with actual data from API
-  const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
-  const brokers = ['ब्रोकर 1', 'ब्रोकर 2', 'ब्रोकर 3'];
-  const grainTypes = ['धान (मोटा)', 'धान (पतला)', 'धान (सरना)'];
-  const committees = ['समिति 1', 'समिति 2', 'समिति 3'];
+  // Fetch parties, brokers, and committees from server
+  const { parties, isLoading: partiesLoading } = useAllParties();
+  const { brokers, isLoading: brokersLoading } = useAllBrokers();
+  const { committees, isLoading: committeesLoading } = useAllCommittees();
+
+  // Convert to options format for SearchableSelect
+  const partyOptions = useMemo(() =>
+    parties.map(party => ({ value: party.partyName, label: party.partyName })),
+    [parties]
+  );
+
+  const brokerOptions = useMemo(() =>
+    brokers.map(broker => ({ value: broker.brokerName, label: broker.brokerName })),
+    [brokers]
+  );
+
+  const committeeOptions = useMemo(() =>
+    committees.map(committee => ({ value: committee.committeeName, label: committee.committeeName })),
+    [committees]
+  );
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
@@ -109,20 +133,18 @@ export default function AddPaddyPurchaseForm() {
       date: new Date(),
       partyName: '',
       brokerName: '',
-      delivery: 'pickup',
+      delivery: '',
       grainType: '',
-      quantity: '0',
-      wastagePercent: '0',
-      brokerage: '0',
-      includeCertificate: 'with-weight',
-      purchaseType: 'do-purchase',
-      doEntries: [{ doInfo: '', doNumber: '', committeeName: '', doPaddyQuantity: '0' }],
-      grainQuantity: '0',
+      quantity: '',
+      wastagePercent: '',
+      brokerage: '',
+      includeCertificate: '',
+      purchaseType: '',
+      doEntries: [{ doInfo: '', doNumber: '', committeeName: '', doPaddyQuantity: '' }],
+      grainQuantity: '',
       newPackagingRate: '',
       oldPackagingRate: '',
       plasticPackagingRate: '',
-      lifting: '',
-      liftingBalance: '',
     },
   });
 
@@ -135,10 +157,27 @@ export default function AddPaddyPurchaseForm() {
   // Watch purchaseType to conditionally show DO fields
   const purchaseType = form.watch('purchaseType');
 
-  // Form submission handler
-  const onSubmit = async (data) => {
+  // Watch includeCertificate to conditionally show packaging rate fields
+  const includeCertificate = form.watch('includeCertificate');
+
+  // Watch doEntries to calculate total DO paddy quantity
+  const doEntries = form.watch('doEntries');
+
+  // Auto-calculate grainQuantity from DO entries when purchaseType is 'do-purchase'
+  useEffect(() => {
+    if (purchaseType === 'do-purchase' && doEntries && doEntries.length > 0) {
+      const total = doEntries.reduce((sum, entry) => {
+        const qty = parseFloat(entry?.doPaddyQuantity) || 0;
+        return sum + qty;
+      }, 0);
+      form.setValue('grainQuantity', total.toString());
+    }
+  }, [purchaseType, JSON.stringify(doEntries)]);
+
+  // Form submission handler - actual submission after confirmation
+  const handleConfirmedSubmit = async (data) => {
     try {
-      const submitData = { ...data, date: format(data.date, 'dd-MM-yy') };
+      const submitData = { ...data, date: data.date.toISOString() };
       await createPaddyPurchaseMutation.mutateAsync(submitData);
       toast.success('Paddy Purchase Added Successfully', {
         description: `Purchase for ${data.partyName} has been recorded.`,
@@ -149,6 +188,17 @@ export default function AddPaddyPurchaseForm() {
         description: error.message || 'An error occurred.',
       });
     }
+  };
+
+  // Hook for confirmation dialog
+  const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+    'paddy-purchase',
+    handleConfirmedSubmit
+  );
+
+  // Form submission handler - shows confirmation dialog first
+  const onSubmit = async (data) => {
+    openDialog(data);
   };
 
   return (
@@ -175,20 +225,14 @@ export default function AddPaddyPurchaseForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.paddyPurchase.partyName')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {parties.map((party) => (
-                        <SelectItem key={party} value={party}>
-                          {party}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={partyOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -201,20 +245,14 @@ export default function AddPaddyPurchaseForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.paddyPurchase.brokerName')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {brokers.map((broker) => (
-                        <SelectItem key={broker} value={broker}>
-                          {broker}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={brokerOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -230,7 +268,7 @@ export default function AddPaddyPurchaseForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex items-center gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -262,7 +300,7 @@ export default function AddPaddyPurchaseForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex items-center gap-6"
                     >
                       <div className="flex items-center space-x-2">
@@ -364,20 +402,14 @@ export default function AddPaddyPurchaseForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base">समिति/संग्रहण का नाम</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="समिति चुनें" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {committees.map((committee) => (
-                                <SelectItem key={committee} value={committee}>
-                                  {committee}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <SearchableSelect
+                              options={committeeOptions}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="समिति चुनें"
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -407,45 +439,47 @@ export default function AddPaddyPurchaseForm() {
               </div>
             )}
 
-            {/* Grain Type Dropdown */}
-            <FormField
-              control={form.control}
-              name="grainType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.paddyPurchase.grainType')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+            {/* Grain Type Dropdown - Only show for other purchase */}
+            {purchaseType === 'other-purchase' && (
+              <FormField
+                control={form.control}
+                name="grainType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">{t('forms.paddyPurchase.grainType')}</FormLabel>
                     <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
+                      <SearchableSelect
+                        options={paddyTypeOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select"
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {grainTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-            {/* Grain Quantity */}
+            {/* Grain Quantity - Auto-calculated for DO purchase, manual input for other purchase */}
             <FormField
               control={form.control}
               name="grainQuantity"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base">{t('forms.paddyPurchase.grainQuantity')}</FormLabel>
+                  <FormLabel className="text-base">
+                    {t('forms.paddyPurchase.grainQuantity')}
+                    {purchaseType === 'do-purchase' && (
+                      <span className="text-sm text-muted-foreground ml-2">(DO की कुल मात्रा)</span>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"
                       placeholder="0"
                       {...field}
-                      className="placeholder:text-gray-400"
+                      readOnly={purchaseType === 'do-purchase'}
+                      className={`placeholder:text-gray-400 ${purchaseType === 'do-purchase' ? 'bg-muted cursor-not-allowed' : ''}`}
                     />
                   </FormControl>
                   <FormMessage />
@@ -525,7 +559,7 @@ export default function AddPaddyPurchaseForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex items-center gap-4"
                     >
                       <div className="flex items-center space-x-2">
@@ -553,108 +587,73 @@ export default function AddPaddyPurchaseForm() {
               )}
             />
 
-            {/* New Packaging Rate */}
-            <FormField
-              control={form.control}
-              name="newPackagingRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.paddyPurchase.newPackagingRate')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Packaging Rate Fields - Only show when 'with-quantity' (सहित भाव में) is selected */}
+            {includeCertificate === 'with-quantity' && (
+              <>
+                {/* New Packaging Rate */}
+                <FormField
+                  control={form.control}
+                  name="newPackagingRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">{t('forms.paddyPurchase.newPackagingRate')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0"
+                          {...field}
+                          className="placeholder:text-gray-400"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Old Packaging Rate */}
-            <FormField
-              control={form.control}
-              name="oldPackagingRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.paddyPurchase.oldPackagingRate')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Old Packaging Rate */}
+                <FormField
+                  control={form.control}
+                  name="oldPackagingRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">{t('forms.paddyPurchase.oldPackagingRate')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0"
+                          {...field}
+                          className="placeholder:text-gray-400"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Plastic Packaging Rate */}
-            <FormField
-              control={form.control}
-              name="plasticPackagingRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.paddyPurchase.plasticPackagingRate')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Lifting */}
-            <FormField
-              control={form.control}
-              name="lifting"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.paddyPurchase.lifting')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Lifting Balance */}
-            <FormField
-              control={form.control}
-              name="liftingBalance"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.paddyPurchase.liftingBalance')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Plastic Packaging Rate */}
+                <FormField
+                  control={form.control}
+                  name="plasticPackagingRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">{t('forms.paddyPurchase.plasticPackagingRate')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0"
+                          {...field}
+                          className="placeholder:text-gray-400"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             {/* Submit Button */}
             <div className="flex justify-center">
@@ -668,6 +667,26 @@ export default function AddPaddyPurchaseForm() {
             </div>
           </form>
         </Form>
+
+        {/* Confirmation Dialog */}
+        <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('forms.common.confirmMessage')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {t('forms.common.confirmNo')}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirm}>
+                {t('forms.common.confirmYes')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

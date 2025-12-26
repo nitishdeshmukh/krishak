@@ -4,6 +4,7 @@ import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
 const paddyPurchaseSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     partyName: { type: String, required: true, trim: true },
+    paddyPurchaseNumber: { type: String, trim: true },
     party: { type: mongoose.Schema.Types.ObjectId, ref: 'Party' },
     brokerName: { type: String, trim: true },
     broker: { type: mongoose.Schema.Types.ObjectId, ref: 'Broker' },
@@ -35,9 +36,6 @@ const paddyPurchaseSchema = new mongoose.Schema({
     newPackagingRate: { type: String, trim: true },
     oldPackagingRate: { type: String, trim: true },
     plasticPackagingRate: { type: String, trim: true },
-
-    lifting: { type: String, trim: true },
-    liftingBalance: { type: String, trim: true },
 
     // Legacy mapping
     paddyType: { type: String, trim: true },

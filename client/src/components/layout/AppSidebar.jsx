@@ -30,6 +30,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { generateNavItems } from '@/utils/routeUtils';
 import { cn } from '@/lib/utils';
 
@@ -157,35 +158,26 @@ export default function AppSidebar() {
 
                     {/* Entry/Reports Toggle - Enhanced UI */}
                     <SidebarMenuItem>
-                        <div className="flex gap-1 p-2 bg-sidebar-accent/50 rounded-lg">
-                            <button
-                                onClick={() => {
-                                    handleToggleChange('entry');
-                                    closeMobileSidebar();
-                                }}
-                                className={cn(
-                                    'flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200',
-                                    activeView === 'entry'
-                                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md'
-                                        : 'text-sidebar-foreground/90 hover:text-sidebar-foreground hover:bg-sidebar-accent'
-                                )}
-                            >
-                                {t('entry:dashboard.entry')}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    handleToggleChange('reports');
-                                    closeMobileSidebar();
-                                }}
-                                className={cn(
-                                    'flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200',
-                                    activeView === 'reports'
-                                        ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md'
-                                        : 'text-sidebar-foreground/90 hover:text-sidebar-foreground hover:bg-sidebar-accent'
-                                )}
-                            >
-                                {t('entry:dashboard.reports')}
-                            </button>
+                        <div className="p-2">
+                            <Tabs value={activeView} onValueChange={(val) => {
+                                handleToggleChange(val);
+                                closeMobileSidebar();
+                            }} className="w-full">
+                                <TabsList className="grid w-full grid-cols-2 bg-sidebar-accent/50 h-auto p-1">
+                                    <TabsTrigger
+                                        value="entry"
+                                        className="py-2 data-[state=active]:bg-sidebar-primary data-[state=active]:text-sidebar-primary-foreground shadow-none data-[state=active]:shadow-md transition-all"
+                                    >
+                                        {t('entry:dashboard.entry')}
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="reports"
+                                        className="py-2 data-[state=active]:bg-sidebar-primary data-[state=active]:text-sidebar-primary-foreground shadow-none data-[state=active]:shadow-md transition-all"
+                                    >
+                                        {t('entry:dashboard.reports')}
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
                         </div>
                     </SidebarMenuItem>
                 </SidebarMenu>

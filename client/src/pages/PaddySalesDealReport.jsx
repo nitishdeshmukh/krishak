@@ -17,25 +17,15 @@ import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
+import { usePaddySales } from '@/hooks/usePaddySales';
 
 export default function PaddySalesDealReport() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
-    // Empty data array - will show EmptyState
-    const [salesDeals, setSalesDeals] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-
-    const totalPages = Math.ceil(salesDeals.length / pageSize);
-    const currentPage = pageIndex + 1;
-
-    // Paginated data
-    const paginatedDeals = React.useMemo(() => {
-        const startIdx = pageIndex * pageSize;
-        const endIdx = startIdx + pageSize;
-        return salesDeals.slice(startIdx, endIdx);
-    }, [salesDeals, pageIndex, pageSize]);
+    // Use the usePaddySales hook to fetch data
+    const { paddySales, totalPages, currentPage, isLoading, isError, error, hasNext, hasPrev } = usePaddySales();
 
     // Table column definitions
     const columns = [
@@ -56,15 +46,39 @@ export default function PaddySalesDealReport() {
             ),
         },
         {
-            accessorKey: 'dealDate',
+            accessorKey: 'brokerName',
+            header: 'ब्रोकर',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => (
+                <div className="font-medium">{row.getValue('brokerName') || '-'}</div>
+            ),
+        },
+        {
+            accessorKey: 'date',
             header: 'सौदा तिथि',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const date = row.getValue('dealDate');
+                const date = row.getValue('date') || row.original.dealDate;
                 if (!date) return <span className="text-muted-foreground">-</span>;
                 const formattedDate = new Date(date).toLocaleDateString('hi-IN');
                 return <div className="text-sm">{formattedDate}</div>;
             },
+        },
+        {
+            accessorKey: 'salesType',
+            header: 'बिक्री प्रकार',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => {
+                const type = row.getValue('salesType');
+                const label = type === 'do-sales' ? 'DO बिक्री' : (type === 'other-sales' ? 'अन्य (मिल से बिक्री)' : '-');
+                return <div className="text-sm">{label}</div>;
+            },
+        },
+        {
+            accessorKey: 'paddyType',
+            header: 'धान का प्रकार',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm">{row.getValue('paddyType') || '-'}</div>,
         },
         {
             accessorKey: 'quantity',
@@ -80,11 +94,11 @@ export default function PaddySalesDealReport() {
             },
         },
         {
-            accessorKey: 'rate',
+            accessorKey: 'rate', // Using 'rate' generically or 'paddyRate' if specific. Form uses 'paddyRate' but API might return 'rate' or 'paddyRate'. Using 'paddyRate' to match form is safer if API aligns, but dummy data has 'paddyRate'.
             header: 'दर (₹/क्विंटल)',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const rate = row.getValue('rate');
+                const rate = row.original.paddyRate || row.getValue('rate');
                 return rate ? (
                     <div className="text-sm font-medium">₹{rate}</div>
                 ) : (
@@ -93,37 +107,48 @@ export default function PaddySalesDealReport() {
             },
         },
         {
+            accessorKey: 'delivery',
+            header: 'डिलीवरी',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => {
+                const delivery = row.getValue('delivery');
+                const label = delivery === 'at-location' ? 'पड़े में' : (delivery === 'delivered' ? 'पहुंचा कर' : '-');
+                return <div className="text-sm">{label}</div>;
+            },
+        },
+        {
             accessorKey: 'totalAmount',
             header: 'कुल राशि (₹)',
             cell: ({ row }) => {
                 const amount = row.getValue('totalAmount');
                 return amount ? (
-                    <div className="text-sm font-semibold text-blue-600">₹{amount.toLocaleString('hi-IN')}</div>
+                    <div className="text-sm font-semibold text-blue-600">₹{parseFloat(amount).toLocaleString('hi-IN')}</div>
                 ) : (
                     <span className="text-muted-foreground">-</span>
                 );
             },
         },
         {
-            accessorKey: 'status',
-            header: 'स्थिति',
-            meta: { filterVariant: 'dropdown' },
+            accessorKey: 'packaging',
+            header: 'पैकेजिंग',
+            meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const status = row.getValue('status');
-                const statusColors = {
-                    'active': 'bg-green-100 text-green-800',
-                    'pending': 'bg-yellow-100 text-yellow-800',
-                    'completed': 'bg-blue-100 text-blue-800',
-                    'cancelled': 'bg-red-100 text-red-800',
-                };
-                return status ? (
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                        {status}
-                    </span>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
+                const pkg = row.getValue('packaging');
+                const label = pkg === 'with-weight' ? 'सहित (वजन में)' : (pkg === 'with-quantity' ? 'सहित (भाव में)' : (pkg === 'return' ? 'वापसी-बारदाना' : '-'));
+                return <div className="text-sm">{label}</div>;
+            }
+        },
+        {
+            accessorKey: 'wastagePercent',
+            header: 'बटाव (%)',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm text-right">{row.getValue('wastagePercent') || '-'}</div>,
+        },
+        {
+            accessorKey: 'brokerage',
+            header: 'दलाली',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm text-right">{row.getValue('brokerage') || '-'}</div>,
         },
         {
             id: 'actions',
@@ -173,11 +198,22 @@ export default function PaddySalesDealReport() {
         });
     };
 
-    const handleDelete = (deal) => {
-        toast.error('Delete Sales Deal', {
-            description: `Are you sure you want to delete deal ${deal.dealNumber}?`,
-        });
-    };
+    // Error state
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 bg-card rounded-xl border">
+                <p className="text-destructive mb-2 font-semibold">Error loading paddy sales</p>
+                <p className="text-muted-foreground text-sm">{error?.message || 'Something went wrong'}</p>
+                <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                    variant="outline"
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
 
     // Loading state
     if (isLoading) {
@@ -192,7 +228,7 @@ export default function PaddySalesDealReport() {
     }
 
     // Empty state - no sales deals
-    if (!isLoading && salesDeals.length === 0) {
+    if (!isLoading && paddySales.length === 0) {
         return (
             <EmptyState
                 title="आपने अभी तक कोई धान बिक्री सौदा नहीं जोड़ा है!"
@@ -207,12 +243,14 @@ export default function PaddySalesDealReport() {
     return (
         <div className="container mx-auto py-2">
             <Card className={"py-0"}>
-                <CardContent className="p-6">
-                    <DataTable
-                        columns={columns}
-                        data={paginatedDeals}
-                        showFilters={true}
-                    />
+                <CardContent className="p-6 overflow-hidden">
+                    <div className="w-full overflow-x-auto">
+                        <DataTable
+                            columns={columns}
+                            data={paddySales}
+                            showFilters={true}
+                        />
+                    </div>
 
                     <TablePagination
                         pageIndex={pageIndex}
@@ -220,8 +258,8 @@ export default function PaddySalesDealReport() {
                         pageSize={pageSize}
                         setPageIndex={(index) => dispatch(setPageIndex(index))}
                         setPageSize={(size) => dispatch(setPageSize(size))}
-                        canPreviousPage={currentPage > 1}
-                        canNextPage={currentPage < totalPages}
+                        canPreviousPage={hasPrev}
+                        canNextPage={hasNext}
                         previousPage={() => dispatch(setPageIndex(Math.max(0, pageIndex - 1)))}
                         nextPage={() => dispatch(setPageIndex(pageIndex + 1))}
                         paginationItemsToDisplay={5}

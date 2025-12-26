@@ -14,17 +14,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateBrewersOutward } from '@/hooks/useBrewersOutward';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const brewersOutwardFormSchema = z.object({
@@ -65,10 +70,21 @@ export default function AddBrewersOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createBrewersOutward = useCreateBrewersOutward();
 
-    // Sample data - Replace with actual data from API
-    const nakkhiSales = ['NS-001', 'NS-002', 'NS-003'];
-    const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
-    const brokers = ['ब्रोकर 1', 'ब्रोकर 2', 'ब्रोकर 3'];
+    const nakkhiSaleOptions = [
+        { value: 'NS-001', label: 'NS-001' },
+        { value: 'NS-002', label: 'NS-002' },
+        { value: 'NS-003', label: 'NS-003' },
+    ];
+    const partyOptions = [
+        { value: 'पार्टी 1', label: 'पार्टी 1' },
+        { value: 'पार्टी 2', label: 'पार्टी 2' },
+        { value: 'पार्टी 3', label: 'पार्टी 3' },
+    ];
+    const brokerOptions = [
+        { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
+        { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
+        { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
+    ];
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -106,8 +122,8 @@ export default function AddBrewersOutwardForm() {
         }
     }, [watchedFields, form]);
 
-    // Form submission handler
-    const onSubmit = async (data) => {
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
@@ -126,6 +142,17 @@ export default function AddBrewersOutwardForm() {
                 });
             },
         });
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'brewers-outward',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
     };
 
     return (
@@ -152,20 +179,14 @@ export default function AddBrewersOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.brewersOutward.nakkhiSaleNumber')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {nakkhiSales.map((item) => (
-                                                <SelectItem key={item} value={item}>
-                                                    {item}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={nakkhiSaleOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -178,20 +199,14 @@ export default function AddBrewersOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.brewersOutward.partyName')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {parties.map((party) => (
-                                                <SelectItem key={party} value={party}>
-                                                    {party}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={partyOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -204,20 +219,14 @@ export default function AddBrewersOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.brewersOutward.brokerName')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {brokers.map((broker) => (
-                                                <SelectItem key={broker} value={broker}>
-                                                    {broker}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={brokerOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -382,7 +391,27 @@ export default function AddBrewersOutwardForm() {
                         </div>
                     </form>
                 </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
-        </Card>
+        </Card >
     );
 }

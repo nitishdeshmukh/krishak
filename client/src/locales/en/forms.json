@@ -64,6 +64,20 @@
             "state": "State",
             "pincode": "PIN Code"
         },
+        "truck": {
+            "title": "Add New Truck",
+            "description": "Fill in truck details",
+            "truckNumber": "Truck Number"
+        },
+        "staff": {
+            "title": "Add New Staff",
+            "description": "Fill in staff details",
+            "name": "Name",
+            "post": "Post/Designation",
+            "phone": "Phone No.",
+            "email": "Email",
+            "address": "Address"
+        },
         "committee": {
             "title": "Add Committee Procurement",
             "description": "Committee/Procurement center details",

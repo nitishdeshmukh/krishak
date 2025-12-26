@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchCommittee, createCommitteeMember } from '../api/committeeApi';
+import { fetchCommittee, createCommitteeMember, fetchAllCommittees } from '../api/committeeApi';
 
 export const useCommittee = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -17,12 +17,30 @@ export const useCommittee = () => {
 
     return {
         ...query,
-        committeeMembers: query.data?.data?.committeeMembers || [],
-        totalCommitteeMembers: query.data?.data?.totalCommitteeMembers || 0,
+        committees: query.data?.data?.committees || [],
+        totalCommittees: query.data?.data?.totalCommittees || 0,
         totalPages: query.data?.data?.totalPages || 0,
         currentPage: query.data?.data?.currentPage || 1,
         hasNext: query.data?.data?.hasNext || false,
         hasPrev: query.data?.data?.hasPrev || false,
+    };
+};
+
+/**
+ * Hook to fetch all committees for dropdown/select use
+ * Always fetches fresh data on mount to get latest committees
+ */
+export const useAllCommittees = () => {
+    const query = useQuery({
+        queryKey: ['committees-all'],
+        queryFn: fetchAllCommittees,
+        staleTime: 0, // Always consider data stale
+        refetchOnMount: 'always', // Always refetch when component mounts
+    });
+
+    return {
+        ...query,
+        committees: query.data || [],
     };
 };
 

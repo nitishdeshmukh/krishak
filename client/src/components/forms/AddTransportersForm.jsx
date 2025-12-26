@@ -14,17 +14,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { PhoneInputField } from '@/components/ui/phone-input-field';
 import { useCreateTransporter } from '@/hooks/useTransporters';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const transporterFormSchema = z.object({
@@ -79,8 +84,8 @@ export default function AddTransportersForm() {
     },
   });
 
-  // Form submission handler
-  const onSubmit = async (data) => {
+  // Form submission handler - actual submission after confirmation
+  const handleConfirmedSubmit = async (data) => {
     try {
       await createTransporterMutation.mutateAsync(data);
       toast.success('Transporter Added Successfully', {
@@ -92,6 +97,17 @@ export default function AddTransportersForm() {
         description: error.message || 'An error occurred.',
       });
     }
+  };
+
+  // Hook for confirmation dialog
+  const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+    'add-transporter',
+    handleConfirmedSubmit
+  );
+
+  // Form submission handler - shows confirmation dialog first
+  const onSubmit = async (data) => {
+    openDialog(data);
   };
 
   return (
@@ -268,20 +284,20 @@ export default function AddTransportersForm() {
                   name="country"
                   render={({ field }) => (
                     <FormItem>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="India">India</SelectItem>
-                          <SelectItem value="USA">USA</SelectItem>
-                          <SelectItem value="UK">UK</SelectItem>
-                          <SelectItem value="Canada">Canada</SelectItem>
-                          <SelectItem value="Australia">Australia</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <SearchableSelect
+                          options={[
+                            { value: 'India', label: 'India' },
+                            { value: 'USA', label: 'USA' },
+                            { value: 'UK', label: 'UK' },
+                            { value: 'Canada', label: 'Canada' },
+                            { value: 'Australia', label: 'Australia' },
+                          ]}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -299,6 +315,26 @@ export default function AddTransportersForm() {
             </Button>
           </form>
         </Form>
+
+        {/* Confirmation Dialog */}
+        <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('forms.common.confirmMessage')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {t('forms.common.confirmNo')}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirm}>
+                {t('forms.common.confirmYes')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

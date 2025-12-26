@@ -8,6 +8,8 @@
             "addTransporter": "परिवहनकर्ता जोड़ें",
             "addWorker": "ब्रोकर जोड़ें",
             "propertyManagement": "समिति संरचना",
+            "addTruck": "स्वयं के वाहन जोड़ें",
+            "addStaff": "मिल स्टाफ जोड़ें",
             "doEntry": "DO प्रविष्टी"
         },
         "purchaseDeals": {
@@ -30,6 +32,8 @@
             "addTransporters": "परिवहनकर्ता जोड़ें",
             "addBrokers": "ब्रोकर जोड़ें",
             "addCommittee": "समिति संग्रहण जोड़ें",
+            "addTruck": "स्वयं के वाहन जोड़ें",
+            "addStaff": "मिल स्टाफ जोड़ें",
             "doEntry": "DO प्रविष्टी"
         },
         "purchase": {

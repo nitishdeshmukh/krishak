@@ -17,7 +17,7 @@ const ricePurchaseSchema = new mongoose.Schema({
     wastagePercent: { type: String, trim: true },
     brokerage: { type: String, trim: true },
 
-    packaging: { type: String, enum: ['with-packaging', 'without-packaging'] },
+    packaging: { type: String, enum: ['with-weight', 'with-quantity', 'return'] },
     newPackagingRate: { type: String, trim: true },
     oldPackagingRate: { type: String, trim: true },
     plasticPackagingRate: { type: String, trim: true },

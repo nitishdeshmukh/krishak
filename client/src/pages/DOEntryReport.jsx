@@ -17,25 +17,15 @@ import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
+import { useDOEntries } from '@/hooks/useDOEntries';
 
 export default function DOEntryReport() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
-    // Empty data array - will show EmptyState
-    const [doEntries, setDoEntries] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-
-    const totalPages = Math.ceil(doEntries.length / pageSize);
-    const currentPage = pageIndex + 1;
-
-    // Paginated data
-    const paginatedEntries = React.useMemo(() => {
-        const startIdx = pageIndex * pageSize;
-        const endIdx = startIdx + pageSize;
-        return doEntries.slice(startIdx, endIdx);
-    }, [doEntries, pageIndex, pageSize]);
+    // Use the useDOEntries hook to fetch data
+    const { doEntries, totalPages, currentPage, isLoading, isError, error, hasNext, hasPrev } = useDOEntries();
 
     // Table column definitions
     const columns = [
@@ -48,11 +38,11 @@ export default function DOEntryReport() {
             ),
         },
         {
-            accessorKey: 'partyName',
-            header: 'पार्टी का नाम',
+            accessorKey: 'committeeCenter',
+            header: 'समिति/केंद्र',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => (
-                <div className="font-medium">{row.getValue('partyName')}</div>
+                <div className="font-medium">{row.getValue('committeeCenter')}</div>
             ),
         },
         {
@@ -67,17 +57,36 @@ export default function DOEntryReport() {
             },
         },
         {
-            accessorKey: 'quantity',
-            header: 'मात्रा (क्विंटल)',
+            accessorKey: 'grainMota',
+            header: 'मोटा',
             meta: { filterVariant: 'text' },
-            cell: ({ row }) => {
-                const quantity = row.getValue('quantity');
-                return quantity ? (
-                    <div className="text-sm font-medium">{quantity} क्विंटल</div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
+            cell: ({ row }) => (
+                <div className="text-sm text-right">{row.getValue('grainMota') || 0}</div>
+            ),
+        },
+        {
+            accessorKey: 'grainPatla',
+            header: 'पतला',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => (
+                <div className="text-sm text-right">{row.getValue('grainPatla') || 0}</div>
+            ),
+        },
+        {
+            accessorKey: 'grainSarna',
+            header: 'सरना',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => (
+                <div className="text-sm text-right">{row.getValue('grainSarna') || 0}</div>
+            ),
+        },
+        {
+            accessorKey: 'total',
+            header: 'कुल (क्विंटल)',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => (
+                <div className="text-sm font-bold text-right">{row.getValue('total') || 0}</div>
+            ),
         },
         {
             accessorKey: 'status',
@@ -136,8 +145,8 @@ export default function DOEntryReport() {
     ];
 
     const handleView = (entry) => {
-        toast.info('View DO Entry', {
-            description: `Viewing details for DO ${entry.doNumber}`,
+        toast.info(t('common:view'), {
+            description: `DO: ${entry.doNumber} - ${entry.committeeCenter}`,
         });
     };
 
@@ -165,6 +174,24 @@ export default function DOEntryReport() {
         );
     }
 
+
+    // Error state
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 bg-card rounded-xl border">
+                <p className="text-destructive mb-2 font-semibold">Error loading DO entries</p>
+                <p className="text-muted-foreground text-sm">{error?.message || 'Something went wrong'}</p>
+                <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                    variant="outline"
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
+
     // Empty state - no DO entries
     if (!isLoading && doEntries.length === 0) {
         return (
@@ -184,7 +211,7 @@ export default function DOEntryReport() {
                 <CardContent className="p-6">
                     <DataTable
                         columns={columns}
-                        data={paginatedEntries}
+                        data={doEntries}
                         showFilters={true}
                     />
 
@@ -194,8 +221,8 @@ export default function DOEntryReport() {
                         pageSize={pageSize}
                         setPageIndex={(index) => dispatch(setPageIndex(index))}
                         setPageSize={(size) => dispatch(setPageSize(size))}
-                        canPreviousPage={currentPage > 1}
-                        canNextPage={currentPage < totalPages}
+                        canPreviousPage={hasPrev}
+                        canNextPage={hasNext}
                         previousPage={() => dispatch(setPageIndex(Math.max(0, pageIndex - 1)))}
                         nextPage={() => dispatch(setPageIndex(pageIndex + 1))}
                         paginationItemsToDisplay={5}

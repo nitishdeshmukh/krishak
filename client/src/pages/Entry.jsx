@@ -54,6 +54,20 @@ export default function EntryPage() {
             iconBg: 'bg-purple-100',
             iconColor: 'text-purple-600',
         },
+        {
+            icon: TruckIcon,
+            title: t('entry:entry.management.addTruck'),
+            onClick: () => navigate('/entry/trucks'),
+            iconBg: 'bg-purple-100',
+            iconColor: 'text-purple-600',
+        },
+        {
+            icon: UserGroupIcon,
+            title: t('entry:entry.management.addStaff'),
+            onClick: () => navigate('/entry/staff'),
+            iconBg: 'bg-purple-100',
+            iconColor: 'text-purple-600',
+        },
     ];
 
     // Purchase deals cards configuration

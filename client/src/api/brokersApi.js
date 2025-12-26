@@ -120,4 +120,17 @@ export const deleteBroker = async (id) => {
     }
 };
 
-export default { fetchBrokers, createBroker, updateBroker, deleteBroker };
+/**
+ * Fetch all brokers for dropdown usage (no pagination)
+ */
+export const fetchAllBrokers = async () => {
+    try {
+        const data = await apiClient.get('/brokers?pageSize=1000');
+        return data;
+    } catch (error) {
+        console.warn('⚠️ API not available, using dummy data:', error.message);
+        return generateDummyResponse({ page: 1, pageSize: 1000 });
+    }
+};
+
+export default { fetchBrokers, createBroker, updateBroker, deleteBroker, fetchAllBrokers };

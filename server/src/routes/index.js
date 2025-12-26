@@ -9,6 +9,10 @@ import brokersRoutes from './brokersRoutes.js';
 import transportersRoutes from './transportersRoutes.js';
 import doEntriesRoutes from './doEntriesRoutes.js';
 import committeesRoutes from './committeesRoutes.js';
+import committeeRoutes from './committeesRoutes.js';
+import trucksRoutes from './truckRoutes.js';
+import staffRoutes from './staffRoutes.js';
+
 
 // Purchase routes
 import paddyPurchasesRoutes from './purchases/paddyPurchasesRoutes.js';
@@ -68,6 +72,8 @@ router.use('/transporters', transportersRoutes);
 router.use('/do-entries', doEntriesRoutes);
 router.use('/committees', committeesRoutes);
 router.use('/committee', committeesRoutes); // Alias for client API compatibility
+router.use('/trucks', trucksRoutes);
+router.use('/staff', staffRoutes);
 
 // ===== PURCHASE ROUTES =====
 router.use('/purchases/paddy', paddyPurchasesRoutes);

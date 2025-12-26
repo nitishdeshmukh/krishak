@@ -1,0 +1,117 @@
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useCreateTruck } from '../../hooks/useTruck';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+export default function AddTruckForm() {
+    const { t } = useTranslation(['forms', 'common']);
+    const navigate = useNavigate();
+    const createTruckMutation = useCreateTruck();
+
+    const form = useForm({
+        defaultValues: {
+            truckNumber: '',
+        },
+    });
+
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = async (data) => {
+        try {
+            await createTruckMutation.mutateAsync(data);
+            form.reset();
+        } catch (error) {
+            console.error('Failed to add truck:', error);
+        }
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'add-truck',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
+    };
+
+    return (
+        <Card className="w-full max-w-3xl mx-auto">
+            <CardHeader>
+                <CardTitle>{t('forms.truck.title')}</CardTitle>
+                <CardDescription>{t('forms.truck.description')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <FormField
+                            control={form.control}
+                            name="truckNumber"
+                            rules={{ required: t('forms.common.required') }}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-base">
+                                        {t('forms.truck.truckNumber')}
+                                        <span className="text-destructive ml-1">*</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="CG 04 AB 1234" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="flex justify-center pt-4">
+
+                            <Button
+                                type="submit"
+                                className="w-full md:w-auto px-8"
+                                disabled={form.formState.isSubmitting}
+                            >
+                                {form.formState.isSubmitting ? t('forms.common.saving') : t('forms.common.save')}
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </CardContent>
+        </Card>
+    );
+}

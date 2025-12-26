@@ -8,6 +8,8 @@
             "addTransporter": "Add Transporters",
             "addWorker": "Add Brokers",
             "propertyManagement": "Committee Procurement",
+            "addTruck": "Add Own Vehicles",
+            "addStaff": "Add Mill Staff",
             "doEntry": "DO Entry"
         },
         "purchaseDeals": {
@@ -30,6 +32,8 @@
             "addTransporters": "Add Transporters",
             "addBrokers": "Add Brokers",
             "addCommittee": "Add Committee Procurement",
+            "addTruck": "Add Own Vehicles",
+            "addStaff": "Add Mill Staff",
             "doEntry": "DO Entry"
         },
         "purchase": {

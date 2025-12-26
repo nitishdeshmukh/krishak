@@ -14,17 +14,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreatePrivatePaddyOutward } from '@/hooks/usePrivatePaddyOutward';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const privatePaddyOutwardFormSchema = z.object({
@@ -80,11 +85,22 @@ export default function AddPrivatePaddyOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createPrivatePaddyOutward = useCreatePrivatePaddyOutward();
 
-    // Sample data - Replace with actual data from API
-    const paddySales = ['PS-001', 'PS-002', 'PS-003'];
-    const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
-    const brokers = ['ब्रोकर 1', 'ब्रोकर 2', 'ब्रोकर 3'];
-    const paddyTypes = [
+    const paddySaleOptions = [
+        { value: 'PS-001', label: 'PS-001' },
+        { value: 'PS-002', label: 'PS-002' },
+        { value: 'PS-003', label: 'PS-003' },
+    ];
+    const partyOptions = [
+        { value: 'पार्टी 1', label: 'पार्टी 1' },
+        { value: 'पार्टी 2', label: 'पार्टी 2' },
+        { value: 'पार्टी 3', label: 'पार्टी 3' },
+    ];
+    const brokerOptions = [
+        { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
+        { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
+        { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
+    ];
+    const paddyTypeOptions = [
         { value: 'mota', label: t('forms.privatePaddyOutward.paddyTypes.mota') || 'धान(मोटा)' },
         { value: 'patla', label: t('forms.privatePaddyOutward.paddyTypes.patla') || 'धान(पतला)' },
         { value: 'sarna', label: t('forms.privatePaddyOutward.paddyTypes.sarna') || 'धान(सरना)' },
@@ -135,8 +151,8 @@ export default function AddPrivatePaddyOutwardForm() {
         }
     }, [watchedFields, form]);
 
-    // Form submission handler
-    const onSubmit = async (data) => {
+    // Form submission handler - actual submission after confirmation
+    const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
             date: format(data.date, 'dd-MM-yy'),
@@ -155,6 +171,17 @@ export default function AddPrivatePaddyOutwardForm() {
                 });
             },
         });
+    };
+
+    // Hook for confirmation dialog
+    const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
+        'private-paddy-outward',
+        handleConfirmedSubmit
+    );
+
+    // Form submission handler - shows confirmation dialog first
+    const onSubmit = async (data) => {
+        openDialog(data);
     };
 
     return (
@@ -181,20 +208,14 @@ export default function AddPrivatePaddyOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.privatePaddyOutward.paddySaleNumber')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {paddySales.map((ps) => (
-                                                <SelectItem key={ps} value={ps}>
-                                                    {ps}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={paddySaleOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -207,20 +228,14 @@ export default function AddPrivatePaddyOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.privatePaddyOutward.partyName')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {parties.map((party) => (
-                                                <SelectItem key={party} value={party}>
-                                                    {party}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={partyOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -233,20 +248,14 @@ export default function AddPrivatePaddyOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.privatePaddyOutward.brokerName')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {brokers.map((broker) => (
-                                                <SelectItem key={broker} value={broker}>
-                                                    {broker}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={brokerOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -259,20 +268,14 @@ export default function AddPrivatePaddyOutwardForm() {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.privatePaddyOutward.paddyType')}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {paddyTypes.map((type) => (
-                                                <SelectItem key={type.value} value={type.value}>
-                                                    {type.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <FormControl>
+                                        <SearchableSelect
+                                            options={paddyTypeOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder="Select"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -521,6 +524,26 @@ export default function AddPrivatePaddyOutwardForm() {
                         </div>
                     </form>
                 </Form>
+
+                {/* Confirmation Dialog */}
+                <AlertDialog open={isOpen} onOpenChange={closeDialog}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {t('forms.common.confirmMessage')}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>
+                                {t('forms.common.confirmNo')}
+                            </AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirm}>
+                                {t('forms.common.confirmYes')}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </CardContent>
         </Card>
     );
