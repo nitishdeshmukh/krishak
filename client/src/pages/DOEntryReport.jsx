@@ -61,7 +61,7 @@ export default function DOEntryReport() {
             header: 'मोटा',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => (
-                <div className="text-sm text-right">{row.getValue('grainMota') || 0}</div>
+                <div className="text-sm">{row.getValue('grainMota') || 0}</div>
             ),
         },
         {
@@ -69,7 +69,7 @@ export default function DOEntryReport() {
             header: 'पतला',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => (
-                <div className="text-sm text-right">{row.getValue('grainPatla') || 0}</div>
+                <div className="text-sm ">{row.getValue('grainPatla') || 0}</div>
             ),
         },
         {
@@ -77,7 +77,7 @@ export default function DOEntryReport() {
             header: 'सरना',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => (
-                <div className="text-sm text-right">{row.getValue('grainSarna') || 0}</div>
+                <div className="text-sm ">{row.getValue('grainSarna') || 0}</div>
             ),
         },
         {
@@ -85,28 +85,8 @@ export default function DOEntryReport() {
             header: 'कुल (क्विंटल)',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => (
-                <div className="text-sm font-bold text-right">{row.getValue('total') || 0}</div>
+                <div className="text-sm font-bold">{row.getValue('total') || 0}</div>
             ),
-        },
-        {
-            accessorKey: 'status',
-            header: 'स्थिति',
-            meta: { filterVariant: 'dropdown' },
-            cell: ({ row }) => {
-                const status = row.getValue('status');
-                const statusColors = {
-                    'pending': 'bg-yellow-100 text-yellow-800',
-                    'completed': 'bg-green-100 text-green-800',
-                    'cancelled': 'bg-red-100 text-red-800',
-                };
-                return status ? (
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                        {status}
-                    </span>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
         },
         {
             id: 'actions',
