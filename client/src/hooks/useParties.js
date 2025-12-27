@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchParties, createParty, updateParty, deleteParty } from '../api/partiesApi';
+import { fetchParties, createParty, updateParty, deleteParty, fetchAllParties } from '../api/partiesApi';
 
 /**
  * React Query hook for fetching parties with pagination
@@ -80,6 +80,23 @@ export const useDeleteParty = () => {
             queryClient.invalidateQueries({ queryKey: ['parties'] });
         },
     });
+};
+
+/**
+ * Hook for fetching all parties for dropdown usage
+ */
+export const useAllParties = () => {
+    const query = useQuery({
+        queryKey: ['parties', 'all'],
+        queryFn: fetchAllParties,
+        staleTime: 60000, // 1 minute
+        refetchOnMount: 'always',
+    });
+
+    return {
+        ...query,
+        parties: query.data?.data?.parties || [],
+    };
 };
 
 export default useParties;

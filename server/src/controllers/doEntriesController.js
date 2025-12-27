@@ -27,6 +27,20 @@ export const getDOEntries = asyncHandler(async (req, res) => {
     });
 });
 
+// @desc    Get all DO entries (no pagination) for dropdown/select use
+// @route   GET /api/do-entries/all
+export const getAllDOEntries = asyncHandler(async (req, res) => {
+    const doEntries = await DOEntry.find({ isActive: { $ne: false } })
+        .select('doNumber committeeCenter date total')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        message: 'All DO Entries retrieved successfully',
+        data: { doEntries },
+    });
+});
+
 // @desc    Get single DO entry
 // @route   GET /api/do-entries/:id
 export const getDOEntryById = asyncHandler(async (req, res) => {

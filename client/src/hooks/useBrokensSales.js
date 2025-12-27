@@ -34,4 +34,4 @@ export const useCreateBrokensSales = () => {
     });
 };
 
-export default useLOTSales;
+export default useBrokensSales;

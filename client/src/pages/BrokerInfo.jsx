@@ -17,25 +17,15 @@ import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
+import { useBrokers } from '@/hooks/useBrokers';
 
 export default function BrokerInfo() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
-    // Empty data array - will show EmptyState
-    const [brokers, setBrokers] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-
-    const totalPages = Math.ceil(brokers.length / pageSize);
-    const currentPage = pageIndex + 1;
-
-    // Paginated data
-    const paginatedBrokers = React.useMemo(() => {
-        const startIdx = pageIndex * pageSize;
-        const endIdx = startIdx + pageSize;
-        return brokers.slice(startIdx, endIdx);
-    }, [brokers, pageIndex, pageSize]);
+    // Use the useBrokers hook to fetch data
+    const { brokers, totalPages, currentPage, isLoading, isError, error } = useBrokers();
 
     // Table column definitions
     const columns = [
@@ -76,19 +66,7 @@ export default function BrokerInfo() {
                 );
             },
         },
-        {
-            accessorKey: 'commission',
-            header: 'कमीशन %',
-            meta: { filterVariant: 'text' },
-            cell: ({ row }) => {
-                const commission = row.getValue('commission');
-                return commission ? (
-                    <div className="text-sm font-medium">{commission}%</div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
-        },
+
         {
             accessorKey: 'address',
             header: 'पता',
@@ -168,6 +146,23 @@ export default function BrokerInfo() {
         );
     }
 
+    // Error state
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 bg-card rounded-xl border">
+                <p className="text-destructive mb-2 font-semibold">Error loading brokers</p>
+                <p className="text-muted-foreground text-sm">{error?.message || 'Something went wrong'}</p>
+                <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                    variant="outline"
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
+
     // Empty state - no brokers
     if (!isLoading && brokers.length === 0) {
         return (
@@ -187,7 +182,7 @@ export default function BrokerInfo() {
                 <CardContent className="p-6">
                     <DataTable
                         columns={columns}
-                        data={paginatedBrokers}
+                        data={brokers}
                         showFilters={true}
                     />
 

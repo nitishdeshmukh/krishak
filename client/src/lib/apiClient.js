@@ -1,4 +1,6 @@
 import axios from 'axios';
+import store from '@/store';
+import { logout } from '@/store/slices/authSlice';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -13,8 +15,10 @@ const apiClient = axios.create({
 // Request interceptor - runs before every request
 apiClient.interceptors.request.use(
     (config) => {
-        // Add auth token if available
-        const token = localStorage.getItem('authToken');
+        // Add auth token if available from Redux store
+        const state = store.getState();
+        const token = state.auth.token;
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -43,7 +47,7 @@ apiClient.interceptors.response.use(
         // Return just the data from the response
         return response.data;
     },
-    (error) => {
+    async (error) => {
         // Handle different error scenarios
         if (error.response) {
             // Server responded with error status
@@ -55,9 +59,37 @@ apiClient.interceptors.response.use(
             // Handle specific status codes
             switch (status) {
                 case 401:
-                    // Unauthorized - clear token and redirect to login
-                    localStorage.removeItem('authToken');
-                    window.location.href = '/login';
+                    const originalRequest = error.config;
+
+                    if (originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/refresh')) {
+                        return Promise.reject(error);
+                    }
+
+                    if (!originalRequest._retry) {
+                        originalRequest._retry = true;
+
+                        try {
+                            const { refreshToken } = await import('@/api/authApi');
+                            const { loginSuccess } = await import('@/store/slices/authSlice');
+
+                            const response = await refreshToken();
+
+                            if (response.success && response.token) {
+                                const state = store.getState();
+                                store.dispatch(loginSuccess({
+                                    user: state.auth.user,
+                                    token: response.token
+                                }));
+
+                                originalRequest.headers.Authorization = `Bearer ${response.token}`;
+                                return apiClient(originalRequest);
+                            }
+                        } catch (refreshError) {
+                            store.dispatch(logout());
+                        }
+                    } else {
+                        store.dispatch(logout());
+                    }
                     break;
                 case 403:
                     console.error('Access forbidden');
@@ -72,14 +104,11 @@ apiClient.interceptors.response.use(
                     console.error('An error occurred');
             }
 
-            // Throw formatted error
             throw new Error(message || `Request failed with status ${status}`);
         } else if (error.request) {
-            // Request made but no response received
             console.error('❌ Network Error: No response received');
             throw new Error('Network error. Please check your connection.');
         } else {
-            // Something else happened
             console.error('❌ Error:', error.message);
             throw new Error(error.message || 'An unexpected error occurred');
         }

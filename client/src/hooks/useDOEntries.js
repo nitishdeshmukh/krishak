@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchDOEntries, createDOEntry, createBulkDOEntries, updateDOEntry, deleteDOEntry } from '../api/doEntriesApi';
+import { fetchDOEntries, createDOEntry, createBulkDOEntries, updateDOEntry, deleteDOEntry, fetchAllDOEntries } from '../api/doEntriesApi';
 
 export const useDOEntries = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -23,6 +23,24 @@ export const useDOEntries = () => {
         currentPage: query.data?.data?.currentPage || 1,
         hasNext: query.data?.data?.hasNext || false,
         hasPrev: query.data?.data?.hasPrev || false,
+    };
+};
+
+/**
+ * Hook to fetch all DO entries for dropdown/select use
+ * Always fetches fresh data on mount to get latest DO entries
+ */
+export const useAllDOEntries = () => {
+    const query = useQuery({
+        queryKey: ['doEntries-all'],
+        queryFn: fetchAllDOEntries,
+        staleTime: 0,
+        refetchOnMount: 'always',
+    });
+
+    return {
+        ...query,
+        doEntries: query.data || [],
     };
 };
 

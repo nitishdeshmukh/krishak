@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,19 +15,29 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useCreatePrivatePaddyInward } from '@/hooks/usePrivatePaddyInward';
+import { useAllParties } from '@/hooks/useParties';
+import { useAllBrokers } from '@/hooks/useBrokers';
+import { useAllCommittees } from '@/hooks/useCommittee';
+import { useAllDOEntries } from '@/hooks/useDOEntries';
+import { useAllPaddyPurchases } from '@/hooks/usePaddyPurchases';
+import { paddyTypeOptions } from '@/lib/constants';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Form validation schema
 const privatePaddyInwardFormSchema = z.object({
@@ -84,19 +94,7 @@ const privatePaddyInwardFormSchema = z.object({
   dhanType: z.string().min(1, {
     message: 'Please select paddy type.',
   }),
-  dhanMota: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanPatla: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanSarna: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanMaha: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
-  }).optional(),
-  dhanRb: z.string().regex(/^\d*\.?\d*$/, {
+  dhanNetWeight: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
   }).optional(),
 });
@@ -104,25 +102,60 @@ const privatePaddyInwardFormSchema = z.object({
 export default function AddPrivatePaddyInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
   const createPrivatePaddyInward = useCreatePrivatePaddyInward();
+  const { parties, isLoading: isLoadingParties } = useAllParties();
+  const { brokers, isLoading: isLoadingBrokers } = useAllBrokers();
+  const { committees, isLoading: isLoadingCommittees } = useAllCommittees();
+  const { doEntries, isLoading: isLoadingDO } = useAllDOEntries();
+  const { paddyPurchases, isLoading: isLoadingPaddyPurchases } = useAllPaddyPurchases();
 
-  // Sample data - Replace with actual data from API
-  const paddyPurchases = ['PP-001', 'PP-002', 'PP-003', 'PP-004'];
-  const parties = ['पार्टी 1', 'पार्टी 2', 'पार्टी 3'];
-  const brokers = ['ब्रोकर 1', 'ब्रोकर 2', 'ब्रोकर 3'];
-  const doNumbers = ['DO-001', 'DO-002', 'DO-003', 'DO-004'];
-  const samitiOptions = [
-    { value: 'samiti1', label: 'समिति 1' },
-    { value: 'samiti2', label: 'समिति 2' },
-    { value: 'sangrahan1', label: 'संग्रहण केंद्र 1' },
-    { value: 'sangrahan2', label: 'संग्रहण केंद्र 2' },
-  ];
-  const dhanTypes = [
-    { value: 'mota', label: t('forms.privatePaddyInward.dhanTypes.mota') || 'धान(मोटा)' },
-    { value: 'patla', label: t('forms.privatePaddyInward.dhanTypes.patla') || 'धान(पतला)' },
-    { value: 'sarna', label: t('forms.privatePaddyInward.dhanTypes.sarna') || 'धान(सरना)' },
-    { value: 'mahamaya', label: t('forms.privatePaddyInward.dhanTypes.mahamaya') || 'धान(महामाया)' },
-    { value: 'rbgold', label: t('forms.privatePaddyInward.dhanTypes.rbgold') || 'धान(RB GOLD)' },
-  ];
+  // State for confirmation dialog
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingData, setPendingData] = useState(null);
+
+  // Memoized options for parties dropdown
+  const partyOptions = useMemo(() => {
+    if (!parties || parties.length === 0) return [];
+    return parties.map(party => ({
+      value: party._id || party.id,
+      label: party.partyName || party.name
+    }));
+  }, [parties]);
+
+  // Memoized options for brokers dropdown
+  const brokerOptions = useMemo(() => {
+    if (!brokers || brokers.length === 0) return [];
+    return brokers.map(broker => ({
+      value: broker._id || broker.id,
+      label: broker.brokerName || broker.name
+    }));
+  }, [brokers]);
+
+  // Memoized options for committees/samiti dropdown
+  const samitiOptions = useMemo(() => {
+    if (!committees || committees.length === 0) return [];
+    return committees.map(committee => ({
+      value: committee._id || committee.id,
+      label: committee.name || committee.committeeName
+    }));
+  }, [committees]);
+
+  // Memoized options for DO number dropdown
+  const doNumberOptions = useMemo(() => {
+    if (!doEntries || doEntries.length === 0) return [];
+    return doEntries.map(entry => ({
+      value: entry._id || entry.id,
+      label: entry.doNumber || entry.doNo
+    }));
+  }, [doEntries]);
+
+  // Memoized options for Paddy Purchase dropdown
+  const paddyPurchaseOptions = useMemo(() => {
+    if (!paddyPurchases || paddyPurchases.length === 0) return [];
+    return paddyPurchases.map(purchase => ({
+      value: purchase._id || purchase.id,
+      label: purchase.paddyPurchaseNumber ? `${purchase.paddyPurchaseNumber}` : purchase.partyName
+    }));
+  }, [paddyPurchases]);
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
@@ -133,24 +166,20 @@ export default function AddPrivatePaddyInwardForm() {
       partyName: '',
       brokerName: '',
       balDo: '',
-      purchaseType: 'do-purchase',
+      purchaseType: '',
       doEntries: [{ doNumber: '', samitiSangrahan: '' }],
-      gunnyOption: 'with-weight',
+      gunnyOption: '',
       gunnyNew: '',
       gunnyOld: '',
       gunnyPlastic: '',
-      juteWeight: '',
-      plasticWeight: '',
+      juteWeight: '0.58',
+      plasticWeight: '0.135',
       gunnyWeight: '',
       truckNo: '',
       rstNo: '',
       truckLoadWeight: '',
-      dhanType: 'mota',
-      dhanMota: '',
-      dhanPatla: '',
-      dhanSarna: '',
-      dhanMaha: '',
-      dhanRb: '',
+      dhanType: '',
+      dhanNetWeight: '',
     },
   });
 
@@ -162,6 +191,12 @@ export default function AddPrivatePaddyInwardForm() {
 
   // Watch purchaseType to conditionally show DO fields
   const purchaseType = form.watch('purchaseType');
+
+  // Watch dhanType for conditional net weight field
+  const selectedDhanType = form.watch('dhanType');
+
+  // Watch gunnyOption for conditional gunny count fields
+  const gunnyOption = form.watch('gunnyOption');
 
   // Watch fields for auto-calculation
   const watchedFields = form.watch(['juteWeight', 'plasticWeight']);
@@ -179,17 +214,25 @@ export default function AddPrivatePaddyInwardForm() {
     }
   }, [watchedFields, form]);
 
-  // Form submission handler
+  // Form submission handler - shows confirmation dialog first
   const onSubmit = async (data) => {
+    setPendingData(data);
+    setShowConfirm(true);
+  };
+
+  // Actual submission after confirmation
+  const handleConfirmedSubmit = async () => {
+    setShowConfirm(false);
+
     const formattedData = {
-      ...data,
-      date: format(data.date, 'dd-MM-yy'),
+      ...pendingData,
+      date: format(pendingData.date, 'yyyy-MM-dd'),
     };
 
     createPrivatePaddyInward.mutate(formattedData, {
       onSuccess: () => {
         toast.success(t('forms.privatePaddyInward.successMessage') || 'Private Paddy Inward Added Successfully', {
-          description: `Inward for ${data.partyName} has been recorded.`,
+          description: `Inward for ${pendingData.partyName} has been recorded.`,
         });
         form.reset();
       },
@@ -225,20 +268,14 @@ export default function AddPrivatePaddyInwardForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.privatePaddyInward.paddyPurchaseNumber')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {paddyPurchases.map((pp) => (
-                        <SelectItem key={pp} value={pp}>
-                          {pp}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={paddyPurchaseOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -251,20 +288,14 @@ export default function AddPrivatePaddyInwardForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.privatePaddyInward.partyName')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {parties.map((party) => (
-                        <SelectItem key={party} value={party}>
-                          {party}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={partyOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -277,20 +308,14 @@ export default function AddPrivatePaddyInwardForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.privatePaddyInward.brokerName')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {brokers.map((broker) => (
-                        <SelectItem key={broker} value={broker}>
-                          {broker}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={brokerOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -327,7 +352,7 @@ export default function AddPrivatePaddyInwardForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
@@ -387,20 +412,14 @@ export default function AddPrivatePaddyInwardForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base">{t('forms.privatePaddyInward.doNumber') || 'DO क्रमांक'}</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {doNumbers.map((doNo) => (
-                                <SelectItem key={doNo} value={doNo}>
-                                  {doNo}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <SearchableSelect
+                              options={doNumberOptions}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="DO चुनें"
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -413,20 +432,14 @@ export default function AddPrivatePaddyInwardForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base">{t('forms.privatePaddyInward.samitiSangrahan') || 'समिति/संग्रहण का नाम'}</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="समिति चुनें" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {samitiOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <SearchableSelect
+                              options={samitiOptions}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="समिति चुनें"
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -446,7 +459,7 @@ export default function AddPrivatePaddyInwardForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
@@ -468,68 +481,73 @@ export default function AddPrivatePaddyInwardForm() {
               )}
             />
 
-            {/* Gunny New */}
-            <FormField
-              control={form.control}
-              name="gunnyNew"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.gunnyNew')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="1"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Gunny Count Fields - Only show when gunnyOption is 'with-price' */}
+            {(gunnyOption === 'with-price') && (
+              <>
+                {/* Gunny New */}
+                <FormField
+                  control={form.control}
+                  name="gunnyNew"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">{t('forms.privatePaddyInward.gunnyNew')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="0"
+                          {...field}
+                          className="placeholder:text-gray-400"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Gunny Old */}
-            <FormField
-              control={form.control}
-              name="gunnyOld"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.gunnyOld')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="1"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Gunny Old */}
+                <FormField
+                  control={form.control}
+                  name="gunnyOld"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">{t('forms.privatePaddyInward.gunnyOld')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="0"
+                          {...field}
+                          className="placeholder:text-gray-400"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Gunny Plastic */}
-            <FormField
-              control={form.control}
-              name="gunnyPlastic"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.gunnyPlastic')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="1"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                {/* Gunny Plastic */}
+                <FormField
+                  control={form.control}
+                  name="gunnyPlastic"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">{t('forms.privatePaddyInward.gunnyPlastic')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="0"
+                          {...field}
+                          className="placeholder:text-gray-400"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             {/* Jute Weight */}
             <FormField
@@ -663,129 +681,43 @@ export default function AddPrivatePaddyInwardForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base">{t('forms.privatePaddyInward.dhanType')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SearchableSelect
+                      options={paddyTypeOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="धान प्रकार चुनें"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dynamic Dhan Net Weight - Shows based on selected dhanType */}
+            {selectedDhanType && (
+              <FormField
+                control={form.control}
+                name="dhanNetWeight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">
+                      {selectedDhanType} नेट वजन (क्विंटल में)
+                    </FormLabel>
                     <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select" />
-                      </SelectTrigger>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="0"
+                        {...field}
+                        className="placeholder:text-gray-400"
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {dhanTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Mota Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanMota"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.dhanMota')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Patla Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanPatla"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.dhanPatla')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Sarna Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanSarna"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.dhanSarna')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan Mahamaya Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanMaha"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.dhanMaha')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Dhan RB Gold Net Weight */}
-            <FormField
-              control={form.control}
-              name="dhanRb"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">{t('forms.privatePaddyInward.dhanRb')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Submit Button */}
             <div className="flex justify-center">
@@ -799,6 +731,26 @@ export default function AddPrivatePaddyInwardForm() {
             </div>
           </form>
         </Form>
+
+        {/* Confirmation Dialog */}
+        <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('forms.common.confirmMessage')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {t('forms.common.confirmNo')}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmedSubmit}>
+                {t('forms.common.confirmYes')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

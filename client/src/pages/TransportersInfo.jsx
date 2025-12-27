@@ -17,25 +17,15 @@ import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
+import { useTransporters } from '@/hooks/useTransporters';
 
 export default function TransportersInfo() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
-    // Empty data array - will show EmptyState
-    const [transporters, setTransporters] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-
-    const totalPages = Math.ceil(transporters.length / pageSize);
-    const currentPage = pageIndex + 1;
-
-    // Paginated data
-    const paginatedTransporters = React.useMemo(() => {
-        const startIdx = pageIndex * pageSize;
-        const endIdx = startIdx + pageSize;
-        return transporters.slice(startIdx, endIdx);
-    }, [transporters, pageIndex, pageSize]);
+    // Use the useTransporters hook to fetch data
+    const { transporters, totalPages, currentPage, isLoading, isError, error } = useTransporters();
 
     // Table column definitions
     const columns = [
@@ -77,13 +67,13 @@ export default function TransportersInfo() {
             },
         },
         {
-            accessorKey: 'vehicleNumber',
-            header: 'वाहन नंबर',
+            accessorKey: 'gstn',
+            header: 'GSTN',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const vehicleNumber = row.getValue('vehicleNumber');
-                return vehicleNumber ? (
-                    <div className="text-sm ">{vehicleNumber}</div>
+                const gstn = row.getValue('gstn');
+                return gstn ? (
+                    <div className="text-sm ">{gstn}</div>
                 ) : (
                     <span className="text-muted-foreground">-</span>
                 );
@@ -168,6 +158,23 @@ export default function TransportersInfo() {
         );
     }
 
+    // Error state
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 bg-card rounded-xl border">
+                <p className="text-destructive mb-2 font-semibold">Error loading transporters</p>
+                <p className="text-muted-foreground text-sm">{error?.message || 'Something went wrong'}</p>
+                <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                    variant="outline"
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
+
     // Empty state - no transporters
     if (!isLoading && transporters.length === 0) {
         return (
@@ -187,7 +194,7 @@ export default function TransportersInfo() {
                 <CardContent className="p-6">
                     <DataTable
                         columns={columns}
-                        data={paginatedTransporters}
+                        data={transporters}
                         showFilters={true}
                     />
 

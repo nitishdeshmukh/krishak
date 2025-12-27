@@ -9,19 +9,31 @@ const schema = new mongoose.Schema({
     broker: { type: mongoose.Schema.Types.ObjectId, ref: 'Broker' },
 
     salesType: { type: String, enum: ['do-sales', 'other-sales'] },
+    quantity: { type: String, trim: true },
+    delivery: { type: String, enum: ['at-location', 'delivered'] },
 
-    // Note: Quantity seems missing in form schema or name differently, checking form...
-    // Assuming generic quantity/rate for now based on other forms, but specific fields below:
-    rate: { type: String, trim: true },
+    // DO Entries (for DO बिक्री)
+    doEntries: [{
+        doNumber: { type: String, trim: true },
+        dhanMota: { type: String, trim: true },
+        dhanPatla: { type: String, trim: true },
+        dhanSarna: { type: String, trim: true },
+    }],
+
+    paddyType: { type: String, trim: true },
+    paddyQuantity: { type: String, trim: true },
+    paddyRate: { type: String, trim: true },
     wastagePercent: { type: String, trim: true },
     brokerage: { type: String, trim: true },
-    packaging: { type: String, enum: ['with-packaging', 'return-packaging'] },
 
-    // Legacy mapping
-    paddyType: { type: String, trim: true },
-    quantity: { type: String, trim: true },
+    packaging: { type: String, enum: ['with-weight', 'with-quantity', 'return'] },
+    newPackagingRate: { type: String, trim: true },
+    oldPackagingRate: { type: String, trim: true },
+    plasticPackagingRate: { type: String, trim: true },
+
+    // Legacy fields
+    rate: { type: String, trim: true },
     amount: { type: String, trim: true },
-
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });

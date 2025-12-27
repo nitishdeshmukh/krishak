@@ -42,10 +42,10 @@ const generateDummyResponse = ({ page = 1, pageSize = 10 }) => {
 
     return {
         success: true,
-        message: 'Committee members retrieved successfully (DUMMY DATA)',
+        message: 'Committees retrieved successfully (DUMMY DATA)',
         data: {
-            committeeMembers: paginatedData,
-            totalCommitteeMembers: total,
+            committees: paginatedData,
+            totalCommittees: total,
             pageSize,
             currentPage: page,
             totalPages,
@@ -68,7 +68,7 @@ export const fetchCommittee = async ({ page = 1, pageSize = 10, filters = [], so
     }
 
     try {
-        const data = await apiClient.get('/committee', { params });
+        const data = await apiClient.get('/committees', { params });
         return data;
     } catch (error) {
         console.warn('⚠️ API not available, using dummy data:', error.message);
@@ -78,8 +78,9 @@ export const fetchCommittee = async ({ page = 1, pageSize = 10, filters = [], so
 };
 
 export const createCommitteeMember = async (memberData) => {
+    console.log("memberData", memberData)
     try {
-        const data = await apiClient.post('/committee', memberData);
+        const data = await apiClient.post('/committees', memberData);
         return data;
     } catch (error) {
         console.warn('⚠️ API not available, simulating create:', error.message);
@@ -92,4 +93,17 @@ export const createCommitteeMember = async (memberData) => {
     }
 };
 
-export default { fetchCommittee, createCommitteeMember };
+/**
+ * Fetch all distinct committees (for dropdowns)
+ */
+export const fetchAllCommittees = async () => {
+    try {
+        const data = await apiClient.get('/committees/distinct');
+        return data?.data?.committees || [];
+    } catch (error) {
+        console.warn('⚠️ API not available, using dummy data:', error.message);
+        return DUMMY_COMMITTEE;
+    }
+};
+
+export default { fetchCommittee, createCommitteeMember, fetchAllCommittees };

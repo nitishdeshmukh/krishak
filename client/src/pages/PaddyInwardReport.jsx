@@ -17,93 +17,124 @@ import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
+import { usePaddyInward } from '@/hooks/usePaddyInward';
+import { useAllDOEntries } from '@/hooks/useDOEntries';
+import { useAllCommittees } from '@/hooks/useCommittee';
 
 export default function PaddyInwardReport() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
-    // Empty data array - will show EmptyState
-    const [inwardEntries, setInwardEntries] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
+    // Use hook for data
+    const { paddyInward, totalPages, currentPage, isLoading, isError, error, hasNext, hasPrev } = usePaddyInward();
+    const { doEntries } = useAllDOEntries();
+    const { committees } = useAllCommittees();
 
-    const totalPages = Math.ceil(inwardEntries.length / pageSize);
-    const currentPage = pageIndex + 1;
+    // Helper to find DO Number by ID
+    const getDONumberName = (id) => {
+        if (!id) return '-';
+        if (!doEntries) return id;
+        const entry = doEntries.find(e => e._id === id || e.id === id);
+        return entry ? (entry.doNumber || entry.doNo) : id;
+    };
 
-    // Paginated data
-    const paginatedEntries = React.useMemo(() => {
-        const startIdx = pageIndex * pageSize;
-        const endIdx = startIdx + pageSize;
-        return inwardEntries.slice(startIdx, endIdx);
-    }, [inwardEntries, pageIndex, pageSize]);
+    // Helper to find Committee Name by ID
+    const getCommitteeName = (id) => {
+        if (!id) return '-';
+        if (!committees) return id;
+        const committee = committees.find(c => c._id === id || c.id === id);
+        return committee ? (committee.name || committee.committeeName) : id;
+    };
 
     // Table column definitions
     const columns = [
         {
-            accessorKey: 'inwardNumber',
-            header: 'आवक नंबर',
-            meta: { filterVariant: 'text' },
-            cell: ({ row }) => (
-                <div className="font-medium ">{row.getValue('inwardNumber')}</div>
-            ),
-        },
-        {
-            accessorKey: 'partyName',
-            header: 'पार्टी का नाम',
-            meta: { filterVariant: 'text' },
-            cell: ({ row }) => (
-                <div className="font-medium">{row.getValue('partyName')}</div>
-            ),
-        },
-        {
-            accessorKey: 'inwardDate',
+            accessorKey: 'date',
             header: 'आवक तिथि',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const date = row.getValue('inwardDate');
+                const date = row.getValue('date');
                 if (!date) return <span className="text-muted-foreground">-</span>;
                 const formattedDate = new Date(date).toLocaleDateString('hi-IN');
                 return <div className="text-sm">{formattedDate}</div>;
             },
         },
         {
-            accessorKey: 'vehicleNumber',
-            header: 'वाहन नंबर',
+            accessorKey: 'doNumber',
+            header: 'DO क्रमांक',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const vehicleNumber = row.getValue('vehicleNumber');
-                return vehicleNumber ? (
-                    <div className="text-sm ">{vehicleNumber}</div>
+                const id = row.getValue('doNumber');
+                return <div className="font-medium">{getDONumberName(id)}</div>;
+            },
+        },
+        {
+            accessorKey: 'samitiSangrahan',
+            header: 'समिति/संग्रहण',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => {
+                const id = row.getValue('samitiSangrahan');
+                return <div className="font-medium">{getCommitteeName(id)}</div>;
+            },
+        },
+        {
+            accessorKey: 'truckNo', // Matches truckNo in form
+            header: 'ट्रक नंबर',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => {
+                const truckNo = row.getValue('truckNo');
+                return truckNo ? (
+                    <div className="text-sm ">{truckNo}</div>
                 ) : (
                     <span className="text-muted-foreground">-</span>
                 );
             },
         },
         {
-            accessorKey: 'quantity',
-            header: 'मात्रा (क्विंटल)',
+            accessorKey: 'rstNo',
+            header: 'RST नंबर',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm">{row.getValue('rstNo') || '-'}</div>,
+        },
+        {
+            accessorKey: 'dhanType',
+            header: 'धान का प्रकार',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm">{row.getValue('dhanType') || '-'}</div>,
+        },
+        {
+            accessorKey: 'dhanNetWeight', // Or truckLoadWeight? Form uses dhanNetWeight for specific type, or truckLoadWeight generically? Usually net weight is important.
+            header: 'नेट वजन (क्विंटल)',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const quantity = row.getValue('quantity');
-                return quantity ? (
-                    <div className="text-sm font-semibold text-blue-600">{quantity} क्विंटल</div>
+                // Determine which weight to show or show both? Usually Net Weight is key if calculated.
+                // The form has 'truckLoadWeight' and 'dhanNetWeight'. Let's show dhanNetWeight if available, fallback to truckLoadWeight.
+                const weight = row.original.dhanNetWeight || row.original.truckLoadWeight;
+                return weight ? (
+                    <div className="text-sm font-semibold text-blue-600">{weight} क्विंटल</div>
                 ) : (
                     <span className="text-muted-foreground">-</span>
                 );
             },
         },
         {
-            accessorKey: 'transporterName',
-            header: 'परिवहनकर्ता',
+            accessorKey: 'gunnyNew',
+            header: 'नया बारदाना',
             meta: { filterVariant: 'text' },
-            cell: ({ row }) => {
-                const name = row.getValue('transporterName');
-                return name ? (
-                    <div className="text-sm">{name}</div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
+            cell: ({ row }) => <div className="text-sm text-center">{row.original.gunnyNew || '-'}</div>,
+        },
+        {
+            accessorKey: 'gunnyOld',
+            header: 'पुराना बारदाना',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm text-center">{row.original.gunnyOld || '-'}</div>,
+        },
+        {
+            accessorKey: 'gunnyPlastic',
+            header: 'प्लास्टिक बारदाना',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm text-center">{row.original.gunnyPlastic || '-'}</div>,
         },
         {
             id: 'actions',
@@ -142,22 +173,39 @@ export default function PaddyInwardReport() {
     ];
 
     const handleView = (entry) => {
-        toast.info('View Inward', {
-            description: `Viewing details for inward ${entry.inwardNumber}`,
+        toast.info(t('common:view'), {
+            description: `View Inward: ${entry.inwardNumber}`,
         });
     };
 
     const handleEdit = (entry) => {
-        toast.info('Edit Inward', {
-            description: `Editing inward ${entry.inwardNumber}`,
+        toast.info(t('common:edit'), {
+            description: `Edit Inward: ${entry.inwardNumber}`,
         });
     };
 
     const handleDelete = (entry) => {
-        toast.error('Delete Inward', {
+        toast.error(t('common:delete'), {
             description: `Are you sure you want to delete inward ${entry.inwardNumber}?`,
         });
     };
+
+    // Error state
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 bg-card rounded-xl border">
+                <p className="text-destructive mb-2 font-semibold">Error loading paddy inward</p>
+                <p className="text-muted-foreground text-sm">{error?.message || 'Something went wrong'}</p>
+                <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                    variant="outline"
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
 
     // Loading state
     if (isLoading) {
@@ -172,7 +220,7 @@ export default function PaddyInwardReport() {
     }
 
     // Empty state - no paddy inward
-    if (!isLoading && inwardEntries.length === 0) {
+    if (!isLoading && (!paddyInward || paddyInward.length === 0)) {
         return (
             <EmptyState
                 title="आपने अभी तक कोई शासकीय धान आवक नहीं जोड़ी है!"
@@ -187,12 +235,14 @@ export default function PaddyInwardReport() {
     return (
         <div className="container mx-auto py-2">
             <Card className={"py-0"}>
-                <CardContent className="p-6">
-                    <DataTable
-                        columns={columns}
-                        data={paginatedEntries}
-                        showFilters={true}
-                    />
+                <CardContent className="p-6 overflow-hidden">
+                    <div className="w-full overflow-x-auto">
+                        <DataTable
+                            columns={columns}
+                            data={paddyInward || []}
+                            showFilters={true}
+                        />
+                    </div>
 
                     <TablePagination
                         pageIndex={pageIndex}
@@ -200,8 +250,8 @@ export default function PaddyInwardReport() {
                         pageSize={pageSize}
                         setPageIndex={(index) => dispatch(setPageIndex(index))}
                         setPageSize={(size) => dispatch(setPageSize(size))}
-                        canPreviousPage={currentPage > 1}
-                        canNextPage={currentPage < totalPages}
+                        canPreviousPage={hasPrev}
+                        canNextPage={hasNext}
                         previousPage={() => dispatch(setPageIndex(Math.max(0, pageIndex - 1)))}
                         nextPage={() => dispatch(setPageIndex(pageIndex + 1))}
                         paginationItemsToDisplay={5}

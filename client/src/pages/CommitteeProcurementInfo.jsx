@@ -17,83 +17,43 @@ import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
+import { useCommittee } from '@/hooks/useCommittee';
 
 export default function CommitteeProcurementInfo() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
-    // Empty data array - will show EmptyState
-    const [committeeMembers, setCommitteeMembers] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-
-    const totalPages = Math.ceil(committeeMembers.length / pageSize);
-    const currentPage = pageIndex + 1;
-
-    // Paginated data
-    const paginatedMembers = React.useMemo(() => {
-        const startIdx = pageIndex * pageSize;
-        const endIdx = startIdx + pageSize;
-        return committeeMembers.slice(startIdx, endIdx);
-    }, [committeeMembers, pageIndex, pageSize]);
+    // Use the useCommittee hook to fetch data
+    const { committees, totalPages, currentPage, isLoading, isError, error } = useCommittee();
 
     // Table column definitions
     const columns = [
         {
-            accessorKey: 'memberName',
-            header: 'सदस्य का नाम',
+            accessorKey: 'committeeName',
+            header: 'समिति का नाम',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => (
-                <div className="font-medium">{row.getValue('memberName')}</div>
+                <div className="font-medium">{row.getValue('committeeName')}</div>
             ),
         },
         {
-            accessorKey: 'position',
-            header: 'पद',
+            accessorKey: 'type',
+            header: 'प्रकार',
             meta: { filterVariant: 'dropdown' },
             cell: ({ row }) => {
-                const position = row.getValue('position');
-                return position ? (
-                    <div className="text-sm font-medium">{position}</div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
+                const type = row.getValue('type');
+                const label = type === 'committee-production' ? 'समिति-उपार्जन केंद्र' : 'संग्रहण केंद्र';
+                return (
+                    <div className="text-sm font-medium">{label}</div>
                 );
             },
         },
         {
-            accessorKey: 'phone',
-            header: 'फोन न.',
-            meta: { filterVariant: 'text' },
+            accessorKey: 'createdAt',
+            header: 'बनाने की तिथि',
             cell: ({ row }) => {
-                const phone = row.getValue('phone');
-                return phone ? (
-                    <div className="flex items-center gap-2">
-                        <PhoneIcon className="h-4 w-4 text-blue-600" />
-                        <span className="text-blue-600">{phone}</span>
-                    </div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
-        },
-        {
-            accessorKey: 'email',
-            header: 'Email',
-            meta: { filterVariant: 'text' },
-            cell: ({ row }) => {
-                const email = row.getValue('email');
-                return email ? (
-                    <div className="text-sm">{email}</div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
-        },
-        {
-            accessorKey: 'joiningDate',
-            header: 'नियुक्ति तिथि',
-            cell: ({ row }) => {
-                const date = row.getValue('joiningDate');
+                const date = row.getValue('createdAt');
                 if (!date) return <span className="text-muted-foreground">-</span>;
                 const formattedDate = new Date(date).toLocaleDateString('hi-IN');
                 return <div className="text-sm">{formattedDate}</div>;
@@ -136,20 +96,20 @@ export default function CommitteeProcurementInfo() {
     ];
 
     const handleView = (member) => {
-        toast.info('View Committee Member', {
-            description: `Viewing details for ${member.memberName}`,
+        toast.info('View Committee', {
+            description: `Viewing details for ${member.committeeName}`,
         });
     };
 
     const handleEdit = (member) => {
-        toast.info('Edit Committee Member', {
-            description: `Editing ${member.memberName}`,
+        toast.info('Edit Committee', {
+            description: `Editing ${member.committeeName}`,
         });
     };
 
     const handleDelete = (member) => {
-        toast.error('Delete Committee Member', {
-            description: `Are you sure you want to delete ${member.memberName}?`,
+        toast.error('Delete Committee', {
+            description: `Are you sure you want to delete ${member.committeeName}?`,
         });
     };
 
@@ -165,8 +125,25 @@ export default function CommitteeProcurementInfo() {
         );
     }
 
+    // Error state
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 bg-card rounded-xl border">
+                <p className="text-destructive mb-2 font-semibold">Error loading committee members</p>
+                <p className="text-muted-foreground text-sm">{error?.message || 'Something went wrong'}</p>
+                <Button
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                    variant="outline"
+                >
+                    Retry
+                </Button>
+            </div>
+        );
+    }
+
     // Empty state - no committee members
-    if (!isLoading && committeeMembers.length === 0) {
+    if (!isLoading && committees.length === 0) {
         return (
             <EmptyState
                 title="आपने अभी तक कोई समिति संरचना नहीं जोड़ी है!"
@@ -184,7 +161,7 @@ export default function CommitteeProcurementInfo() {
                 <CardContent className="p-6">
                     <DataTable
                         columns={columns}
-                        data={paginatedMembers}
+                        data={committees}
                         showFilters={true}
                     />
 

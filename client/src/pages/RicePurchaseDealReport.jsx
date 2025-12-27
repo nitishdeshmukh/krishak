@@ -17,35 +17,28 @@ import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
+import { useRicePurchases } from '@/hooks/useRicePurchases';
 
 export default function RicePurchaseDealReport() {
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
-    // Empty data array - will show EmptyState
-    const [riceDeals, setRiceDeals] = React.useState([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-
-    const totalPages = Math.ceil(riceDeals.length / pageSize);
-    const currentPage = pageIndex + 1;
-
-    // Paginated data
-    const paginatedDeals = React.useMemo(() => {
-        const startIdx = pageIndex * pageSize;
-        const endIdx = startIdx + pageSize;
-        return riceDeals.slice(startIdx, endIdx);
-    }, [riceDeals, pageIndex, pageSize]);
+    // Use the useRicePurchases hook to fetch data
+    const { ricePurchases, totalPages, currentPage, isLoading, isError, error, hasNext, hasPrev } = useRicePurchases();
 
     // Table column definitions
     const columns = [
         {
-            accessorKey: 'dealNumber',
-            header: 'सौदा नंबर',
+            accessorKey: 'date',
+            header: 'सौदा तिथि',
             meta: { filterVariant: 'text' },
-            cell: ({ row }) => (
-                <div className="font-medium ">{row.getValue('dealNumber')}</div>
-            ),
+            cell: ({ row }) => {
+                const date = row.getValue('date');
+                if (!date) return <span className="text-muted-foreground">-</span>;
+                const formattedDate = new Date(date).toLocaleDateString('hi-IN');
+                return <div className="text-sm">{formattedDate}</div>;
+            },
         },
         {
             accessorKey: 'partyName',
@@ -56,15 +49,30 @@ export default function RicePurchaseDealReport() {
             ),
         },
         {
-            accessorKey: 'dealDate',
-            header: 'सौदा तिथि',
+            accessorKey: 'brokerName',
+            header: 'ब्रोकर',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => (
+                <div className="font-medium">{row.getValue('brokerName') || '-'}</div>
+            ),
+        },
+        {
+            accessorKey: 'purchaseType',
+            header: 'खरीदी प्रकार',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const date = row.getValue('dealDate');
-                if (!date) return <span className="text-muted-foreground">-</span>;
-                const formattedDate = new Date(date).toLocaleDateString('hi-IN');
-                return <div className="text-sm">{formattedDate}</div>;
+                const type = row.getValue('purchaseType');
+                const label = type === 'lot-purchase' ? 'LOT खरीदी' : 'अन्य खरीदी';
+                return <div className="text-sm">{label}</div>;
             },
+        },
+        {
+            accessorKey: 'riceType',
+            header: 'चावल का प्रकार',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => (
+                <div className="text-sm">{row.getValue('riceType') || '-'}</div>
+            ),
         },
         {
             accessorKey: 'quantity',
@@ -81,7 +89,7 @@ export default function RicePurchaseDealReport() {
         },
         {
             accessorKey: 'rate',
-            header: 'दर (₹/क्विंटल)',
+            header: 'दर (₹)',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
                 const rate = row.getValue('rate');
@@ -93,33 +101,63 @@ export default function RicePurchaseDealReport() {
             },
         },
         {
-            accessorKey: 'totalAmount',
+            accessorKey: 'amount',
             header: 'कुल राशि (₹)',
             cell: ({ row }) => {
-                const amount = row.getValue('totalAmount');
+                const amount = row.getValue('amount') || row.original.totalAmount;
                 return amount ? (
-                    <div className="text-sm font-semibold text-green-600">₹{amount.toLocaleString('hi-IN')}</div>
+                    <div className="text-sm font-semibold text-green-600">₹{parseFloat(amount).toLocaleString('hi-IN')}</div>
                 ) : (
                     <span className="text-muted-foreground">-</span>
                 );
             },
         },
         {
-            accessorKey: 'status',
-            header: 'स्थिति',
-            meta: { filterVariant: 'dropdown' },
+            accessorKey: 'packaging',
+            header: 'पैकेजिंग',
+            meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const status = row.getValue('status');
-                const statusColors = {
-                    'active': 'bg-green-100 text-green-800',
-                    'pending': 'bg-yellow-100 text-yellow-800',
-                    'completed': 'bg-blue-100 text-blue-800',
-                    'cancelled': 'bg-red-100 text-red-800',
-                };
-                return status ? (
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                        {status}
-                    </span>
+                const pkg = row.getValue('packaging');
+                const label = pkg === 'with-weight' ? 'सहित (वजन में)' : (pkg === 'with-quantity' ? 'सहित (भाव में)' : (pkg === 'return' ? 'वापसी' : '-'));
+                return <div className="text-sm">{label}</div>;
+            }
+        },
+        {
+            accessorKey: 'wastagePercent',
+            header: 'बटाव (%)',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm text-right">{row.getValue('wastagePercent') || '-'}</div>,
+        },
+        {
+            accessorKey: 'brokerage',
+            header: 'दलाली',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm text-right">{row.getValue('brokerage') || '-'}</div>,
+        },
+        {
+            accessorKey: 'frk',
+            header: 'FRK',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => {
+                const frk = row.getValue('frk');
+                const label = frk === 'frk-included' ? 'FRK सहित' : (frk === 'frk-give' ? 'FRK देना है' : '-');
+                return <div className="text-sm">{label}</div>;
+            }
+        },
+        {
+            accessorKey: 'lotNumber',
+            header: 'LOT No.',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => <div className="text-sm">{row.getValue('lotNumber') || '-'}</div>,
+        },
+        {
+            accessorKey: 'remarks',
+            header: 'टिप्पणी',
+            meta: { filterVariant: 'text' },
+            cell: ({ row }) => {
+                const remarks = row.getValue('remarks');
+                return remarks ? (
+                    <div className="text-sm truncate max-w-[150px]" title={remarks}>{remarks}</div>
                 ) : (
                     <span className="text-muted-foreground">-</span>
                 );
@@ -162,20 +200,20 @@ export default function RicePurchaseDealReport() {
     ];
 
     const handleView = (deal) => {
-        toast.info('View Deal', {
-            description: `Viewing details for deal ${deal.dealNumber}`,
+        toast.info(t('common:view'), {
+            description: `View Deal: ${deal.partyName}`,
         });
     };
 
     const handleEdit = (deal) => {
-        toast.info('Edit Deal', {
-            description: `Editing deal ${deal.dealNumber}`,
+        toast.info(t('common:edit'), {
+            description: `Edit Deal for ${deal.partyName}`,
         });
     };
 
     const handleDelete = (deal) => {
-        toast.error('Delete Deal', {
-            description: `Are you sure you want to delete deal ${deal.dealNumber}?`,
+        toast.error(t('common:delete'), {
+            description: `Are you sure you want to delete deal for ${deal.partyName}?`,
         });
     };
 
@@ -192,7 +230,7 @@ export default function RicePurchaseDealReport() {
     }
 
     // Empty state - no rice deals
-    if (!isLoading && riceDeals.length === 0) {
+    if (!isLoading && ricePurchases.length === 0) {
         return (
             <EmptyState
                 title="आपने अभी तक कोई चावल खरीदी सौदा नहीं जोड़ा है!"
@@ -207,12 +245,14 @@ export default function RicePurchaseDealReport() {
     return (
         <div className="container mx-auto py-2">
             <Card className={"py-0"}>
-                <CardContent className="p-6">
-                    <DataTable
-                        columns={columns}
-                        data={paginatedDeals}
-                        showFilters={true}
-                    />
+                <CardContent className="p-6 overflow-hidden">
+                    <div className="w-full overflow-x-auto">
+                        <DataTable
+                            columns={columns}
+                            data={ricePurchases}
+                            showFilters={true}
+                        />
+                    </div>
 
                     <TablePagination
                         pageIndex={pageIndex}
@@ -220,8 +260,8 @@ export default function RicePurchaseDealReport() {
                         pageSize={pageSize}
                         setPageIndex={(index) => dispatch(setPageIndex(index))}
                         setPageSize={(size) => dispatch(setPageSize(size))}
-                        canPreviousPage={currentPage > 1}
-                        canNextPage={currentPage < totalPages}
+                        canPreviousPage={hasPrev}
+                        canNextPage={hasNext}
                         previousPage={() => dispatch(setPageIndex(Math.max(0, pageIndex - 1)))}
                         nextPage={() => dispatch(setPageIndex(pageIndex + 1))}
                         paginationItemsToDisplay={5}

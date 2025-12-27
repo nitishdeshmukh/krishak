@@ -4,8 +4,22 @@
 import apiClient from '@/lib/apiClient';
 
 const DUMMY_PADDY_SALES = [
-    { _id: '1', dealNumber: 'PS-2024-001', partyName: 'PARTY 3', dealDate: '2024-03-15', quantity: '400', rate: '2800', totalAmount: 1120000, status: 'completed', createdAt: '2024-03-15T10:30:00.000Z' },
-    { _id: '2', dealNumber: 'PS-2024-002', partyName: 'PARTY 1', dealDate: '2024-04-01', quantity: '550', rate: '2900', totalAmount: 1595000, status: 'active', createdAt: '2024-04-01T10:30:00.000Z' },
+    {
+        _id: '1', dealNumber: 'PS-2024-001', partyName: 'PARTY 3', brokerName: 'BROKER 1', dealDate: '2024-03-15',
+        salesType: 'do-sales', quantity: '400', delivery: 'at-location',
+        doEntries: [{ doNumber: 'DO-001', dhanMota: '100', dhanPatla: '150', dhanSarna: '150' }],
+        paddyType: 'मोटा (Grade-A)', paddyQuantity: '400', paddyRate: '2800', wastagePercent: '2', brokerage: '10',
+        packaging: 'with-weight', newPackagingRate: '', oldPackagingRate: '', plasticPackagingRate: '',
+        totalAmount: 1120000, status: 'completed', createdAt: '2024-03-15T10:30:00.000Z'
+    },
+    {
+        _id: '2', dealNumber: 'PS-2024-002', partyName: 'PARTY 1', brokerName: 'BROKER 2', dealDate: '2024-04-01',
+        salesType: 'do-sales', quantity: '550', delivery: 'delivered',
+        doEntries: [{ doNumber: 'DO-002', dhanMota: '200', dhanPatla: '200', dhanSarna: '150' }],
+        paddyType: 'पतला (Grade-A)', paddyQuantity: '550', paddyRate: '2900', wastagePercent: '1.5', brokerage: '12',
+        packaging: 'with-quantity', newPackagingRate: '50', oldPackagingRate: '30', plasticPackagingRate: '25',
+        totalAmount: 1595000, status: 'active', createdAt: '2024-04-01T10:30:00.000Z'
+    },
 ];
 
 const generateDummyResponse = ({ page = 1, pageSize = 10 }) => {

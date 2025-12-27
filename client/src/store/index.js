@@ -5,6 +5,7 @@ import tableReducer from './slices/tableSlice';
 import sidebarReducer from './slices/sidebarSlice';
 import authReducer from './slices/authSlice';
 import languageReducer from './slices/languageSlice';
+import confirmDialogReducer from './slices/confirmDialogSlice';
 
 // Root reducer
 const rootReducer = combineReducers({
@@ -12,6 +13,7 @@ const rootReducer = combineReducers({
     sidebar: sidebarReducer,
     auth: authReducer,
     language: languageReducer,
+    confirmDialog: confirmDialogReducer,
 });
 
 // Persist config - only persist language slice

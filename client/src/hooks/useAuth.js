@@ -36,8 +36,9 @@ export const useLogin = () => {
             navigate('/entry');
         },
         onError: (error) => {
-            dispatch(loginFailure(error.message));
-            toast.error(error.message || 'Login failed');
+            const message = error.response?.data?.message || error.message || 'Login failed';
+            dispatch(loginFailure(message));
+            toast.error(message);
         }
     });
 };
@@ -60,7 +61,8 @@ export const useLogout = () => {
             navigate('/');
         },
         onError: (error) => {
-            toast.error(error.message || 'Logout failed');
+            const message = error.response?.data?.message || error.message || 'Logout failed';
+            toast.error(message);
         }
     });
 };

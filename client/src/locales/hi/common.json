@@ -6,7 +6,10 @@
         "edit": "संपादित करें",
         "view": "देखें",
         "retry": "पुनः प्रयास करें",
-        "search": "खोजें"
+        "search": "खोजें",
+        "submit": "जमा करें",
+        "remove": "हटाएं",
+        "processing": "प्रोसेस हो रहा है..."
     },
     "pagination": {
         "page": "पृष्ठ",
@@ -26,6 +29,33 @@
     "languages": {
         "english": "English",
         "hindi": "हिंदी"
+    },
+    "doEntry": {
+        "excelUpload": "Excel अपलोड",
+        "manualEntry": "मैनुअल एंट्री",
+        "dropFileHere": "Excel फ़ाइल यहाँ ड्रॉप करें",
+        "orClickToBrowse": "या ब्राउज़ करने के लिए क्लिक करें",
+        "fileFormat": "Format: .xlsx, .xls",
+        "previewData": "पूर्वावलोकन डेटा",
+        "totalEntries": "कुल: {{count}} प्रविष्टियाँ",
+        "submitEntries": "{{count}} प्रविष्टियाँ जमा करें",
+        "tableHeaders": {
+            "committee": "समिति",
+            "doNumber": "DO क्र.",
+            "date": "दिनांक",
+            "coarse": "मोटा",
+            "fine": "पतला",
+            "common": "सरना",
+            "total": "कुल"
+        },
+        "total": "कुल (Total)",
+        "successSingle": "DO प्रविष्टी सफलतापूर्वक जमा की गई",
+        "successBulk": "{{count}} प्रविष्टियां सफलतापूर्वक जमा की गईं",
+        "errorSubmit": "त्रुटि: DO जमा नहीं हो सका",
+        "errorBulk": "Bulk Upload Failed",
+        "noValidData": "फ़ाइल में कोई मान्य डेटा नहीं मिला।",
+        "invalidFile": "कृपया मान्य Excel फ़ाइल (.xlsx) अपलोड करें",
+        "parseError": "Excel फ़ाइल पढ़ने में विफल। कृपया मान्य .xlsx फ़ाइल अपलोड करें।"
     },
     "uiGuide": "UI गाइड",
     "profile": "प्रोफ़ाइल",

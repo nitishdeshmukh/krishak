@@ -46,4 +46,11 @@ export const deleteParty = async (id) => {
     return await apiClient.delete(`/parties/${id}`);
 };
 
-export default { fetchParties, fetchPartyById, createParty, updateParty, deleteParty };
+/**
+ * Fetch all parties for dropdown usage (no pagination)
+ */
+export const fetchAllParties = async () => {
+    return await apiClient.get('/parties?pageSize=1000');
+};
+
+export default { fetchParties, fetchPartyById, createParty, updateParty, deleteParty, fetchAllParties };
