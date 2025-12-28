@@ -14,8 +14,17 @@ export default function App() {
   // Get all routes in flat array for easier mapping
   const allRoutes = flattenRoutes(routes)
 
-  // Get parent routes that need redirects to their first child
-  const parentRoutesWithChildren = routes.filter(route => route.children && route.children.length > 0)
+  // Get parent routes that need redirects to their first child (only if they don't have a component themselves)
+  const parentRoutesWithChildren = routes.filter(route => {
+    const hasChildren = route.children && route.children.length > 0
+    if (!hasChildren) return false
+
+    // Check if this route or any sibling route definition for the same path has a component
+    // This allows us to have a route act as both a parent (sidebar group) and a page (dashboard)
+    const hasComponent = route.component || routes.some(r => r.path === route.path && r.component)
+
+    return !hasComponent
+  })
 
   return (
     <BrowserRouter>
