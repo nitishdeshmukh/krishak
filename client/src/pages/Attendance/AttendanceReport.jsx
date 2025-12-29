@@ -6,13 +6,20 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
-import { useAttendance } from '@/hooks/useAttendance';
+import { useAttendance, useDeleteAttendance } from '@/hooks/useAttendance';
 import { format } from 'date-fns';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
-import { ArrowPathIcon, ArrowDownTrayIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowDownTrayIcon, UserGroupIcon, EllipsisHorizontalIcon, TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { Badge } from '@/components/ui/badge';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 export default function AttendanceReport() {
     const dispatch = useDispatch();
@@ -20,6 +27,18 @@ export default function AttendanceReport() {
     const { t } = useTranslation(['entry', 'common']);
 
     const { attendance, totalRecords, totalPages, currentPage, isLoading, isError, error, hasNext, hasPrev } = useAttendance();
+    const { mutate: deleteAttendance } = useDeleteAttendance();
+
+    const handleDelete = (id) => {
+        deleteAttendance(id, {
+            onSuccess: () => {
+                toast.success(t('messages.deleteSuccess') || 'Record deleted successfully');
+            },
+            onError: (err) => {
+                toast.error(err.message || 'Failed to delete record');
+            }
+        });
+    };
 
     // Define columns for the data table
     const columns = [
@@ -51,7 +70,7 @@ export default function AttendanceReport() {
                 let className = '';
 
                 if (status === 'Present') {
-                    variant = 'success'; // Verify if badge supports success, otherwise use className
+                    variant = 'success';
                     className = "bg-green-100 text-green-800 hover:bg-green-100";
                 } else if (status === 'Absent') {
                     variant = 'destructive';
@@ -61,6 +80,36 @@ export default function AttendanceReport() {
                 }
 
                 return <Badge variant={variant === 'success' || variant === 'secondary' ? 'outline' : variant} className={className}>{status}</Badge>;
+            },
+        },
+        {
+            id: 'actions',
+            header: t('common:actions'),
+            enableColumnFilter: false,
+            cell: ({ row }) => {
+                const entry = row.original;
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <EllipsisHorizontalIcon className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => toast.info('Edit functionality via Bulk Entry page')}>
+                                <PencilIcon className="mr-2 h-4 w-4" />
+                                {t('common:edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleDelete(entry._id)}
+                                className="text-destructive"
+                            >
+                                <TrashIcon className="mr-2 h-4 w-4" />
+                                {t('common:delete')}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                );
             },
         },
     ];

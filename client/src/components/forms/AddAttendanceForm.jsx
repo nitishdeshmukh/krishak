@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStaff } from '@/hooks/useStaff';
 import { useAttendanceByDate, useCreateBulkAttendance } from '@/hooks/useAttendance';
 import { toast } from 'sonner';
-import PageLoader from '../PageLoader';
+import RouteLoader from '../RouteLoader';
 
 export default function AddAttendanceForm() {
     const { t } = useTranslation(['common', 'forms']);
@@ -19,11 +19,20 @@ export default function AddAttendanceForm() {
     const [attendanceMap, setAttendanceMap] = useState({});
 
     // Fetch Staff
-    const { data: staffList, isLoading: isStaffLoading } = useStaff();
+    const { data: staffList, isLoading: isStaffLoading, isError: isStaffError, error: staffError } = useStaff();
 
     // Fetch Existing Attendance
     const formattedDate = format(date, 'yyyy-MM-dd');
     const { data: existingData, isLoading: isAttendanceLoading, refetch: refetchAttendance } = useAttendanceByDate(formattedDate);
+
+    console.log('Attendance Debug:', {
+        staffList,
+        isStaffLoading,
+        isStaffError,
+        staffError,
+        existingData,
+        formattedDate
+    });
 
     // Save Mutation
     const { mutate: saveAttendance, isPending: isSaving } = useCreateBulkAttendance();
@@ -77,7 +86,7 @@ export default function AddAttendanceForm() {
         );
     };
 
-    if (isStaffLoading) return <PageLoader />;
+    if (isStaffLoading) return <RouteLoader />;
 
     return (
         <Card className="max-w-4xl mx-auto">
