@@ -97,4 +97,8 @@ export const createOtherInward = async (inwardData) => {
     }
 };
 
-export default { fetchOtherInward, createOtherInward };
+export const fetchAllOtherInward = async () => {
+    return await fetchOtherInward({ page: 1, pageSize: 1000 });
+};
+
+export default { fetchOtherInward, fetchAllOtherInward, createOtherInward };

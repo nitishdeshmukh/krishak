@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +21,7 @@ import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useCreateGovtRiceOutward } from '@/hooks/useGovtRiceOutward';
+import { useAllLotNumbers } from '@/hooks/useRiceInward';
 import { riceTypeOptions } from '@/lib/constants';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
@@ -64,23 +65,21 @@ const govtRiceOutwardFormSchema = z.object({
     truckWeight: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    gunnyWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    finalWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
 });
 
 export default function AddGovtRiceOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createGovtRiceOutward = useCreateGovtRiceOutward();
 
-    const lotNumberOptions = [
-        { value: 'LOT-001', label: 'LOT-001' },
-        { value: 'LOT-002', label: 'LOT-002' },
-        { value: 'LOT-003', label: 'LOT-003' },
-    ];
+    // Fetch all lot numbers for dropdown
+    const { lotNumbers } = useAllLotNumbers();
+
+    // Convert to options format
+    const lotNumberOptions = useMemo(() =>
+        lotNumbers.map(lot => ({ value: lot.lotNo, label: lot.lotNo })),
+        [lotNumbers]
+    );
+
     const fciNanOptions = [
         { value: 'fci', label: 'FCI' },
         { value: 'nan', label: 'NAN' },
@@ -92,42 +91,24 @@ export default function AddGovtRiceOutwardForm() {
         defaultValues: {
             date: new Date(),
             lotNo: '',
-            fciNan: 'fci',
-            riceType: 'mota',
+            fciNan: '',
+            riceType: '',
             gunnyNew: '',
             gunnyOld: '',
-            juteWeight: '',
+            juteWeight: '0.58',
             truckNo: '',
             rstNo: '',
             truckWeight: '',
-            gunnyWeight: '',
-            finalWeight: '',
         },
     });
 
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['truckWeight', 'juteWeight']);
 
-    React.useEffect(() => {
-        const [truckWeight, juteWeight] = watchedFields;
-        const truck = parseFloat(truckWeight) || 0;
-        const jute = parseFloat(juteWeight) || 0;
-
-        // Gunny weight = jute weight
-        form.setValue('gunnyWeight', jute.toFixed(2));
-
-        // Final weight = truck weight - gunny weight
-        const finalWeight = truck - jute;
-        if (finalWeight >= 0) {
-            form.setValue('finalWeight', finalWeight.toFixed(2));
-        }
-    }, [watchedFields, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createGovtRiceOutward.mutate(formattedData, {
@@ -356,50 +337,6 @@ export default function AddGovtRiceOutwardForm() {
                                             placeholder="0"
                                             {...field}
                                             className="placeholder:text-gray-400"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Gunny Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="gunnyWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.govtRiceOutward.gunnyWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Final Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="finalWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.govtRiceOutward.finalWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
                                         />
                                     </FormControl>
                                     <FormMessage />

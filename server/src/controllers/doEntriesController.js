@@ -31,7 +31,7 @@ export const getDOEntries = asyncHandler(async (req, res) => {
 // @route   GET /api/do-entries/all
 export const getAllDOEntries = asyncHandler(async (req, res) => {
     const doEntries = await DOEntry.find({ isActive: { $ne: false } })
-        .select('doNumber committeeCenter date total')
+        .select('doNumber')
         .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -39,6 +39,21 @@ export const getAllDOEntries = asyncHandler(async (req, res) => {
         message: 'All DO Entries retrieved successfully',
         data: { doEntries },
     });
+});
+
+// @desc    Get DO entry by DO number (for auto-fill)
+// @route   GET /api/do-entries/by-number/:doNumber
+export const getDOEntryByNumber = asyncHandler(async (req, res) => {
+    const { doNumber } = req.params;
+    const doEntry = await DOEntry.findOne({
+        doNumber: doNumber,
+        isActive: { $ne: false }
+    }).select('grainMota grainPatla grainSarna total');
+
+    if (!doEntry) {
+        return res.status(404).json({ success: false, message: 'DO Entry not found' });
+    }
+    res.status(200).json({ success: true, data: doEntry });
 });
 
 // @desc    Get single DO entry

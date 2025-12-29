@@ -12,6 +12,27 @@ export const getBrokensSales = asyncHandler(async (req, res) => {
     res.status(200).json({ success: true, data: { brokensSales: result.docs, totalBrokensSales: result.totalDocs, ...buildPaginationResponse(result.totalDocs, page, pageSize) } });
 });
 
+// Get all Brokens sales for dropdown
+export const getAllBrokensSales = asyncHandler(async (req, res) => {
+    const sales = await BrokensSales.find({ isActive: { $ne: false } })
+        .select('dealNumber partyName brokerName')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: { brokensSales: sales },
+    });
+});
+
+// Get Brokens sale by deal number (for auto-fill)
+export const getBrokensSaleByDealNumber = asyncHandler(async (req, res) => {
+    const { dealNumber } = req.params;
+    const record = await BrokensSales.findOne({ dealNumber, isActive: { $ne: false } })
+        .select('partyName brokerName');
+    if (!record) return res.status(404).json({ success: false, message: 'Brokens sale not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getBrokensSaleById = asyncHandler(async (req, res) => {
     const record = await BrokensSales.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });

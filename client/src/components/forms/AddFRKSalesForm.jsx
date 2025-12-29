@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateFRKSales } from '@/hooks/useFRKSales';
+import { useAllParties } from '@/hooks/useParties';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -45,16 +46,7 @@ const frkSalesFormSchema = z.object({
     rate: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    amount: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
     gstPercent: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    gstAmount: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    payableAmount: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
 });
@@ -63,11 +55,14 @@ export default function AddFRKSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createFRKSales = useCreateFRKSales();
 
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
+    // Fetch parties from server
+    const { parties, isLoading: partiesLoading } = useAllParties();
+
+    // Convert to options format for SearchableSelect
+    const partyOptions = useMemo(() =>
+        parties.map(party => ({ value: party.partyName, label: party.partyName })),
+        [parties]
+    );
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -77,32 +72,11 @@ export default function AddFRKSalesForm() {
             partyName: '',
             quantity: '',
             rate: '',
-            amount: '',
             gstPercent: '18',
-            gstAmount: '',
-            payableAmount: '',
         },
     });
 
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['quantity', 'rate', 'gstPercent']);
 
-    React.useEffect(() => {
-        const [quantity, rate, gstPercent] = watchedFields;
-        const qty = parseFloat(quantity) || 0;
-        const rt = parseFloat(rate) || 0;
-        const gst = parseFloat(gstPercent) || 0;
-
-        const amount = qty * rt;
-        const gstAmount = (amount * gst) / 100;
-        const payableAmount = amount + gstAmount;
-
-        if (amount > 0) {
-            form.setValue('amount', amount.toFixed(2));
-            form.setValue('gstAmount', gstAmount.toFixed(2));
-            form.setValue('payableAmount', payableAmount.toFixed(2));
-        }
-    }, [watchedFields, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
@@ -216,27 +190,6 @@ export default function AddFRKSalesForm() {
                             )}
                         />
 
-                        {/* Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="amount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.frkSales.amount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
                         {/* GST Percent */}
                         <FormField
@@ -252,50 +205,6 @@ export default function AddFRKSalesForm() {
                                             placeholder="18"
                                             {...field}
                                             className="placeholder:text-gray-400"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* GST Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="gstAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.frkSales.gstAmount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Payable Amount + GST (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="payableAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.frkSales.payableAmount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
                                         />
                                     </FormControl>
                                     <FormMessage />

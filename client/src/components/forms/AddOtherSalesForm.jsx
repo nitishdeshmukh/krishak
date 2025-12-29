@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +21,8 @@ import { DatePickerField } from '@/components/ui/date-picker-field';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useCreateOtherSales } from '@/hooks/useOtherSales';
+import { useAllParties } from '@/hooks/useParties';
+import { useAllBrokers } from '@/hooks/useBrokers';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -56,13 +58,7 @@ const otherSalesFormSchema = z.object({
     rate: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    amount: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
     gstPercent: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    gstAmount: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
     totalAmountWithGst: z.string().regex(/^\d*\.?\d*$/, {
@@ -71,16 +67,7 @@ const otherSalesFormSchema = z.object({
     discountPercent: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    discountAmount: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
     brokeragePerUnit: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    brokerPayable: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    totalPayable: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
 });
@@ -89,16 +76,20 @@ export default function AddOtherSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createOtherSale = useCreateOtherSales();
 
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
-    const brokerOptions = [
-        { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
-        { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
-        { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
-    ];
+    // Fetch parties and brokers from server
+    const { parties, isLoading: partiesLoading } = useAllParties();
+    const { brokers, isLoading: brokersLoading } = useAllBrokers();
+
+    // Convert to options format for SearchableSelect
+    const partyOptions = useMemo(() =>
+        parties.map(party => ({ value: party.partyName, label: party.partyName })),
+        [parties]
+    );
+
+    const brokerOptions = useMemo(() =>
+        brokers.map(broker => ({ value: broker.brokerName, label: broker.brokerName })),
+        [brokers]
+    );
 
     // Quantity type options
     const quantityTypeOptions = [
@@ -117,58 +108,16 @@ export default function AddOtherSalesForm() {
             brokerName: '',
             itemName: '',
             quantity: '',
-            quantityType: 'quintal',
+            quantityType: '',
             rate: '',
-            amount: '',
             gstPercent: '18',
-            gstAmount: '',
             totalAmountWithGst: '',
             discountPercent: '',
-            discountAmount: '',
             brokeragePerUnit: '',
-            brokerPayable: '',
-            totalPayable: '',
         },
     });
 
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['quantity', 'rate', 'gstPercent', 'discountPercent', 'brokeragePerUnit', 'totalAmountWithGst']);
 
-    React.useEffect(() => {
-        const [quantity, rate, gstPercent, discountPercent, brokeragePerUnit, totalAmountWithGst] = watchedFields;
-        const qty = parseFloat(quantity) || 0;
-        const rateVal = parseFloat(rate) || 0;
-        const gst = parseFloat(gstPercent) || 0;
-        const discount = parseFloat(discountPercent) || 0;
-        const brokerage = parseFloat(brokeragePerUnit) || 0;
-
-        // Calculate amount
-        const amount = qty * rateVal;
-
-        // Calculate GST amount
-        const gstAmount = (amount * gst) / 100;
-
-        // Calculate total with GST
-        const totalWithGst = amount + gstAmount;
-
-        // Calculate discount amount
-        const discountAmount = (totalWithGst * discount) / 100;
-
-        // Calculate broker payable
-        const brokerPayable = qty * brokerage;
-
-        // Calculate total payable (total with GST - discount)
-        const totalPayable = totalWithGst - discountAmount;
-
-        if (amount > 0) {
-            form.setValue('amount', amount.toFixed(2));
-            form.setValue('gstAmount', gstAmount.toFixed(2));
-            form.setValue('totalAmountWithGst', totalWithGst.toFixed(2));
-            form.setValue('discountAmount', discountAmount.toFixed(2));
-            form.setValue('brokerPayable', brokerPayable.toFixed(2));
-            form.setValue('totalPayable', totalPayable.toFixed(2));
-        }
-    }, [watchedFields, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
@@ -311,10 +260,10 @@ export default function AddOtherSalesForm() {
                                     <FormControl>
                                         <RadioGroup
                                             onValueChange={field.onChange}
-                                            defaultValue={field.value}
+                                            value={field.value}
                                             className="flex flex-wrap gap-4"
                                         >
-                                            {quantityTypes.map((type) => (
+                                            {quantityTypeOptions.map((type) => (
                                                 <div key={type.value} className="flex items-center space-x-2">
                                                     <RadioGroupItem value={type.value} id={type.value} />
                                                     <Label htmlFor={type.value}>{type.label}</Label>
@@ -348,28 +297,6 @@ export default function AddOtherSalesForm() {
                             )}
                         />
 
-                        {/* Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="amount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.otherSales.amount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
                         {/* GST Percent */}
                         <FormField
                             control={form.control}
@@ -391,29 +318,8 @@ export default function AddOtherSalesForm() {
                             )}
                         />
 
-                        {/* GST Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="gstAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.otherSales.gstAmount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
-                        {/* Total Amount with GST (Auto-calculated) */}
+                        {/* Total Amount with GST (Editable) */}
                         <FormField
                             control={form.control}
                             name="totalAmountWithGst"
@@ -426,8 +332,7 @@ export default function AddOtherSalesForm() {
                                             step="0.01"
                                             placeholder="0"
                                             {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
+                                            className="placeholder:text-gray-400"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -456,27 +361,6 @@ export default function AddOtherSalesForm() {
                             )}
                         />
 
-                        {/* Discount Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="discountAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.otherSales.discountAmount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
                         {/* Brokerage Per Unit */}
                         <FormField
@@ -499,49 +383,7 @@ export default function AddOtherSalesForm() {
                             )}
                         />
 
-                        {/* Broker Payable (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="brokerPayable"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.otherSales.brokerPayable')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
-                        {/* Total Payable (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="totalPayable"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.otherSales.totalPayable')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
                         {/* Submit Button */}
                         <div className="flex justify-center">

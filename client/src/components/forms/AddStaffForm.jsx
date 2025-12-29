@@ -1,7 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { useCreateStaff } from '../../hooks/useStaff';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -21,7 +20,6 @@ import {
 
 export default function AddStaffForm() {
     const { t } = useTranslation(['forms', 'common']);
-    const navigate = useNavigate();
     const createStaffMutation = useCreateStaff();
 
     const form = useForm({
@@ -31,6 +29,7 @@ export default function AddStaffForm() {
             phone: '',
             email: '',
             address: '',
+            salary: '',
         },
     });
 
@@ -94,6 +93,29 @@ export default function AddStaffForm() {
                                     </FormLabel>
                                     <FormControl>
                                         <Input placeholder="Manager" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Salary */}
+                        <FormField
+                            control={form.control}
+                            name="salary"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-base">
+                                        {t('forms.staff.salary')}
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0"
+                                            {...field}
+                                            className="placeholder:text-gray-400"
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

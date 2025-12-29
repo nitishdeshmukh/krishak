@@ -12,6 +12,7 @@ import committeesRoutes from './committeesRoutes.js';
 import committeeRoutes from './committeesRoutes.js';
 import trucksRoutes from './truckRoutes.js';
 import staffRoutes from './staffRoutes.js';
+import attendanceRoutes from './attendanceRoutes.js';
 
 
 // Purchase routes
@@ -60,6 +61,11 @@ import otherOutwardRoutes from './outward/otherOutwardRoutes.js';
 import paddyMillingRoutes from './milling/paddyMillingRoutes.js';
 import riceMillingRoutes from './milling/riceMillingRoutes.js';
 
+// Labor Cost routes
+import inwardLaborRoutes from './laborCost/inwardLaborRoutes.js';
+import millingLaborRoutes from './laborCost/millingLaborRoutes.js';
+import otherLaborRoutes from './laborCost/otherLaborRoutes.js';
+
 const router = Router();
 
 // ===== AUTH ROUTES =====
@@ -74,6 +80,7 @@ router.use('/committees', committeesRoutes);
 router.use('/committee', committeesRoutes); // Alias for client API compatibility
 router.use('/trucks', trucksRoutes);
 router.use('/staff', staffRoutes);
+router.use('/attendance', attendanceRoutes);
 
 // ===== PURCHASE ROUTES =====
 router.use('/purchases/paddy', paddyPurchasesRoutes);
@@ -121,5 +128,10 @@ router.use('/outward/other', otherOutwardRoutes);
 // ===== MILLING ROUTES =====
 router.use('/milling/paddy', paddyMillingRoutes);
 router.use('/milling/rice', riceMillingRoutes);
+
+// ===== LABOR COST ROUTES =====
+router.use('/labor-cost/inward', inwardLaborRoutes);
+router.use('/labor-cost/milling', millingLaborRoutes);
+router.use('/labor-cost/other', otherLaborRoutes);
 
 export default router;

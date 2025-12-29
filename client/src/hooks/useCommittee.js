@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchCommittee, createCommitteeMember, fetchAllCommittees } from '../api/committeeApi';
+import { fetchCommittee, createCommitteeMember, fetchAllCommittees, createBulkCommitteeMembers } from '../api/committeeApi';
 
 export const useCommittee = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -17,12 +17,12 @@ export const useCommittee = () => {
 
     return {
         ...query,
-        committees: query.data?.data?.committees || [],
-        totalCommittees: query.data?.data?.totalCommittees || 0,
-        totalPages: query.data?.data?.totalPages || 0,
-        currentPage: query.data?.data?.currentPage || 1,
-        hasNext: query.data?.data?.hasNext || false,
-        hasPrev: query.data?.data?.hasPrev || false,
+        committees: query.data?.data?.committees,
+        totalCommittees: query.data?.data?.totalCommittees,
+        totalPages: query.data?.data?.totalPages,
+        currentPage: query.data?.data?.currentPage,
+        hasNext: query.data?.data?.hasNext,
+        hasPrev: query.data?.data?.hasPrev,
     };
 };
 
@@ -49,6 +49,17 @@ export const useCreateCommitteeMember = () => {
     return useMutation({
         mutationFn: createCommitteeMember,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committee'] }),
+    });
+};
+
+export const useCreateBulkCommitteeMembers = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: createBulkCommitteeMembers,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['committee'] });
+            queryClient.invalidateQueries({ queryKey: ['committees-all'] });
+        },
     });
 };
 

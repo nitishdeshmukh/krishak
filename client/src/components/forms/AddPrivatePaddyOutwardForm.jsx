@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreatePrivatePaddyOutward } from '@/hooks/usePrivatePaddyOutward';
+import { useAllPaddySales, usePaddySaleBySaleNumber } from '@/hooks/usePaddySales';
+import { paddyTypeOptions } from '@/lib/constants';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -73,41 +75,41 @@ const privatePaddyOutwardFormSchema = z.object({
     truckWeight: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    gunnyWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    finalWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
 });
 
 export default function AddPrivatePaddyOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createPrivatePaddyOutward = useCreatePrivatePaddyOutward();
+    const [selectedSaleNumber, setSelectedSaleNumber] = useState('');
 
-    const paddySaleOptions = [
-        { value: 'PS-001', label: 'PS-001' },
-        { value: 'PS-002', label: 'PS-002' },
-        { value: 'PS-003', label: 'PS-003' },
-    ];
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
-    const brokerOptions = [
-        { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
-        { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
-        { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
-    ];
-    const paddyTypeOptions = [
-        { value: 'mota', label: t('forms.privatePaddyOutward.paddyTypes.mota') || 'धान(मोटा)' },
-        { value: 'patla', label: t('forms.privatePaddyOutward.paddyTypes.patla') || 'धान(पतला)' },
-        { value: 'sarna', label: t('forms.privatePaddyOutward.paddyTypes.sarna') || 'धान(सरना)' },
-        { value: 'mahamaya', label: t('forms.privatePaddyOutward.paddyTypes.mahamaya') || 'धान(महामाया)' },
-        { value: 'rbgold', label: t('forms.privatePaddyOutward.paddyTypes.rbgold') || 'धान(RB GOLD)' },
-    ];
+    // Fetch all paddy sales for dropdown
+    const { paddySales } = useAllPaddySales();
 
+    // Fetch sale details when a sale number is selected
+    const { saleDetails, isFetching: isFetchingSaleDetails } = usePaddySaleBySaleNumber(selectedSaleNumber);
+
+    // Convert to options format
+    const paddySaleOptions = useMemo(() =>
+        paddySales.map(sale => ({ value: sale.dealNumber, label: sale.dealNumber })),
+        [paddySales]
+    );
+
+    // Map paddyTypeOptions from constants to form enum values
+    const paddyTypeOptionsFormatted = useMemo(() => {
+        // Create a mapping from Hindi labels to enum values
+        const labelToEnumMap = {
+            'धान(मोटा)': 'mota',
+            'धान(पतला)': 'patla',
+            'धान(सरना)': 'sarna',
+            'धान(महामाया)': 'mahamaya',
+            'धान(RB GOLD)': 'rbgold',
+        };
+
+        return paddyTypeOptions.map(option => ({
+            value: labelToEnumMap[option.value] || option.value,
+            label: option.label,
+        }));
+    }, []);
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
         resolver: zodResolver(privatePaddyOutwardFormSchema),
@@ -116,46 +118,67 @@ export default function AddPrivatePaddyOutwardForm() {
             paddySaleNumber: '',
             partyName: '',
             brokerName: '',
-            paddyType: 'mota',
+            paddyType: '',
             saleQuantity: '',
             gunnyNew: '',
             gunnyOld: '',
             gunnyPlastic: '',
-            juteWeight: '',
-            plasticWeight: '',
+            juteWeight: '0.58',
+            plasticWeight: '0.135',
             truckNo: '',
             rstNo: '',
             truckWeight: '',
-            gunnyWeight: '',
-            finalWeight: '',
         },
     });
 
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['truckWeight', 'juteWeight', 'plasticWeight']);
+    // Handle paddy sale number change
+    const handleSaleNumberChange = useCallback((saleNumber) => {
+        setSelectedSaleNumber(saleNumber);
+        form.setValue('paddySaleNumber', saleNumber);
 
-    React.useEffect(() => {
-        const [truckWeight, juteWeight, plasticWeight] = watchedFields;
-        const truck = parseFloat(truckWeight) || 0;
-        const jute = parseFloat(juteWeight) || 0;
-        const plastic = parseFloat(plasticWeight) || 0;
-
-        // Gunny weight = jute + plastic
-        const gunnyWeight = jute + plastic;
-        form.setValue('gunnyWeight', gunnyWeight.toFixed(2));
-
-        // Final weight = truck weight - gunny weight
-        const finalWeight = truck - gunnyWeight;
-        if (finalWeight >= 0) {
-            form.setValue('finalWeight', finalWeight.toFixed(2));
+        if (!saleNumber) {
+            // Clear related fields if no sale number selected
+            form.setValue('partyName', '');
+            form.setValue('brokerName', '');
+            form.setValue('paddyType', '');
         }
-    }, [watchedFields, form]);
+    }, [form]);
+
+    // Auto-fill fields when sale details are fetched
+    useEffect(() => {
+        if (saleDetails && selectedSaleNumber) {
+            const { partyName, brokerName, paddyType } = saleDetails;
+
+            // Auto-fill the fields
+            if (partyName) form.setValue('partyName', partyName);
+            if (brokerName) form.setValue('brokerName', brokerName);
+
+            // Map paddyType from backend to form enum value
+            if (paddyType) {
+                // Convert from display format to enum format
+                const typeMap = {
+                    'धान(मोटा)': 'mota',
+                    'धान(पतला)': 'patla',
+                    'धान(सरना)': 'sarna',
+                    'धान(महामाया)': 'mahamaya',
+                    'धान(RB GOLD)': 'rbgold',
+                };
+
+                const mappedType = typeMap[paddyType] || '';
+                if (mappedType) {
+                    form.setValue('paddyType', mappedType);
+                }
+            }
+        }
+    }, [saleDetails, selectedSaleNumber, form]);
+
+
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createPrivatePaddyOutward.mutate(formattedData, {
@@ -212,7 +235,7 @@ export default function AddPrivatePaddyOutwardForm() {
                                         <SearchableSelect
                                             options={paddySaleOptions}
                                             value={field.value}
-                                            onChange={field.onChange}
+                                            onChange={handleSaleNumberChange}
                                             placeholder="Select"
                                         />
                                     </FormControl>
@@ -221,7 +244,7 @@ export default function AddPrivatePaddyOutwardForm() {
                             )}
                         />
 
-                        {/* Party Name Dropdown */}
+                        {/* Party Name (Auto-filled from Paddy Sale) */}
                         <FormField
                             control={form.control}
                             name="partyName"
@@ -229,11 +252,11 @@ export default function AddPrivatePaddyOutwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.privatePaddyOutward.partyName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={partyOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -241,7 +264,7 @@ export default function AddPrivatePaddyOutwardForm() {
                             )}
                         />
 
-                        {/* Broker Name Dropdown */}
+                        {/* Broker Name (Auto-filled from Paddy Sale) */}
                         <FormField
                             control={form.control}
                             name="brokerName"
@@ -249,11 +272,11 @@ export default function AddPrivatePaddyOutwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.privatePaddyOutward.brokerName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={brokerOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -261,7 +284,7 @@ export default function AddPrivatePaddyOutwardForm() {
                             )}
                         />
 
-                        {/* Paddy Type Dropdown */}
+                        {/* Paddy Type (Auto-filled from Paddy Sale) */}
                         <FormField
                             control={form.control}
                             name="paddyType"
@@ -270,7 +293,7 @@ export default function AddPrivatePaddyOutwardForm() {
                                     <FormLabel className="text-base">{t('forms.privatePaddyOutward.paddyType')}</FormLabel>
                                     <FormControl>
                                         <SearchableSelect
-                                            options={paddyTypeOptions}
+                                            options={paddyTypeOptionsFormatted}
                                             value={field.value}
                                             onChange={field.onChange}
                                             placeholder="Select"
@@ -461,50 +484,6 @@ export default function AddPrivatePaddyOutwardForm() {
                                             placeholder="0"
                                             {...field}
                                             className="placeholder:text-gray-400"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Gunny Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="gunnyWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.privatePaddyOutward.gunnyWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Final Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="finalWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.privatePaddyOutward.finalWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
                                         />
                                     </FormControl>
                                     <FormMessage />

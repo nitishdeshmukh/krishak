@@ -72,7 +72,6 @@ const paddyPurchaseFormSchema = z.object({
     required_error: 'Please select purchase type.',
   }),
   doEntries: z.array(z.object({
-    doInfo: z.string().optional(),
     doNumber: z.string().optional(),
     committeeName: z.string().optional(),
     doPaddyQuantity: z.string().regex(/^\d*$/, {
@@ -140,7 +139,7 @@ export default function AddPaddyPurchaseForm() {
       brokerage: '',
       includeCertificate: '',
       purchaseType: '',
-      doEntries: [{ doInfo: '', doNumber: '', committeeName: '', doPaddyQuantity: '' }],
+      doEntries: [{ doNumber: '', committeeName: '', doPaddyQuantity: '' }],
       grainQuantity: '',
       newPackagingRate: '',
       oldPackagingRate: '',
@@ -331,7 +330,7 @@ export default function AddPaddyPurchaseForm() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ doInfo: '', doNumber: '', committeeName: '', doPaddyQuantity: '0' })}
+                    onClick={() => append({ doNumber: '', committeeName: '', doPaddyQuantity: '0' })}
                     className="text-success border-success/30 hover:bg-success/10"
                   >
                     <Plus className="h-4 w-4 mr-1" />
@@ -357,24 +356,7 @@ export default function AddPaddyPurchaseForm() {
                       )}
                     </div>
 
-                    {/* DO Info */}
-                    <FormField
-                      control={form.control}
-                      name={`doEntries.${index}.doInfo`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-base">DO की जानकारी</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="DO की जानकारी दर्ज करें"
-                              {...field}
-                              className="placeholder:text-gray-400"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+
 
                     {/* DO Number */}
                     <FormField

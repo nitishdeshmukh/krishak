@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateFrkOutward } from '@/hooks/useFrkOutward';
+import { useAllFrkSales, useFrkSaleByDealNumber } from '@/hooks/useFRKSales';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -55,28 +56,24 @@ const frkOutwardFormSchema = z.object({
     truckWeight: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    gunnyWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    finalWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
 });
 
 export default function AddFrkOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createFrkOutward = useCreateFrkOutward();
+    const [selectedDealNumber, setSelectedDealNumber] = useState('');
 
-    const frkSaleOptions = [
-        { value: 'FRK-001', label: 'FRK-001' },
-        { value: 'FRK-002', label: 'FRK-002' },
-        { value: 'FRK-003', label: 'FRK-003' },
-    ];
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
+    // Fetch all FRK sales for dropdown
+    const { frkSales } = useAllFrkSales();
+
+    // Fetch sale details when a deal number is selected
+    const { saleDetails, isFetching: isFetchingSaleDetails } = useFrkSaleByDealNumber(selectedDealNumber);
+
+    // Convert to options format
+    const frkSaleOptions = useMemo(() =>
+        frkSales.map(sale => ({ value: sale.dealNumber, label: sale.dealNumber })),
+        [frkSales]
+    );
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -90,34 +87,32 @@ export default function AddFrkOutwardForm() {
             truckNo: '',
             rstNo: '',
             truckWeight: '',
-            gunnyWeight: '',
-            finalWeight: '',
         },
     });
 
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['truckWeight', 'plasticWeight']);
+    // Handle FRK deal number change
+    const handleDealNumberChange = useCallback((dealNumber) => {
+        setSelectedDealNumber(dealNumber);
+        form.setValue('frkSaleNumber', dealNumber);
 
-    React.useEffect(() => {
-        const [truckWeight, plasticWeight] = watchedFields;
-        const truck = parseFloat(truckWeight) || 0;
-        const plastic = parseFloat(plasticWeight) || 0;
-
-        // Gunny weight = plastic weight
-        form.setValue('gunnyWeight', plastic.toFixed(2));
-
-        // Final weight = truck weight - gunny weight
-        const finalWeight = truck - plastic;
-        if (finalWeight >= 0) {
-            form.setValue('finalWeight', finalWeight.toFixed(2));
+        if (!dealNumber) {
+            form.setValue('partyName', '');
         }
-    }, [watchedFields, form]);
+    }, [form]);
+
+    // Auto-fill fields when sale details are fetched
+    useEffect(() => {
+        if (saleDetails && selectedDealNumber) {
+            const { partyName } = saleDetails;
+            if (partyName) form.setValue('partyName', partyName);
+        }
+    }, [saleDetails, selectedDealNumber, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createFrkOutward.mutate(formattedData, {
@@ -174,7 +169,7 @@ export default function AddFrkOutwardForm() {
                                         <SearchableSelect
                                             options={frkSaleOptions}
                                             value={field.value}
-                                            onChange={field.onChange}
+                                            onChange={handleDealNumberChange}
                                             placeholder="Select"
                                         />
                                     </FormControl>
@@ -183,7 +178,7 @@ export default function AddFrkOutwardForm() {
                             )}
                         />
 
-                        {/* Party Name Dropdown */}
+                        {/* Party Name (Auto-filled from FRK Sale) */}
                         <FormField
                             control={form.control}
                             name="partyName"
@@ -191,11 +186,11 @@ export default function AddFrkOutwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.frkOutward.partyName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={partyOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -299,50 +294,6 @@ export default function AddFrkOutwardForm() {
                                             placeholder="0"
                                             {...field}
                                             className="placeholder:text-gray-400"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Gunny Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="gunnyWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.frkOutward.gunnyWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Final Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="finalWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.frkOutward.finalWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
                                         />
                                     </FormControl>
                                     <FormMessage />

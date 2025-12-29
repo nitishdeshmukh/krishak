@@ -106,4 +106,11 @@ export const fetchAllCommittees = async () => {
     }
 };
 
-export default { fetchCommittee, createCommitteeMember, fetchAllCommittees };
+/**
+ * Create multiple committee members in bulk
+ */
+export const createBulkCommitteeMembers = async (members) => {
+    return await apiClient.post('/committees/bulk', { members });
+};
+
+export default { fetchCommittee, createCommitteeMember, fetchAllCommittees, createBulkCommitteeMembers };

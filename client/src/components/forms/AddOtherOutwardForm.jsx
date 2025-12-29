@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateOtherOutward } from '@/hooks/useOtherOutward';
+import { useAllOtherSales, useOtherSaleByDealNumber } from '@/hooks/useOtherSales';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -77,38 +78,24 @@ const otherOutwardFormSchema = z.object({
     truckWeight: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    gunnyWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    finalWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
 });
 
 export default function AddOtherOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createOtherOutward = useCreateOtherOutward();
+    const [selectedDealNumber, setSelectedDealNumber] = useState('');
 
-    const otherSaleOptions = [
-        { value: 'OS-001', label: 'OS-001' },
-        { value: 'OS-002', label: 'OS-002' },
-        { value: 'OS-003', label: 'OS-003' },
-    ];
-    const itemOptions = [
-        { value: 'वस्तु 1', label: 'वस्तु 1' },
-        { value: 'वस्तु 2', label: 'वस्तु 2' },
-        { value: 'वस्तु 3', label: 'वस्तु 3' },
-    ];
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
-    const brokerOptions = [
-        { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
-        { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
-        { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
-    ];
+    // Fetch all Other sales for dropdown
+    const { otherSales } = useAllOtherSales();
+
+    // Fetch sale details when a deal number is selected
+    const { saleDetails, isFetching: isFetchingSaleDetails } = useOtherSaleByDealNumber(selectedDealNumber);
+
+    // Convert to options format
+    const otherSaleOptions = useMemo(() =>
+        otherSales.map(sale => ({ value: sale.dealNumber, label: sale.dealNumber })),
+        [otherSales]
+    );
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -118,7 +105,7 @@ export default function AddOtherOutwardForm() {
             otherSaleNumber: '',
             itemName: '',
             quantity: '',
-            quantityType: 'kg',
+            quantityType: '',
             partyName: '',
             brokerName: '',
             gunnyNew: '',
@@ -129,36 +116,36 @@ export default function AddOtherOutwardForm() {
             truckNo: '',
             rstNo: '',
             truckWeight: '',
-            gunnyWeight: '',
-            finalWeight: '',
         },
     });
 
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['truckWeight', 'juteWeight', 'plasticWeight']);
+    // Handle Other deal number change
+    const handleDealNumberChange = useCallback((dealNumber) => {
+        setSelectedDealNumber(dealNumber);
+        form.setValue('otherSaleNumber', dealNumber);
 
-    React.useEffect(() => {
-        const [truckWeight, juteWeight, plasticWeight] = watchedFields;
-        const truck = parseFloat(truckWeight) || 0;
-        const jute = parseFloat(juteWeight) || 0;
-        const plastic = parseFloat(plasticWeight) || 0;
-
-        // Gunny weight = jute + plastic
-        const gunnyWeight = jute + plastic;
-        form.setValue('gunnyWeight', gunnyWeight.toFixed(2));
-
-        // Final weight = truck weight - gunny weight
-        const finalWeight = truck - gunnyWeight;
-        if (finalWeight >= 0) {
-            form.setValue('finalWeight', finalWeight.toFixed(2));
+        if (!dealNumber) {
+            form.setValue('partyName', '');
+            form.setValue('brokerName', '');
+            form.setValue('itemName', '');
         }
-    }, [watchedFields, form]);
+    }, [form]);
 
-    // Form submission handler - actual submission after confirmation
+    // Auto-fill fields when sale details are fetched
+    useEffect(() => {
+        if (saleDetails && selectedDealNumber) {
+            const { partyName, brokerName, itemName } = saleDetails;
+            if (partyName) form.setValue('partyName', partyName);
+            if (brokerName) form.setValue('brokerName', brokerName);
+            if (itemName) form.setValue('itemName', itemName);
+        }
+    }, [saleDetails, selectedDealNumber, form]);
+
+    // Form submission handler
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createOtherOutward.mutate(formattedData, {
@@ -215,7 +202,7 @@ export default function AddOtherOutwardForm() {
                                         <SearchableSelect
                                             options={otherSaleOptions}
                                             value={field.value}
-                                            onChange={field.onChange}
+                                            onChange={handleDealNumberChange}
                                             placeholder="Select"
                                         />
                                     </FormControl>
@@ -224,7 +211,7 @@ export default function AddOtherOutwardForm() {
                             )}
                         />
 
-                        {/* Item Name Dropdown */}
+                        {/* Item Name (Auto-filled from Other Sale) */}
                         <FormField
                             control={form.control}
                             name="itemName"
@@ -232,11 +219,11 @@ export default function AddOtherOutwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.otherOutward.itemName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={itemOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -317,7 +304,7 @@ export default function AddOtherOutwardForm() {
                             )}
                         />
 
-                        {/* Party Name Dropdown */}
+                        {/* Party Name (Auto-filled from Other Sale) */}
                         <FormField
                             control={form.control}
                             name="partyName"
@@ -325,11 +312,11 @@ export default function AddOtherOutwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.otherOutward.partyName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={partyOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -337,7 +324,7 @@ export default function AddOtherOutwardForm() {
                             )}
                         />
 
-                        {/* Broker Name Dropdown */}
+                        {/* Broker Name (Auto-filled from Other Sale) */}
                         <FormField
                             control={form.control}
                             name="brokerName"
@@ -345,11 +332,11 @@ export default function AddOtherOutwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.otherOutward.brokerName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={brokerOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />
