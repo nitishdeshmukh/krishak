@@ -7,7 +7,8 @@ import {
     ShoppingBagIcon,
     ArrowDownTrayIcon,
     CurrencyDollarIcon,
-    CogIcon
+    CogIcon,
+    UserGroupIcon
 } from '@heroicons/react/24/outline';
 
 // Lazy load all page components for code splitting
@@ -44,9 +45,6 @@ const AddSackSales = lazy(() => import('@/pages/AddSackSales'));
 const AddFRKSales = lazy(() => import('@/pages/AddFRKSales'));
 const AddBrokensSales = lazy(() => import('@/pages/AddBrokensSales'));
 const AddBrewersSales = lazy(() => import('@/pages/AddBrewersSales'));
-const AddHuskSales = lazy(() => import('@/pages/AddHuskSales'));
-const AddRiceBranSales = lazy(() => import('@/pages/AddRiceBranSales'));
-const AddWhiteBranSales = lazy(() => import('@/pages/AddWhiteBranSales'));
 const AddOtherSales = lazy(() => import('@/pages/AddOtherSales'));
 const AddGovPaddyInward = lazy(() => import('@/pages/AddGovPaddyInward'));
 const AddPrivatePaddyInward = lazy(() => import('@/pages/AddPrivatePaddyInward'));
@@ -68,6 +66,14 @@ const AddWhiteBranOutward = lazy(() => import('@/pages/AddWhiteBranOutward'));
 const AddOtherOutward = lazy(() => import('@/pages/AddOtherOutward'));
 const AddPaddyMilling = lazy(() => import('@/pages/AddPaddyMilling'));
 const AddRiceMilling = lazy(() => import('@/pages/AddRiceMilling'));
+const AddInwardLaborEntry = lazy(() => import('@/pages/LaborCost/AddInwardLaborEntry'));
+const AddMillingLaborEntry = lazy(() => import('@/pages/LaborCost/AddMillingLaborEntry'));
+const AddOtherLaborEntry = lazy(() => import('@/pages/LaborCost/AddOtherLaborEntry'));
+const InwardLaborReport = lazy(() => import('@/pages/LaborCost/InwardLaborReport'));
+const MillingLaborReport = lazy(() => import('@/pages/LaborCost/MillingLaborReport'));
+const OtherLaborReport = lazy(() => import('@/pages/LaborCost/OtherLaborReport'));
+const AddAttendanceEntry = lazy(() => import('@/pages/Attendance/AddAttendanceEntry'));
+const AttendanceReport = lazy(() => import('@/pages/Attendance/AttendanceReport'));
 const ReportsPage = lazy(() => import('@/pages/Reports'));
 
 /**
@@ -79,6 +85,14 @@ export const routes = [
     {
         path: '/entry',
         component: Entry,
+        title: 'Entry',
+        titleKey: 'entry:nav.entry',
+        icon: DocumentTextIcon,
+        showInSidebar: false,
+        view: 'entry',
+    },
+    {
+        path: '/entry',
         title: 'Entry',
         titleKey: 'entry:sections.entry.title',
         icon: DocumentTextIcon,
@@ -231,27 +245,6 @@ export const routes = [
                 component: AddBrewersSales,
                 title: 'Brewers Sales Deal',
                 titleKey: 'entry:sections.sales.brewers',
-                showInSidebar: true,
-            },
-            {
-                path: '/sales/husk',
-                component: AddHuskSales,
-                title: 'Husk Sales Deal',
-                titleKey: 'entry:sections.sales.husk',
-                showInSidebar: true,
-            },
-            {
-                path: '/sales/ricebran',
-                component: AddRiceBranSales,
-                title: 'Rice Bran Sales Deal',
-                titleKey: 'entry:sections.sales.ricebran',
-                showInSidebar: true,
-            },
-            {
-                path: '/sales/whitebran',
-                component: AddWhiteBranSales,
-                title: 'White Bran Sales Deal',
-                titleKey: 'entry:sections.sales.whitebran',
                 showInSidebar: true,
             },
             {
@@ -453,7 +446,7 @@ export const routes = [
     },
     {
         path: '/reports/entry',
-        component: ReportsPage,
+        // component: ReportsPage, // Parent nav item - no component rendering
         title: 'Entry Report',
         titleKey: 'reports:sections.entry.title',
         icon: DocumentTextIcon,
@@ -506,7 +499,7 @@ export const routes = [
     },
     {
         path: '/reports/purchase',
-        component: ReportsPage,
+        // component: ReportsPage, // Parent nav item - no component rendering
         title: 'Purchase Deals Report',
         titleKey: 'reports:sections.purchase.title',
         icon: ShoppingBagIcon,
@@ -531,7 +524,7 @@ export const routes = [
     },
     {
         path: '/reports/sales',
-        component: ReportsPage,
+        // component: ReportsPage, // Parent nav item - no component rendering
         title: 'Sales Deals Report',
         titleKey: 'reports:sections.sales.title',
         icon: CurrencyDollarIcon,
@@ -549,7 +542,7 @@ export const routes = [
     },
     {
         path: '/reports/inward',
-        component: ReportsPage,
+        // component: ReportsPage, // Parent nav item - no component rendering
         title: 'Inward Report',
         titleKey: 'reports:sections.inward.title',
         icon: ArrowDownTrayIcon,
@@ -578,6 +571,94 @@ export const routes = [
                 showInSidebar: true,
             },
         ],
+    },
+
+    // ===== LABOR COST REPORT ROUTES =====
+    {
+        path: '/reports/labor-cost',
+        title: 'Labor Cost Report',
+        titleKey: 'reports:sections.laborCost.title',
+        icon: CurrencyDollarIcon,
+        showInSidebar: true,
+        view: 'reports',
+        children: [
+            {
+                path: '/reports/labor-cost/inward',
+                component: InwardLaborReport,
+                title: 'Inward Labor Report',
+                titleKey: 'reports:sections.laborCost.inward',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/labor-cost/milling',
+                component: MillingLaborReport,
+                title: 'Milling Labor Report',
+                titleKey: 'reports:sections.laborCost.milling',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/labor-cost/other',
+                component: OtherLaborReport,
+                title: 'Other Labor Report',
+                titleKey: 'reports:sections.laborCost.other',
+                showInSidebar: true,
+            },
+        ],
+    },
+
+    // ===== ATTENDANCE REPORT ROUTES =====
+    {
+        path: '/reports/attendance',
+        component: AttendanceReport,
+        title: 'Attendance Report',
+        titleKey: 'reports:sections.attendance.title',
+        icon: UserGroupIcon,
+        showInSidebar: true,
+        view: 'reports',
+    },
+
+    // ===== LABOR COST ROUTES =====
+    {
+        path: '/labor-cost',
+        title: 'Labor Cost',
+        titleKey: 'entry:sections.laborCost.title',
+        icon: CurrencyDollarIcon,
+        showInSidebar: true,
+        view: 'entry',
+        children: [
+            {
+                path: '/labor-cost/inward',
+                component: AddInwardLaborEntry,
+                title: 'Inward Labor',
+                titleKey: 'entry:sections.laborCost.inward',
+                showInSidebar: true,
+            },
+            {
+                path: '/labor-cost/milling',
+                component: AddMillingLaborEntry,
+                title: 'Milling Labor',
+                titleKey: 'entry:sections.laborCost.milling',
+                showInSidebar: true,
+            },
+            {
+                path: '/labor-cost/other',
+                component: AddOtherLaborEntry,
+                title: 'Other Labor',
+                titleKey: 'entry:sections.laborCost.other',
+                showInSidebar: true,
+            },
+        ],
+    },
+
+    // ===== ATTENDANCE ENTRY ROUTES =====
+    {
+        path: '/entry/attendance',
+        component: AddAttendanceEntry,
+        title: 'Mark Attendance',
+        titleKey: 'entry:sections.attendance.title',
+        icon: UserGroupIcon,
+        showInSidebar: true,
+        view: 'entry',
     },
 
     // ===== UTILITY ROUTES (hidden from sidebar) =====

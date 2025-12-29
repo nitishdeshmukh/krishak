@@ -65,4 +65,43 @@ export const createPaddySale = async (saleData) => {
     }
 };
 
-export default { fetchPaddySales, createPaddySale };
+// Fetch all paddy sales (only sale numbers for dropdown)
+export const fetchAllPaddySales = async () => {
+    try {
+        const data = await apiClient.get('/sales/paddy/all');
+        return data;
+    } catch (error) {
+        console.warn('⚠️ API not available, using dummy data');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        return {
+            success: true,
+            message: 'Paddy sales retrieved successfully (DUMMY DATA)',
+            data: DUMMY_PADDY_SALES.map(ps => ({ dealNumber: ps.dealNumber })),
+        };
+    }
+};
+
+// Fetch paddy sale details by sale number (for auto-fill)
+export const fetchPaddySaleBySaleNumber = async (saleNumber) => {
+    try {
+        const data = await apiClient.get(`/sales/paddy/by-number/${saleNumber}`);
+        return data;
+    } catch (error) {
+        console.warn('⚠️ API not available, using dummy data');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const sale = DUMMY_PADDY_SALES.find(ps => ps.dealNumber === saleNumber);
+        if (!sale) {
+            throw new Error('Paddy sale not found');
+        }
+        return {
+            success: true,
+            data: {
+                partyName: sale.partyName,
+                brokerName: sale.brokerName,
+                paddyType: sale.paddyType,
+            },
+        };
+    }
+};
+
+export default { fetchPaddySales, createPaddySale, fetchAllPaddySales, fetchPaddySaleBySaleNumber };

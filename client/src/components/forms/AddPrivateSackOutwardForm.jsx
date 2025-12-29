@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreatePrivateSackOutward } from '@/hooks/usePrivateSackOutward';
+import { useAllSackSales, useSackSaleByDealNumber } from '@/hooks/useSackSales';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -59,17 +60,19 @@ const privateSackOutwardFormSchema = z.object({
 export default function AddPrivateSackOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createPrivateSackOutward = useCreatePrivateSackOutward();
+    const [selectedDealNumber, setSelectedDealNumber] = useState('');
 
-    const sackSaleOptions = [
-        { value: 'SS-001', label: 'SS-001' },
-        { value: 'SS-002', label: 'SS-002' },
-        { value: 'SS-003', label: 'SS-003' },
-    ];
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
+    // Fetch all sack sales for dropdown
+    const { sackSales } = useAllSackSales();
+
+    // Fetch sale details when a deal number is selected
+    const { saleDetails, isFetching: isFetchingSaleDetails } = useSackSaleByDealNumber(selectedDealNumber);
+
+    // Convert to options format
+    const sackSaleOptions = useMemo(() =>
+        sackSales.map(sale => ({ value: sale.dealNumber, label: sale.dealNumber })),
+        [sackSales]
+    );
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -85,11 +88,32 @@ export default function AddPrivateSackOutwardForm() {
         },
     });
 
+    // Handle sack deal number change
+    const handleDealNumberChange = useCallback((dealNumber) => {
+        setSelectedDealNumber(dealNumber);
+        form.setValue('sackSaleNumber', dealNumber);
+
+        if (!dealNumber) {
+            // Clear related fields if no deal number selected
+            form.setValue('partyName', '');
+        }
+    }, [form]);
+
+    // Auto-fill fields when sale details are fetched
+    useEffect(() => {
+        if (saleDetails && selectedDealNumber) {
+            const { partyName } = saleDetails;
+
+            // Auto-fill the party field
+            if (partyName) form.setValue('partyName', partyName);
+        }
+    }, [saleDetails, selectedDealNumber, form]);
+
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createPrivateSackOutward.mutate(formattedData, {
@@ -146,7 +170,7 @@ export default function AddPrivateSackOutwardForm() {
                                         <SearchableSelect
                                             options={sackSaleOptions}
                                             value={field.value}
-                                            onChange={field.onChange}
+                                            onChange={handleDealNumberChange}
                                             placeholder="Select"
                                         />
                                     </FormControl>
@@ -155,7 +179,7 @@ export default function AddPrivateSackOutwardForm() {
                             )}
                         />
 
-                        {/* Party Name Dropdown */}
+                        {/* Party Name (Auto-filled from Sack Purchase) */}
                         <FormField
                             control={form.control}
                             name="partyName"
@@ -163,11 +187,11 @@ export default function AddPrivateSackOutwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.privateSackOutward.partyName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={partyOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />

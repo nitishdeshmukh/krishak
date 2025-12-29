@@ -77,4 +77,8 @@ export const createFrkInward = async (inwardData) => {
     }
 };
 
-export default { fetchFrkInward, createFrkInward };
+export const fetchAllFrkInward = async () => {
+    return await fetchFrkInward({ page: 1, pageSize: 1000 });
+};
+
+export default { fetchFrkInward, fetchAllFrkInward, createFrkInward };

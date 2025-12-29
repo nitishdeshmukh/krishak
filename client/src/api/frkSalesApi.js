@@ -77,4 +77,14 @@ export const createFRKSales = async (salesData) => {
     }
 };
 
-export default { fetchFRKSales, createFRKSales };
+// Fetch all FRK sales for dropdown
+export const fetchAllFrkSales = async () => {
+    return await apiClient.get('/sales/frk/all');
+};
+
+// Fetch FRK sale by deal number for auto-fill
+export const fetchFrkSaleByDealNumber = async (dealNumber) => {
+    return await apiClient.get(`/sales/frk/by-deal-number/${dealNumber}`);
+};
+
+export default { fetchFRKSales, createFRKSales, fetchAllFrkSales, fetchFrkSaleByDealNumber };

@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const schema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    dealNumber: { type: String, trim: true, unique: true },
     partyName: { type: String, required: true, trim: true },
     party: { type: mongoose.Schema.Types.ObjectId, ref: 'Party' },
     brokerName: { type: String, trim: true },
@@ -11,8 +13,6 @@ const schema = new mongoose.Schema({
     salesType: { type: String, enum: ['do-sales', 'other-sales'] },
     quantity: { type: String, trim: true },
     delivery: { type: String, enum: ['at-location', 'delivered'] },
-
-    // DO Entries (for DO बिक्री)
     doEntries: [{
         doNumber: { type: String, trim: true },
         dhanMota: { type: String, trim: true },
@@ -37,6 +37,9 @@ const schema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate dealNumber: PS-DDMMYY-N (Paddy Sales)
+schema.pre('save', createNumberGeneratorMiddleware('dealNumber', 'PS'));
 
 schema.plugin(aggregatePaginate);
 export default mongoose.model('PaddySales', schema);

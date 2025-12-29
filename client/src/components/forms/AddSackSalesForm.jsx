@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateSackSales } from '@/hooks/useSackSales';
+import { useAllParties } from '@/hooks/useParties';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -57,20 +58,20 @@ const sackSalesFormSchema = z.object({
     plasticPackagingRate: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    payableAmount: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
 });
 
 export default function AddSackSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createSackSales = useCreateSackSales();
 
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
+    // Fetch parties from server
+    const { parties, isLoading: partiesLoading } = useAllParties();
+
+    // Convert to options format for SearchableSelect
+    const partyOptions = useMemo(() =>
+        parties.map(party => ({ value: party.partyName, label: party.partyName })),
+        [parties]
+    );
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -84,23 +85,10 @@ export default function AddSackSalesForm() {
             oldPackagingRate: '',
             plasticPackagingCount: '',
             plasticPackagingRate: '',
-            payableAmount: '',
         },
     });
 
-    // Calculate payable amount automatically
-    const watchedFields = form.watch(['newPackagingCount', 'newPackagingRate', 'oldPackagingCount', 'oldPackagingRate', 'plasticPackagingCount', 'plasticPackagingRate']);
 
-    React.useEffect(() => {
-        const [newCount, newRate, oldCount, oldRate, plasticCount, plasticRate] = watchedFields;
-        const newTotal = (parseFloat(newCount) || 0) * (parseFloat(newRate) || 0);
-        const oldTotal = (parseFloat(oldCount) || 0) * (parseFloat(oldRate) || 0);
-        const plasticTotal = (parseFloat(plasticCount) || 0) * (parseFloat(plasticRate) || 0);
-        const total = newTotal + oldTotal + plasticTotal;
-        if (total > 0) {
-            form.setValue('payableAmount', total.toFixed(2));
-        }
-    }, [watchedFields, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
@@ -295,27 +283,6 @@ export default function AddSackSalesForm() {
                             )}
                         />
 
-                        {/* Payable Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="payableAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.sackSales.payableAmount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
 
                         {/* Submit Button */}
                         <div className="flex justify-center">

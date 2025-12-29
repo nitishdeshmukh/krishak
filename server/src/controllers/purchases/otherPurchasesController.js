@@ -20,6 +20,18 @@ export const getOtherPurchases = asyncHandler(async (req, res) => {
     });
 });
 
+export const getAllOtherPurchases = asyncHandler(async (req, res) => {
+    const otherPurchases = await OtherPurchase.find({ isActive: { $ne: false } })
+        .select('otherPurchaseNumber')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        message: 'All Other Purchases retrieved successfully',
+        data: { otherPurchases },
+    });
+});
+
 export const getOtherPurchaseById = asyncHandler(async (req, res) => {
     const record = await OtherPurchase.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });

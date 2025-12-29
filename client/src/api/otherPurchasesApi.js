@@ -93,4 +93,17 @@ export const createOtherPurchase = async (purchaseData) => {
     }
 };
 
-export default { fetchOtherPurchases, createOtherPurchase };
+/**
+ * Fetch all other purchases for dropdown/select use (no pagination)
+ */
+export const fetchAllOtherPurchases = async () => {
+    try {
+        const response = await apiClient.get('/purchases/other/all');
+        return response?.data?.otherPurchases;
+    } catch (error) {
+        console.warn('⚠️ API not available for fetching all other purchases');
+        return [];
+    }
+};
+
+export default { fetchOtherPurchases, createOtherPurchase, fetchAllOtherPurchases };

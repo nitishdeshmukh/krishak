@@ -2,6 +2,15 @@ import RiceInward from '../../models/inward/RiceInward.js';
 import asyncHandler from '../../utils/asyncHandler.js';
 import { getPagination, buildPaginationResponse, getSorting, getFilters } from '../../utils/pagination.js';
 
+// Get all unique lot numbers (for dropdowns)
+export const getAllLotNumbers = asyncHandler(async (req, res) => {
+    const lotNumbers = await RiceInward.find({ isActive: { $ne: false }, lotNo: { $exists: true, $ne: '' } })
+        .select('lotNo')
+        .distinct('lotNo')
+        .sort();
+    res.status(200).json({ success: true, data: lotNumbers.map(lotNo => ({ lotNo })) });
+});
+
 export const getRiceInward = asyncHandler(async (req, res) => {
     const { page, pageSize } = getPagination(req.query);
     const sort = getSorting(req.query);

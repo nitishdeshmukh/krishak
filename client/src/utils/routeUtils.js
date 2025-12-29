@@ -27,7 +27,8 @@ export const findRouteByPath = (routes, pathname) => {
 
 /**
  * Generate breadcrumbs for current path
- * Handles Entry, Reports, and Utility views
+ * Shows navigation hierarchy without view type duplication
+ * Example: "Entry > Add Mill Staff" (not "Entry > Entry > Add Mill Staff")
  * @param {string} pathname - Current pathname
  * @param {Array} routes - Route configuration array
  * @param {Function} t - Translation function
@@ -37,7 +38,7 @@ export const getBreadcrumbs = (pathname, routes, t) => {
     const breadcrumbs = [];
     const found = findRouteByPath(routes, pathname);
 
-    // Utility routes (UI Guide) - standalone, no parent breadcrumb
+    // Utility routes (UI Guide) - standalone
     if (found?.route?.view === 'utility' || found?.view === 'utility') {
         const route = found.route || found;
         if (route.titleKey) {
@@ -49,24 +50,17 @@ export const getBreadcrumbs = (pathname, routes, t) => {
         return breadcrumbs;
     }
 
-    // Add dashboard breadcrumb based on current view
-    if (pathname.startsWith('/reports')) {
-        breadcrumbs.push({ label: t('entry:dashboard.reports'), path: '/reports' });
-    } else if (!pathname.startsWith('/ui/')) {
-        breadcrumbs.push({ label: t('entry:dashboard.entry'), path: '/entry' });
-    }
-
-    // Dashboard roots - return early
+    // Dashboard roots - return empty (no breadcrumbs needed)
     if (pathname === '/' || pathname === '/entry' || pathname === '/reports') {
         return breadcrumbs;
     }
 
-    // Add current page breadcrumb
+    // Add navigation hierarchy breadcrumbs
     if (found) {
         const route = found.route || found;
         const parentRoute = found.parent;
 
-        // Add parent breadcrumb if exists
+        // Add parent breadcrumb (nav item like "Entry", "Purchase Deals", etc.)
         if (parentRoute && parentRoute.titleKey) {
             breadcrumbs.push({
                 label: t(parentRoute.titleKey),

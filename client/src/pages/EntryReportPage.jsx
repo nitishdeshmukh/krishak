@@ -147,6 +147,56 @@ export default function EntryReportPage() {
                     ))}
                 </div>
             </section>
+
+            {/* Labor Cost Reports Section */}
+            <section>
+                <h2 className="text-2xl font-bold mb-4">{t('reports:sections.laborCost.title') || 'Labor Cost Reports'}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                        {
+                            icon: UserGroupIcon,
+                            title: t('reports:sections.laborCost.inward') || 'Inward Labor (जावक हमाली)',
+                            onClick: () => navigate('/reports/labor-cost/inward'),
+                            iconBg: 'bg-orange-100',
+                            iconColor: 'text-orange-600',
+                        },
+                        {
+                            icon: UserGroupIcon,
+                            title: t('reports:sections.laborCost.milling') || 'Milling Labor (मिलिंग हमाली)',
+                            onClick: () => navigate('/reports/labor-cost/milling'),
+                            iconBg: 'bg-orange-100',
+                            iconColor: 'text-orange-600',
+                        },
+                        {
+                            icon: UserGroupIcon,
+                            title: t('reports:sections.laborCost.other') || 'Other Labor (अन्य हमाली)',
+                            onClick: () => navigate('/reports/labor-cost/other'),
+                            iconBg: 'bg-orange-100',
+                            iconColor: 'text-orange-600',
+                        },
+                    ].map((card, index) => (
+                        <DashboardCard key={index} {...card} />
+                    ))}
+                </div>
+            </section>
+
+            {/* Attendance Reports Section */}
+            <section>
+                <h2 className="text-2xl font-bold mb-4">{t('reports:sections.attendance.title') || 'Attendance Reports'}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                        {
+                            icon: UserGroupIcon,
+                            title: t('reports:sections.attendance.title') || 'Attendance Report (उपस्थिति रिपोर्ट)',
+                            onClick: () => navigate('/reports/attendance'),
+                            iconBg: 'bg-teal-100',
+                            iconColor: 'text-teal-600',
+                        },
+                    ].map((card, index) => (
+                        <DashboardCard key={index} {...card} />
+                    ))}
+                </div>
+            </section>
         </div>
     );
 }

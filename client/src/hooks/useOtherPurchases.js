@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchOtherPurchases, createOtherPurchase } from '../api/otherPurchasesApi';
+import { fetchOtherPurchases, createOtherPurchase, fetchAllOtherPurchases } from '../api/otherPurchasesApi';
 
 export const useOtherPurchases = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -32,6 +32,20 @@ export const useCreateOtherPurchase = () => {
         mutationFn: createOtherPurchase,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['otherPurchases'] }),
     });
+};
+
+export const useAllOtherPurchases = () => {
+    const query = useQuery({
+        queryKey: ['otherPurchases', 'all'],
+        queryFn: fetchAllOtherPurchases,
+        staleTime: 60000,
+        refetchOnMount: 'always',
+    });
+
+    return {
+        ...query,
+        otherPurchases: query.data || [],
+    };
 };
 
 export default useOtherPurchases;

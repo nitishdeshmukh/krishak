@@ -23,6 +23,16 @@
             "govtPaddy": "शासकीय धान आवक",
             "privatePaddy": "निजी धान आवक",
             "riceInward": "चावल आवक / LOT जमा"
+        },
+        "laborCost": {
+            "title": "हमाली लागत",
+            "inward": "जावक हमाली",
+            "milling": "मिलिंग हमाली",
+            "other": "अन्य हमाली"
+        },
+        "attendance": {
+            "title": "उपस्थिति",
+            "markAttendance": "उपस्थिति दर्ज करें"
         }
     },
     "sections": {
@@ -85,6 +95,16 @@
             "title": "मिलिंग",
             "paddy": "धान मिलिंग",
             "rice": "चावल मिलिंग"
+        },
+        "laborCost": {
+            "title": "हमाली लागत",
+            "inward": "जावक हमाली",
+            "milling": "मिलिंग हमाली",
+            "other": "अन्य हमाली"
+        },
+        "attendance": {
+            "title": "उपस्थिति",
+            "markAttendance": "उपस्थिति दर्ज करें"
         }
     },
     "nav": {
@@ -94,7 +114,9 @@
         "sales": "बिक्री सौदा",
         "inward": "आवक",
         "outward": "जावक",
-        "milling": "मिलिंग"
+        "milling": "मिलिंग",
+        "laborCost": "हमाली लागत",
+        "attendance": "उपस्थिति"
     },
     "dashboard": {
         "entry": "प्रविष्टि",

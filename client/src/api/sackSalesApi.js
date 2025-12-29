@@ -79,4 +79,14 @@ export const createSackSales = async (salesData) => {
     }
 };
 
-export default { fetchSackSales, createSackSales };
+// Fetch all sack sales for dropdown
+export const fetchAllSackSales = async () => {
+    return await apiClient.get('/sales/sack/all');
+};
+
+// Fetch sack sale by deal number for auto-fill
+export const fetchSackSaleByDealNumber = async (dealNumber) => {
+    return await apiClient.get(`/sales/sack/by-deal-number/${dealNumber}`);
+};
+
+export default { fetchSackSales, createSackSales, fetchAllSackSales, fetchSackSaleByDealNumber };

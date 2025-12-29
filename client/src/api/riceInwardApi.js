@@ -101,4 +101,26 @@ export const createRiceInward = async (inwardData) => {
     }
 };
 
-export default { fetchRiceInward, createRiceInward };
+// Fetch all unique lot numbers (for dropdown)
+export const fetchAllLotNumbers = async () => {
+    try {
+        const data = await apiClient.get('/inward/rice/lot-numbers');
+        return data;
+    } catch (error) {
+        console.warn('⚠️ API not available, using dummy data');
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // Extract unique lot numbers from dummy data
+        const uniqueLotNumbers = [...new Set(DUMMY_RICE_INWARD.map(item => item.lotNo))];
+        return {
+            success: true,
+            message: 'Lot numbers retrieved successfully (DUMMY DATA)',
+            data: uniqueLotNumbers.map(lotNo => ({ lotNo })),
+        };
+    }
+};
+
+export const fetchAllRiceInward = async () => {
+    return await fetchRiceInward({ page: 1, pageSize: 1000 });
+};
+
+export default { fetchRiceInward, fetchAllRiceInward, createRiceInward, fetchAllLotNumbers };

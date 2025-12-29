@@ -12,6 +12,27 @@ export const getFrkSales = asyncHandler(async (req, res) => {
     res.status(200).json({ success: true, data: { frkSales: result.docs, totalFrkSales: result.totalDocs, ...buildPaginationResponse(result.totalDocs, page, pageSize) } });
 });
 
+// Get all FRK sales for dropdown
+export const getAllFrkSales = asyncHandler(async (req, res) => {
+    const sales = await FrkSales.find({ isActive: { $ne: false } })
+        .select('dealNumber partyName')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: { frkSales: sales },
+    });
+});
+
+// Get FRK sale by deal number (for auto-fill)
+export const getFrkSaleByDealNumber = asyncHandler(async (req, res) => {
+    const { dealNumber } = req.params;
+    const record = await FrkSales.findOne({ dealNumber, isActive: { $ne: false } })
+        .select('partyName brokerName');
+    if (!record) return res.status(404).json({ success: false, message: 'FRK sale not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getFrkSaleById = asyncHandler(async (req, res) => {
     const record = await FrkSales.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
