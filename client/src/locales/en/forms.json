@@ -74,6 +74,7 @@
             "description": "Fill in staff details",
             "name": "Name",
             "post": "Post/Designation",
+            "salary": "Salary",
             "phone": "Phone No.",
             "email": "Email",
             "address": "Address"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateSackInward } from '@/hooks/useSackInward';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import { useAllSackPurchases, useSackPurchaseByNumber } from '@/hooks/useSackPurchases';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,9 +40,9 @@ const sackInwardFormSchema = z.object({
     sackPurchaseNumber: z.string().min(1, {
         message: 'Please select sack purchase.',
     }),
-    partyName: z.string().min(1, {
-        message: 'Please select a party.',
-    }),
+    partyName: z.string().optional(),
+    delivery: z.string().optional(),
+    samitiSangrahan: z.string().optional(),
     gunnyNew: z.string().regex(/^\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
@@ -51,26 +52,24 @@ const sackInwardFormSchema = z.object({
     gunnyPlastic: z.string().regex(/^\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    gunnyBundle: z.string().regex(/^\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
 });
 
 export default function AddSackInwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createSackInward = useCreateSackInward();
+    const [showSamitiField, setShowSamitiField] = useState(false);
 
-    const sackPurchaseOptions = [
-        { value: 'SP-001', label: 'SP-001' },
-        { value: 'SP-002', label: 'SP-002' },
-        { value: 'SP-003', label: 'SP-003' },
-        { value: 'SP-004', label: 'SP-004' },
-    ];
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
+    // Fetch data from API
+    const { sackPurchases } = useAllSackPurchases();
+
+    // Convert fetched data to options format
+    const sackPurchaseOptions = useMemo(() =>
+        sackPurchases.map(sp => ({
+            value: sp.sackPurchaseNumber,
+            label: sp.sackPurchaseNumber
+        })),
+        [sackPurchases]
+    );
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -79,19 +78,44 @@ export default function AddSackInwardForm() {
             date: new Date(),
             sackPurchaseNumber: '',
             partyName: '',
+            delivery: '',
+            samitiSangrahan: '',
             gunnyNew: '',
             gunnyOld: '',
             gunnyPlastic: '',
-            gunnyBundle: '',
         },
     });
 
+    // Watch sackPurchaseNumber for auto-fetch
+    const watchedSackPurchaseNumber = form.watch('sackPurchaseNumber');
+
+    // Use hook to fetch purchase details
+    const { purchaseDetails, isLoading: isLoadingDetails } = useSackPurchaseByNumber(watchedSackPurchaseNumber);
+
+    // Update form fields when purchase details change
+    useEffect(() => {
+        if (!watchedSackPurchaseNumber) {
+            form.setValue('partyName', '');
+            form.setValue('delivery', '');
+            form.setValue('samitiSangrahan', '');
+            setShowSamitiField(false);
+            return;
+        }
+
+        if (purchaseDetails) {
+            const { partyName, delivery, samitiSangrahan } = purchaseDetails;
+            form.setValue('partyName', partyName || '');
+            form.setValue('delivery', delivery || '');
+            form.setValue('samitiSangrahan', samitiSangrahan || '');
+            setShowSamitiField(delivery === 'samiti-sangrahan');
+        }
+    }, [purchaseDetails, watchedSackPurchaseNumber, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createSackInward.mutate(formattedData, {
@@ -100,6 +124,7 @@ export default function AddSackInwardForm() {
                     description: `Inward for ${data.partyName} has been recorded.`,
                 });
                 form.reset();
+                setShowSamitiField(false);
             },
             onError: (error) => {
                 toast.error('Error creating Sack Inward', {
@@ -157,7 +182,7 @@ export default function AddSackInwardForm() {
                             )}
                         />
 
-                        {/* Party Name Dropdown */}
+                        {/* Party Name (Readonly - Auto-populated) */}
                         <FormField
                             control={form.control}
                             name="partyName"
@@ -165,17 +190,59 @@ export default function AddSackInwardForm() {
                                 <FormItem>
                                     <FormLabel className="text-base">{t('forms.sackInward.partyName')}</FormLabel>
                                     <FormControl>
-                                        <SearchableSelect
-                                            options={partyOptions}
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            placeholder="Select"
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
                                         />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
+
+                        {/* Delivery (Readonly - Auto-populated) */}
+                        <FormField
+                            control={form.control}
+                            name="delivery"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-base">{t('forms.sackInward.delivery')}</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            readOnly
+                                            className="bg-muted"
+                                            placeholder=""
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Samiti Sangrahan (Conditional - only shown when delivery === 'samiti-sangrahan') */}
+                        {showSamitiField && (
+                            <FormField
+                                control={form.control}
+                                name="samitiSangrahan"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-base">{t('forms.sackInward.samitiSangrahan')}</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                readOnly
+                                                className="bg-muted"
+                                                placeholder="Auto-populated from sack purchase"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         {/* Gunny New */}
                         <FormField
@@ -240,27 +307,6 @@ export default function AddSackInwardForm() {
                             )}
                         />
 
-                        {/* Gunny Bundle */}
-                        <FormField
-                            control={form.control}
-                            name="gunnyBundle"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.sackInward.gunnyBundle')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="1"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
                         {/* Submit Button */}
                         <div className="flex justify-center">
                             <Button
@@ -297,3 +343,4 @@ export default function AddSackInwardForm() {
         </Card>
     );
 }
+

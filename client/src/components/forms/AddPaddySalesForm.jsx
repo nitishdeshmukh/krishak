@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -27,6 +27,7 @@ import { useAllBrokers } from '@/hooks/useBrokers';
 import { useAllCommittees } from '@/hooks/useCommittee';
 import { paddyTypeOptions } from '@/lib/constants';
 import { useAllDOEntries } from '@/hooks/useDOEntries';
+import { fetchDOEntryByNumber } from '@/api/doEntriesApi';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
   AlertDialog,
@@ -73,9 +74,6 @@ const paddySalesFormSchema = z.object({
   })).optional(),
   paddyType: z.string().min(1, {
     message: 'Please select paddy type.',
-  }).optional(),
-  paddyQuantity: z.string().regex(/^\d*\.?\d*$/, {
-    message: 'Must be a valid number.',
   }).optional(),
   paddyRate: z.string().regex(/^\d*\.?\d*$/, {
     message: 'Must be a valid number.',
@@ -143,7 +141,6 @@ export default function AddPaddySalesForm() {
       delivery: '',
       doEntries: [{ doNumber: '', dhanMota: '', dhanPatla: '', dhanSarna: '' }],
       paddyType: '',
-      paddyQuantity: '',
       paddyRate: '',
       wastagePercent: '',
       brokerage: '',
@@ -165,6 +162,30 @@ export default function AddPaddySalesForm() {
 
   // Watch packaging to conditionally show packaging rate fields
   const packaging = form.watch('packaging');
+
+  // Handler to fetch DO details and auto-fill grain fields
+  const handleDOChange = useCallback(async (doNumber, index, fieldOnChange) => {
+    fieldOnChange(doNumber); // Update the field value first
+
+    if (!doNumber) {
+      form.setValue(`doEntries.${index}.dhanMota`, '');
+      form.setValue(`doEntries.${index}.dhanPatla`, '');
+      form.setValue(`doEntries.${index}.dhanSarna`, '');
+      return;
+    }
+
+    try {
+      const response = await fetchDOEntryByNumber(doNumber);
+      if (response?.data) {
+        const { grainMota, grainPatla, grainSarna } = response.data;
+        form.setValue(`doEntries.${index}.dhanMota`, grainMota);
+        form.setValue(`doEntries.${index}.dhanPatla`, grainPatla);
+        form.setValue(`doEntries.${index}.dhanSarna`, grainSarna);
+      }
+    } catch (error) {
+      console.error('Error fetching DO details:', error);
+    }
+  }, [form]);
 
   // Form submission handler - actual submission after confirmation
   const handleConfirmedSubmit = (data) => {
@@ -396,7 +417,7 @@ export default function AddPaddySalesForm() {
                               <SearchableSelect
                                 options={doOptions}
                                 value={field.value}
-                                onChange={field.onChange}
+                                onChange={(value) => handleDOChange(value, index, field.onChange)}
                                 placeholder="Select DO"
                               />
                             </FormControl>
@@ -418,7 +439,8 @@ export default function AddPaddySalesForm() {
                                 step="0.01"
                                 placeholder="0"
                                 {...field}
-                                className="placeholder:text-gray-400"
+                                // readOnly
+                                className="bg-muted"
                               />
                             </FormControl>
                             <FormMessage />
@@ -439,7 +461,8 @@ export default function AddPaddySalesForm() {
                                 step="0.01"
                                 placeholder="0"
                                 {...field}
-                                className="placeholder:text-gray-400"
+                                // readOnly
+                                className="bg-muted"
                               />
                             </FormControl>
                             <FormMessage />
@@ -460,7 +483,8 @@ export default function AddPaddySalesForm() {
                                 step="0.01"
                                 placeholder="0"
                                 {...field}
-                                className="placeholder:text-gray-400"
+                                // readOnly
+                                className="bg-muted"
                               />
                             </FormControl>
                             <FormMessage />
@@ -495,26 +519,7 @@ export default function AddPaddySalesForm() {
               />
             )}
 
-            {/* धान की मात्रा (Paddy Quantity) */}
-            <FormField
-              control={form.control}
-              name="paddyQuantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">धान की मात्रा</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0"
-                      {...field}
-                      className="placeholder:text-gray-400"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             {/* धान का भाव/दर (Paddy Rate) */}
             <FormField

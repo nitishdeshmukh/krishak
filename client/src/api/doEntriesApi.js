@@ -44,4 +44,11 @@ export const fetchAllDOEntries = async () => {
     }
 };
 
-export default { fetchDOEntries, createDOEntry, createBulkDOEntries, updateDOEntry, deleteDOEntry, fetchAllDOEntries };
+/**
+ * Fetch DO entry details by DO number (for auto-fill)
+ */
+export const fetchDOEntryByNumber = async (doNumber) => {
+    return await apiClient.get(`/do-entries/by-number/${doNumber}`);
+};
+
+export default { fetchDOEntries, createDOEntry, createBulkDOEntries, updateDOEntry, deleteDOEntry, fetchAllDOEntries, fetchDOEntryByNumber };

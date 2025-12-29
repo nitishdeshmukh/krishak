@@ -2,7 +2,36 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchPaddySales, createPaddySale } from '../api/paddySalesApi';
+import { fetchPaddySales, createPaddySale, fetchAllPaddySales, fetchPaddySaleBySaleNumber } from '../api/paddySalesApi';
+
+// Hook for fetching all paddy sales (only sale numbers for dropdown)
+export const useAllPaddySales = () => {
+    const query = useQuery({
+        queryKey: ['paddySales', 'all'],
+        queryFn: fetchAllPaddySales,
+        staleTime: 300000, // 5 minutes
+    });
+
+    return {
+        ...query,
+        paddySales: query.data?.data || [],
+    };
+};
+
+// Hook for fetching paddy sale details by sale number
+export const usePaddySaleBySaleNumber = (saleNumber) => {
+    const query = useQuery({
+        queryKey: ['paddySales', 'by-number', saleNumber],
+        queryFn: () => fetchPaddySaleBySaleNumber(saleNumber),
+        enabled: !!saleNumber, // Only fetch if saleNumber is provided
+        staleTime: 300000, // 5 minutes
+    });
+
+    return {
+        ...query,
+        saleDetails: query.data?.data || null,
+    };
+};
 
 export const usePaddySales = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);

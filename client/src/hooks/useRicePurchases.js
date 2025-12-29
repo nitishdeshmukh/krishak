@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchRicePurchases, createRicePurchase } from '../api/ricePurchasesApi';
+import { fetchRicePurchases, createRicePurchase, fetchAllRicePurchases, fetchRicePurchaseByNumber } from '../api/ricePurchasesApi';
 
 export const useRicePurchases = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -32,6 +32,38 @@ export const useCreateRicePurchase = () => {
         mutationFn: createRicePurchase,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ricePurchases'] }),
     });
+};
+
+/**
+ * Hook for fetching all rice purchases for dropdown usage
+ */
+export const useAllRicePurchases = () => {
+    const query = useQuery({
+        queryKey: ['ricePurchases', 'all'],
+        queryFn: fetchAllRicePurchases,
+        staleTime: 60000, // 1 minute
+        refetchOnMount: 'always',
+    });
+
+    return {
+        ...query,
+        ricePurchases: query.data?.data?.ricePurchases || [],
+    };
+};
+
+// Hook for fetching rice purchase details by purchase number
+export const useRicePurchaseByNumber = (purchaseNumber) => {
+    const query = useQuery({
+        queryKey: ['ricePurchases', 'by-number', purchaseNumber],
+        queryFn: () => fetchRicePurchaseByNumber(purchaseNumber),
+        enabled: !!purchaseNumber, // Only fetch if purchaseNumber is provided
+        staleTime: 300000, // 5 minutes
+    });
+
+    return {
+        ...query,
+        purchaseDetails: query.data?.data || null,
+    };
 };
 
 export default useRicePurchases;

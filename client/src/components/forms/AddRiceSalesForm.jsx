@@ -643,6 +643,12 @@ export default function AddRiceSalesForm() {
                                                         FRK देना है
                                                     </Label>
                                                 </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <RadioGroupItem value="non-frk" id="non-frk-sale" />
+                                                    <Label htmlFor="non-frk-sale" className="font-normal cursor-pointer">
+                                                        NON FRK
+                                                    </Label>
+                                                </div>
                                             </RadioGroup>
                                         </FormControl>
                                         <FormMessage />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateBrewersSales } from '@/hooks/useBrewersSales';
+import { useAllParties } from '@/hooks/useParties';
+import { useAllBrokers } from '@/hooks/useBrokers';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -48,22 +50,10 @@ const brewersSalesFormSchema = z.object({
     nakkhiRate: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    nakkhiAmount: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
     discountPercent: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    discountAmount: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
     brokeragePerQuintal: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    brokerPayable: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    totalPayable: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
 });
@@ -72,16 +62,20 @@ export default function AddBrewersSalesForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createBrewersSales = useCreateBrewersSales();
 
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
-    const brokerOptions = [
-        { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
-        { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
-        { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
-    ];
+    // Fetch parties and brokers from server
+    const { parties, isLoading: partiesLoading } = useAllParties();
+    const { brokers, isLoading: brokersLoading } = useAllBrokers();
+
+    // Convert to options format for SearchableSelect
+    const partyOptions = useMemo(() =>
+        parties.map(party => ({ value: party.partyName, label: party.partyName })),
+        [parties]
+    );
+
+    const brokerOptions = useMemo(() =>
+        brokers.map(broker => ({ value: broker.brokerName, label: broker.brokerName })),
+        [brokers]
+    );
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -92,44 +86,12 @@ export default function AddBrewersSalesForm() {
             brokerName: '',
             nakkhiQuantity: '',
             nakkhiRate: '',
-            nakkhiAmount: '',
             discountPercent: '',
-            discountAmount: '',
             brokeragePerQuintal: '',
-            brokerPayable: '',
-            totalPayable: '',
         },
     });
 
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['nakkhiQuantity', 'nakkhiRate', 'discountPercent', 'brokeragePerQuintal']);
 
-    React.useEffect(() => {
-        const [nakkhiQuantity, nakkhiRate, discountPercent, brokeragePerQuintal] = watchedFields;
-        const qty = parseFloat(nakkhiQuantity) || 0;
-        const rate = parseFloat(nakkhiRate) || 0;
-        const discount = parseFloat(discountPercent) || 0;
-        const brokerage = parseFloat(brokeragePerQuintal) || 0;
-
-        // Calculate nakkhi amount
-        const nakkhiAmount = qty * rate;
-
-        // Calculate discount amount
-        const discountAmount = (nakkhiAmount * discount) / 100;
-
-        // Calculate broker payable
-        const brokerPayable = qty * brokerage;
-
-        // Calculate total payable
-        const totalPayable = nakkhiAmount - discountAmount;
-
-        if (nakkhiAmount > 0) {
-            form.setValue('nakkhiAmount', nakkhiAmount.toFixed(2));
-            form.setValue('discountAmount', discountAmount.toFixed(2));
-            form.setValue('brokerPayable', brokerPayable.toFixed(2));
-            form.setValue('totalPayable', totalPayable.toFixed(2));
-        }
-    }, [watchedFields, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
@@ -263,28 +225,6 @@ export default function AddBrewersSalesForm() {
                             )}
                         />
 
-                        {/* Nakkhi Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="nakkhiAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.brewersSales.nakkhiAmount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
                         {/* Discount Percent */}
                         <FormField
                             control={form.control}
@@ -306,28 +246,6 @@ export default function AddBrewersSalesForm() {
                             )}
                         />
 
-                        {/* Discount Amount (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="discountAmount"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.brewersSales.discountAmount')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
                         {/* Brokerage Per Quintal */}
                         <FormField
                             control={form.control}
@@ -342,50 +260,6 @@ export default function AddBrewersSalesForm() {
                                             placeholder="0"
                                             {...field}
                                             className="placeholder:text-gray-400"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Broker Payable (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="brokerPayable"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.brewersSales.brokerPayable')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Total Payable (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="totalPayable"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.brewersSales.totalPayable')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
                                         />
                                     </FormControl>
                                     <FormMessage />

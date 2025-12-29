@@ -12,6 +12,27 @@ export const getBrewersSales = asyncHandler(async (req, res) => {
     res.status(200).json({ success: true, data: { brewersSales: result.docs, totalBrewersSales: result.totalDocs, ...buildPaginationResponse(result.totalDocs, page, pageSize) } });
 });
 
+// Get all Brewers sales for dropdown
+export const getAllBrewersSales = asyncHandler(async (req, res) => {
+    const sales = await BrewersSales.find({ isActive: { $ne: false } })
+        .select('dealNumber partyName brokerName')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: { brewersSales: sales },
+    });
+});
+
+// Get Brewers sale by deal number (for auto-fill)
+export const getBrewersSaleByDealNumber = asyncHandler(async (req, res) => {
+    const { dealNumber } = req.params;
+    const record = await BrewersSales.findOne({ dealNumber, isActive: { $ne: false } })
+        .select('partyName brokerName');
+    if (!record) return res.status(404).json({ success: false, message: 'Brewers sale not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getBrewersSaleById = asyncHandler(async (req, res) => {
     const record = await BrewersSales.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });

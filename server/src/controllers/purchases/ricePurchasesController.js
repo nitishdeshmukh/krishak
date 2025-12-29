@@ -20,6 +20,26 @@ export const getRicePurchases = asyncHandler(async (req, res) => {
     });
 });
 
+export const getAllRicePurchases = asyncHandler(async (req, res) => {
+    const purchases = await RicePurchase.find({ isActive: { $ne: false } })
+        .select('ricePurchaseNumber')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: { ricePurchases: purchases },
+    });
+});
+
+// Get rice purchase by purchase number (for auto-fill)
+export const getRicePurchaseByNumber = asyncHandler(async (req, res) => {
+    const { purchaseNumber } = req.params;
+    const record = await RicePurchase.findOne({ ricePurchaseNumber: purchaseNumber, isActive: { $ne: false } })
+        .select('partyName brokerName');
+    if (!record) return res.status(404).json({ success: false, message: 'Rice purchase not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getRicePurchaseById = asyncHandler(async (req, res) => {
     const record = await RicePurchase.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });

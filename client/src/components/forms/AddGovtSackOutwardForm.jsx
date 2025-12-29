@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateGovtSackOutward } from '@/hooks/useGovtSackOutward';
+import { useAllCommittees } from '@/hooks/useCommittee';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -57,12 +58,18 @@ export default function AddGovtSackOutwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createGovtSackOutward = useCreateGovtSackOutward();
 
-    const samitiSangrahanOptions = [
-        { value: 'समिति 1', label: 'समिति 1' },
-        { value: 'समिति 2', label: 'समिति 2' },
-        { value: 'संग्रहण 1', label: 'संग्रहण 1' },
-        { value: 'संग्रहण 2', label: 'संग्रहण 2' },
-    ];
+    // Fetch all committees for dropdown
+    const { committees } = useAllCommittees();
+
+    // Convert to options format
+    const samitiSangrahanOptions = useMemo(() => {
+        if (!committees || committees.length === 0) return [];
+        return committees.map(committee => ({
+            value: committee._id || committee.id,
+            label: committee.name || committee.committeeName
+        }));
+    }, [committees]);
+
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -81,7 +88,7 @@ export default function AddGovtSackOutwardForm() {
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createGovtSackOutward.mutate(formattedData, {

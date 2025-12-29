@@ -81,3 +81,21 @@ export const getDistinctCommittees = asyncHandler(async (req, res) => {
         data: { committees },
     });
 });
+
+// @desc    Create multiple committees in bulk
+// @route   POST /api/committees/bulk
+export const createBulkCommittees = asyncHandler(async (req, res) => {
+    const { members } = req.body;
+
+    if (!members || !Array.isArray(members) || members.length === 0) {
+        return res.status(400).json({ success: false, message: 'No valid members provided' });
+    }
+
+    const committees = await Committee.insertMany(members, { ordered: false });
+
+    res.status(201).json({
+        success: true,
+        message: `${committees.length} committees created successfully`,
+        data: { count: committees.length },
+    });
+});

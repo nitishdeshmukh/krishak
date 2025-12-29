@@ -97,4 +97,8 @@ export const createGovPaddyInward = async (inwardData) => {
     }
 };
 
-export default { fetchPaddyInward, createGovPaddyInward };
+export const fetchAllPaddyInward = async () => {
+    return await fetchPaddyInward({ page: 1, pageSize: 1000 });
+};
+
+export default { fetchPaddyInward, fetchAllPaddyInward, createGovPaddyInward };

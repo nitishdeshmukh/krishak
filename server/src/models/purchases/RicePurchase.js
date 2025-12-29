@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const ricePurchaseSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    ricePurchaseNumber: { type: String, trim: true, unique: true },
     partyName: { type: String, required: true, trim: true },
     party: { type: mongoose.Schema.Types.ObjectId, ref: 'Party' },
     brokerName: { type: String, trim: true },
@@ -29,13 +31,15 @@ const ricePurchaseSchema = new mongoose.Schema({
     riceInward: { type: String, trim: true },
     riceInwardBalance: { type: String, trim: true },
 
-    // Legacy mapping
     bardana: { type: String, trim: true },
     aadat: { type: String, trim: true },
 
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate ricePurchaseNumber: RP-DDMMYY-N
+ricePurchaseSchema.pre('save', createNumberGeneratorMiddleware('ricePurchaseNumber', 'RP'));
 
 ricePurchaseSchema.plugin(aggregatePaginate);
 

@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const otherPurchaseSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    otherPurchaseNumber: { type: String, trim: true, unique: true },
     partyName: { type: String, required: true, trim: true },
     party: { type: mongoose.Schema.Types.ObjectId, ref: 'Party' },
     brokerName: { type: String, trim: true },
@@ -29,6 +31,9 @@ const otherPurchaseSchema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate otherPurchaseNumber: OP-DDMMYY-N
+otherPurchaseSchema.pre('save', createNumberGeneratorMiddleware('otherPurchaseNumber', 'OP'));
 
 otherPurchaseSchema.plugin(aggregatePaginate);
 

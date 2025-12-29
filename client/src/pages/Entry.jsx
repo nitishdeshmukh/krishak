@@ -151,6 +151,56 @@ export default function EntryPage() {
                     ))}
                 </div>
             </section>
+
+            {/* Labor Cost Section */}
+            <section>
+                <h2 className="text-2xl font-bold mb-4">{t('entry:entry.laborCost.title')}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                        {
+                            icon: UserGroupIcon,
+                            title: t('entry:entry.laborCost.inward'),
+                            onClick: () => navigate('/labor-cost/inward'),
+                            iconBg: 'bg-orange-100',
+                            iconColor: 'text-orange-600',
+                        },
+                        {
+                            icon: UserGroupIcon,
+                            title: t('entry:entry.laborCost.milling'),
+                            onClick: () => navigate('/labor-cost/milling'),
+                            iconBg: 'bg-orange-100',
+                            iconColor: 'text-orange-600',
+                        },
+                        {
+                            icon: UserGroupIcon,
+                            title: t('entry:entry.laborCost.other'),
+                            onClick: () => navigate('/labor-cost/other'),
+                            iconBg: 'bg-orange-100',
+                            iconColor: 'text-orange-600',
+                        },
+                    ].map((card, index) => (
+                        <DashboardCard key={index} {...card} />
+                    ))}
+                </div>
+            </section>
+
+            {/* Attendance Section */}
+            <section>
+                <h2 className="text-2xl font-bold mb-4">{t('entry:entry.attendance.title')}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                        {
+                            icon: UserGroupIcon,
+                            title: t('entry:entry.attendance.markAttendance'),
+                            onClick: () => navigate('/entry/attendance'),
+                            iconBg: 'bg-teal-100',
+                            iconColor: 'text-teal-600',
+                        },
+                    ].map((card, index) => (
+                        <DashboardCard key={index} {...card} />
+                    ))}
+                </div>
+            </section>
         </div>
     );
 }

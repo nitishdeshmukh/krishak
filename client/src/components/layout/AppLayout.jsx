@@ -94,7 +94,7 @@ export default function AppLayout() {
     return (
         <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className="overflow-x-hidden">
+            <SidebarInset>
                 {/* Header with breadcrumbs */}
                 <header className="sticky top-0 z-10 flex h-14 md:h-16 shrink-0 items-center gap-2 border-b bg-background px-3 md:px-4">
                     {/* Mobile: Back button (when not on root) or Sidebar trigger */}
@@ -126,11 +126,7 @@ export default function AppLayout() {
                                 <React.Fragment key={`${crumb.path}-${index}`}>
                                     {index > 0 && <BreadcrumbSeparator />}
                                     <BreadcrumbItem>
-                                        {index === breadcrumbs.length - 1 ? (
-                                            <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                                        ) : (
-                                            <BreadcrumbLink href={crumb.path}>{crumb.label}</BreadcrumbLink>
-                                        )}
+                                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                                     </BreadcrumbItem>
                                 </React.Fragment>
                             ))}

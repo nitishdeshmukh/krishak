@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -23,6 +23,9 @@ import { Label } from '@/components/ui/label';
 import { useCreateRiceInward } from '@/hooks/useRiceInward';
 import { riceTypeOptions } from '@/lib/constants';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import { useAllParties } from '@/hooks/useParties';
+import { useAllBrokers } from '@/hooks/useBrokers';
+import { useAllRicePurchases } from '@/hooks/useRicePurchases';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,22 +104,29 @@ export default function AddRiceInwardForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
   const createRiceInward = useCreateRiceInward();
 
-  const ricePurchaseOptions = [
-    { value: 'RP-001', label: 'RP-001' },
-    { value: 'RP-002', label: 'RP-002' },
-    { value: 'RP-003', label: 'RP-003' },
-    { value: 'RP-004', label: 'RP-004' },
-  ];
-  const partyOptions = [
-    { value: 'पार्टी 1', label: 'पार्टी 1' },
-    { value: 'पार्टी 2', label: 'पार्टी 2' },
-    { value: 'पार्टी 3', label: 'पार्टी 3' },
-  ];
-  const brokerOptions = [
-    { value: 'ब्रोकर 1', label: 'ब्रोकर 1' },
-    { value: 'ब्रोकर 2', label: 'ब्रोकर 2' },
-    { value: 'ब्रोकर 3', label: 'ब्रोकर 3' },
-  ];
+  // Fetch data from API
+  const { parties } = useAllParties();
+  const { brokers } = useAllBrokers();
+  const { ricePurchases } = useAllRicePurchases();
+
+  // Convert fetched data to options format
+  const partyOptions = useMemo(() =>
+    parties.map(party => ({ value: party.partyName, label: party.partyName })),
+    [parties]
+  );
+
+  const brokerOptions = useMemo(() =>
+    brokers.map(broker => ({ value: broker.brokerName, label: broker.brokerName })),
+    [brokers]
+  );
+
+  const ricePurchaseOptions = useMemo(() =>
+    ricePurchases.map(rp => ({
+      value: rp.dealNumber,
+      label: rp.dealNumber
+    })),
+    [ricePurchases]
+  );
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
@@ -126,17 +136,17 @@ export default function AddRiceInwardForm() {
       ricePurchaseNumber: '',
       partyName: '',
       brokerName: '',
-      riceType: 'mota',
+      riceType: '',
       awakBalance: '',
-      lotType: 'lot-purchase',
+      lotType: '',
       lotNo: '',
-      frkNon: 'frk',
-      gunnyOption: 'with-sack',
+      frkNon: '',
+      gunnyOption: '',
       gunnyNew: '',
       gunnyOld: '',
       gunnyPlastic: '',
-      juteWeight: '',
-      plasticWeight: '',
+      juteWeight: '0.58',
+      plasticWeight: '0.135',
       gunnyWeight: '',
       truckNo: '',
       rstNo: '',
@@ -324,7 +334,7 @@ export default function AddRiceInwardForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
@@ -372,7 +382,7 @@ export default function AddRiceInwardForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
@@ -400,7 +410,7 @@ export default function AddRiceInwardForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                       className="flex flex-wrap gap-4"
                     >
                       <div className="flex items-center space-x-2">
