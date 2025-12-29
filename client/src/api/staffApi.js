@@ -2,7 +2,7 @@ import apiClient from '../lib/apiClient';
 
 export const getStaff = async () => {
     const response = await apiClient.get('/staff');
-    return response.data;
+    return response;
 };
 
 export const createStaff = async (staffData) => {
