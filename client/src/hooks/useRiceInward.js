@@ -2,7 +2,21 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchRiceInward, createRiceInward } from '../api/riceInwardApi';
+import { fetchRiceInward, createRiceInward, fetchAllLotNumbers } from '../api/riceInwardApi';
+
+// Hook for fetching all lot numbers (for dropdown)
+export const useAllLotNumbers = () => {
+    const query = useQuery({
+        queryKey: ['lotNumbers', 'all'],
+        queryFn: fetchAllLotNumbers,
+        staleTime: 300000, // 5 minutes
+    });
+
+    return {
+        ...query,
+        lotNumbers: query.data?.data || [],
+    };
+};
 
 export const useRiceInward = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);

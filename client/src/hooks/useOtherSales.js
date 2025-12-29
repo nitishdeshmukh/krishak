@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchOtherSales, createOtherSales } from '../api/otherSalesApi';
+import { fetchOtherSales, createOtherSales, fetchAllOtherSales, fetchOtherSaleByDealNumber } from '../api/otherSalesApi';
 
 export const useOtherSales = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -32,6 +32,36 @@ export const useCreateOtherSales = () => {
         mutationFn: createOtherSales,
         onSuccess: () => queryClient.invalidateQueries({ queryKey: ['otherSales'] }),
     });
+};
+
+// Hook for fetching all Other sales for dropdown
+export const useAllOtherSales = () => {
+    const query = useQuery({
+        queryKey: ['otherSales', 'all'],
+        queryFn: fetchAllOtherSales,
+        staleTime: 60000,
+        refetchOnMount: 'always',
+    });
+
+    return {
+        ...query,
+        otherSales: query.data?.data?.otherSales || [],
+    };
+};
+
+// Hook for fetching Other sale details by deal number
+export const useOtherSaleByDealNumber = (dealNumber) => {
+    const query = useQuery({
+        queryKey: ['otherSales', 'by-deal-number', dealNumber],
+        queryFn: () => fetchOtherSaleByDealNumber(dealNumber),
+        enabled: !!dealNumber,
+        staleTime: 300000,
+    });
+
+    return {
+        ...query,
+        saleDetails: query.data?.data || null,
+    };
 };
 
 export default useOtherSales;

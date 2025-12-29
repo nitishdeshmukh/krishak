@@ -12,6 +12,27 @@ export const getSackSales = asyncHandler(async (req, res) => {
     res.status(200).json({ success: true, data: { sackSales: result.docs, totalSackSales: result.totalDocs, ...buildPaginationResponse(result.totalDocs, page, pageSize) } });
 });
 
+// Get all sack sales for dropdown
+export const getAllSackSales = asyncHandler(async (req, res) => {
+    const sales = await SackSales.find({ isActive: { $ne: false } })
+        .select('dealNumber')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: { sackSales: sales },
+    });
+});
+
+// Get sack sale by deal number (for auto-fill)
+export const getSackSaleByDealNumber = asyncHandler(async (req, res) => {
+    const { dealNumber } = req.params;
+    const record = await SackSales.findOne({ dealNumber, isActive: { $ne: false } })
+        .select('partyName');
+    if (!record) return res.status(404).json({ success: false, message: 'Sack sale not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getSackSaleById = asyncHandler(async (req, res) => {
     const record = await SackSales.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });

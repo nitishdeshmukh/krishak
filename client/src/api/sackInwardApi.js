@@ -73,4 +73,8 @@ export const createSackInward = async (inwardData) => {
     }
 };
 
-export default { fetchSackInward, createSackInward };
+export const fetchAllSackInward = async () => {
+    return await fetchSackInward({ page: 1, pageSize: 1000 });
+};
+
+export default { fetchSackInward, fetchAllSackInward, createSackInward };

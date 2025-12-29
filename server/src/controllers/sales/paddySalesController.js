@@ -2,6 +2,20 @@ import PaddySales from '../../models/sales/PaddySales.js';
 import asyncHandler from '../../utils/asyncHandler.js';
 import { getPagination, buildPaginationResponse, getSorting, getFilters } from '../../utils/pagination.js';
 
+// Get all paddy sales (only sale numbers for dropdowns)
+export const getAllPaddySales = asyncHandler(async (req, res) => {
+    const paddySales = await PaddySales.find({ isActive: { $ne: false } }).select('dealNumber').sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: paddySales });
+});
+
+// Get paddy sale by sale number (for auto-fill)
+export const getPaddySaleBySaleNumber = asyncHandler(async (req, res) => {
+    const { saleNumber } = req.params;
+    const record = await PaddySales.findOne({ dealNumber: saleNumber, isActive: { $ne: false } }).select('partyName brokerName paddyType');
+    if (!record) return res.status(404).json({ success: false, message: 'Paddy sale not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getPaddySales = asyncHandler(async (req, res) => {
     const { page, pageSize } = getPagination(req.query);
     const sort = getSorting(req.query);

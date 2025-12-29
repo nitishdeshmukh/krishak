@@ -1,10 +1,14 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const sackPurchaseSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    sackPurchaseNumber: { type: String, trim: true, unique: true },
     partyName: { type: String, required: true, trim: true },
     party: { type: mongoose.Schema.Types.ObjectId, ref: 'Party' },
+    delivery: { type: String, enum: ['mill', 'samiti-sangrahan'], trim: true },
+    samitiSangrahan: { type: String, trim: true },
 
     newPackagingCount: { type: String, trim: true },
     newPackagingRate: { type: String, trim: true },
@@ -15,7 +19,6 @@ const sackPurchaseSchema = new mongoose.Schema({
 
     payableAmount: { type: String, trim: true },
 
-    // Legacy mapping
     sackType: { type: String, trim: true },
     quantity: { type: String, trim: true },
     rate: { type: String, trim: true },
@@ -24,6 +27,9 @@ const sackPurchaseSchema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate sackPurchaseNumber: SP-DDMMYY-N
+sackPurchaseSchema.pre('save', createNumberGeneratorMiddleware('sackPurchaseNumber', 'SP'));
 
 sackPurchaseSchema.plugin(aggregatePaginate);
 

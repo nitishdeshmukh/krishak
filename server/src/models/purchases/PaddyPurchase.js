@@ -1,10 +1,11 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const paddyPurchaseSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     partyName: { type: String, required: true, trim: true },
-    paddyPurchaseNumber: { type: String, trim: true },
+    paddyPurchaseNumber: { type: String, trim: true, unique: true },
     party: { type: mongoose.Schema.Types.ObjectId, ref: 'Party' },
     brokerName: { type: String, trim: true },
     broker: { type: mongoose.Schema.Types.ObjectId, ref: 'Broker' },
@@ -13,7 +14,6 @@ const paddyPurchaseSchema = new mongoose.Schema({
     purchaseType: { type: String, enum: ['do-purchase', 'other-purchase'] },
 
     doEntries: [{
-        doInfo: { type: String, trim: true },
         doNumber: { type: String, trim: true },
         committeeName: { type: String, trim: true },
         doPaddyQuantity: { type: String, trim: true }
@@ -23,8 +23,6 @@ const paddyPurchaseSchema = new mongoose.Schema({
     grainQuantity: { type: String, trim: true },
     quantity: { type: String, trim: true },
 
-    // Note: Rate and Amount were possibly missing from observed form snippet or handled differently
-    // Keeping them as they are core to purchase models usually
     rate: { type: String, trim: true },
     amount: { type: String, trim: true },
 
@@ -37,7 +35,6 @@ const paddyPurchaseSchema = new mongoose.Schema({
     oldPackagingRate: { type: String, trim: true },
     plasticPackagingRate: { type: String, trim: true },
 
-    // Legacy mapping
     paddyType: { type: String, trim: true },
     bardana: { type: String, trim: true },
     aadat: { type: String, trim: true },
@@ -45,6 +42,9 @@ const paddyPurchaseSchema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate paddyPurchaseNumber: PPP-DDMMYY-N
+paddyPurchaseSchema.pre('save', createNumberGeneratorMiddleware('paddyPurchaseNumber', 'PPP'));
 
 paddyPurchaseSchema.plugin(aggregatePaginate);
 

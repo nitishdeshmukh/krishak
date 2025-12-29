@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateFrkInward } from '@/hooks/useFrkInward';
+import { useAllParties } from '@/hooks/useParties';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -52,63 +53,39 @@ const frkInwardFormSchema = z.object({
     truckWeight: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
-    gunnyWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
-    finalWeight: z.string().regex(/^\d*\.?\d*$/, {
-        message: 'Must be a valid number.',
-    }).optional(),
 });
 
 export default function AddFrkInwardForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
     const createFrkInward = useCreateFrkInward();
 
-    const partyOptions = [
-        { value: 'पार्टी 1', label: 'पार्टी 1' },
-        { value: 'पार्टी 2', label: 'पार्टी 2' },
-        { value: 'पार्टी 3', label: 'पार्टी 3' },
-    ];
+    // Fetch parties from server
+    const { parties, isLoading: partiesLoading } = useAllParties();
 
-    // Initialize form with react-hook-form and zod validation
+    // Convert to options format for SearchableSelect
+    const partyOptions = useMemo(() =>
+        parties.map(party => ({ value: party.partyName, label: party.partyName })),
+        [parties]
+    );
+
     const form = useForm({
         resolver: zodResolver(frkInwardFormSchema),
         defaultValues: {
             date: new Date(),
             partyName: '',
             gunnyPlastic: '',
-            plasticWeight: '',
+            plasticWeight: '0.135',
             truckNo: '',
             rstNo: '',
             truckWeight: '',
-            gunnyWeight: '',
-            finalWeight: '',
         },
     });
-
-    // Watch fields for auto-calculation
-    const watchedFields = form.watch(['truckWeight', 'plasticWeight']);
-
-    React.useEffect(() => {
-        const [truckWeight, plasticWeight] = watchedFields;
-        const truck = parseFloat(truckWeight) || 0;
-        const plastic = parseFloat(plasticWeight) || 0;
-
-        // Gunny weight = plastic weight
-        form.setValue('gunnyWeight', plastic.toFixed(2));
-
-        // Final weight = truck weight - gunny weight
-        const finalWeight = truck - plastic;
-        if (finalWeight >= 0) {
-            form.setValue('finalWeight', finalWeight.toFixed(2));
-        }
-    }, [watchedFields, form]);
 
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createFrkInward.mutate(formattedData, {
@@ -270,50 +247,6 @@ export default function AddFrkInwardForm() {
                                             placeholder="0"
                                             {...field}
                                             className="placeholder:text-gray-400"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Gunny Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="gunnyWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.frkInward.gunnyWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        {/* Final Weight (Auto-calculated) */}
-                        <FormField
-                            control={form.control}
-                            name="finalWeight"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="text-base">{t('forms.frkInward.finalWeight')}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            className="placeholder:text-gray-400 bg-muted"
-                                            readOnly
                                         />
                                     </FormControl>
                                     <FormMessage />

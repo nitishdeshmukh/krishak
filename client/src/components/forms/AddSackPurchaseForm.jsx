@@ -15,6 +15,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
@@ -40,6 +42,10 @@ const sackPurchaseFormSchema = z.object({
     partyName: z.string().min(1, {
         message: 'Please select a party.',
     }),
+    delivery: z.enum(['mill', 'samiti-sangrahan'], {
+        required_error: 'Please select delivery option.',
+    }),
+    samitiSangrahan: z.string().optional(),
     newPackagingCount: z.string().regex(/^\d*$/, {
         message: 'Must be a valid number.',
     }).optional(),
@@ -79,6 +85,8 @@ export default function AddSackPurchaseForm() {
         defaultValues: {
             date: new Date(),
             partyName: '',
+            delivery: '',
+            samitiSangrahan: '',
             newPackagingCount: '',
             newPackagingRate: '',
             oldPackagingCount: '',
@@ -90,11 +98,10 @@ export default function AddSackPurchaseForm() {
 
 
 
-    // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = (data) => {
         const formattedData = {
             ...data,
-            date: format(data.date, 'dd-MM-yy'),
+            date: format(data.date, 'yyyy-MM-dd'),
         };
 
         createSackPurchase.mutate(formattedData, {
@@ -154,6 +161,34 @@ export default function AddSackPurchaseForm() {
                                             onChange={field.onChange}
                                             placeholder="Select"
                                         />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {/* Delivery */}
+                        <FormField
+                            control={form.control}
+                            name="delivery"
+                            render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                    <FormLabel className="text-base">डिलीवरी</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            className="flex space-x-4"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="mill" id="mill" />
+                                                <Label htmlFor="mill" className="font-normal cursor-pointer">मिल में</Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="samiti-sangrahan" id="samiti-sangrahan" />
+                                                <Label htmlFor="samiti-sangrahan" className="font-normal cursor-pointer">समिति/संग्रहण में</Label>
+                                            </div>
+                                        </RadioGroup>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

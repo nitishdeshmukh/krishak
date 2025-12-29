@@ -20,6 +20,28 @@ export const getSackPurchases = asyncHandler(async (req, res) => {
     });
 });
 
+export const getAllSackPurchases = asyncHandler(async (req, res) => {
+    const purchases = await SackPurchase.find({ isActive: { $ne: false } })
+        .select('sackPurchaseNumber')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: { sackPurchases: purchases },
+    });
+});
+
+export const getSackPurchaseByNumber = asyncHandler(async (req, res) => {
+    const { purchaseNumber } = req.params;
+    const record = await SackPurchase.findOne({
+        sackPurchaseNumber: purchaseNumber,
+        isActive: { $ne: false }
+    }).select('partyName delivery samitiSangrahan');
+
+    if (!record) return res.status(404).json({ success: false, message: 'Record not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getSackPurchaseById = asyncHandler(async (req, res) => {
     const record = await SackPurchase.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });

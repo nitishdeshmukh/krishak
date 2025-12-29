@@ -12,6 +12,27 @@ export const getOtherSales = asyncHandler(async (req, res) => {
     res.status(200).json({ success: true, data: { otherSales: result.docs, totalOtherSales: result.totalDocs, ...buildPaginationResponse(result.totalDocs, page, pageSize) } });
 });
 
+// Get all Other sales for dropdown
+export const getAllOtherSales = asyncHandler(async (req, res) => {
+    const sales = await OtherSales.find({ isActive: { $ne: false } })
+        .select('dealNumber partyName brokerName itemName')
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        data: { otherSales: sales },
+    });
+});
+
+// Get Other sale by deal number (for auto-fill)
+export const getOtherSaleByDealNumber = asyncHandler(async (req, res) => {
+    const { dealNumber } = req.params;
+    const record = await OtherSales.findOne({ dealNumber, isActive: { $ne: false } })
+        .select('partyName brokerName itemName');
+    if (!record) return res.status(404).json({ success: false, message: 'Other sale not found' });
+    res.status(200).json({ success: true, data: record });
+});
+
 export const getOtherSaleById = asyncHandler(async (req, res) => {
     const record = await OtherSales.findById(req.params.id);
     if (!record) return res.status(404).json({ success: false, message: 'Record not found' });

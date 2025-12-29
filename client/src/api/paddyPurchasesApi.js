@@ -64,7 +64,7 @@ const generateDummyResponse = ({ page = 1, pageSize = 10 }) => {
 export const fetchAllPaddyPurchases = async () => {
     try {
         const response = await apiClient.get('/purchases/paddy/all');
-        return response?.data || [];
+        return response?.data;
     } catch (error) {
         console.warn('⚠️ API not available, using dummy data');
         await new Promise(resolve => setTimeout(resolve, 500));
