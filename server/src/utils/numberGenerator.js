@@ -40,14 +40,13 @@ export const generateSequentialNumber = async (Model, field, prefix) => {
  * @returns {Function} - Mongoose pre-save middleware function
  */
 export const createNumberGeneratorMiddleware = (field, prefix) => {
-    return async function (next) {
+    return async function () {
         // Only generate if field is not already set
         if (this[field]) {
-            return next();
+            return;
         }
 
         this[field] = await generateSequentialNumber(this.constructor, field, prefix);
-        next();
     };
 };
 
@@ -56,11 +55,13 @@ export const createNumberGeneratorMiddleware = (field, prefix) => {
  */
 export const generateLaborNumber = async (type) => {
     const InwardLabor = (await import('../models/laborCost/InwardLabor.js')).default;
+    const OutwardLabor = (await import('../models/laborCost/OutwardLabor.js')).default;
     const MillingLabor = (await import('../models/laborCost/MillingLabor.js')).default;
     const OtherLabor = (await import('../models/laborCost/OtherLabor.js')).default;
 
     const prefixMap = {
         'INWARD_LABOR': { model: InwardLabor, prefix: 'IWL' },
+        'OUTWARD_LABOR': { model: OutwardLabor, prefix: 'OWL' },
         'MILLING_LABOR': { model: MillingLabor, prefix: 'MIL' },
         'OTHER_LABOR': { model: OtherLabor, prefix: 'OTL' },
     };

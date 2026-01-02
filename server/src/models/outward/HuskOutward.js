@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const schema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    outwardNumber: { type: String, trim: true, unique: true },
     bhusaPurchaseNumber: { type: String, trim: true },
 
     partyName: { type: String, trim: true },
@@ -22,6 +24,9 @@ const schema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate outwardNumber: HO-DDMMYY-N
+schema.pre('save', createNumberGeneratorMiddleware('outwardNumber', 'HO'));
 
 schema.plugin(aggregatePaginate);
 export default mongoose.model('HuskOutward', schema);

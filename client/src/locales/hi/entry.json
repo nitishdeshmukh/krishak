@@ -44,7 +44,8 @@
             "addCommittee": "समिति संग्रहण जोड़ें",
             "addTruck": "स्वयं के वाहन जोड़ें",
             "addStaff": "मिल स्टाफ जोड़ें",
-            "doEntry": "DO प्रविष्टी"
+            "doEntry": "DO जोड़ें ",
+            "laborTeam": "हमाल/रेजा टोली जोड़ें"
         },
         "purchase": {
             "title": "खरीदी सौदा",
@@ -98,9 +99,15 @@
         },
         "laborCost": {
             "title": "हमाली लागत",
-            "inward": "जावक हमाली",
+            "inward": "आवक हमाली",
+            "outward": "जावक हमाली",
             "milling": "मिलिंग हमाली",
             "other": "अन्य हमाली"
+        },
+        "financial": {
+            "title": "प्रप्ति/भुगतान",
+            "receiving": "प्रप्ति",
+            "payment": "भुगतान"
         },
         "attendance": {
             "title": "उपस्थिति",

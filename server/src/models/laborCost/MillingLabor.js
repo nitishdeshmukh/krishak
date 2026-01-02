@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
-import { generateLaborNumber } from '../../utils/numberGenerator.js';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const millingLaborSchema = new mongoose.Schema(
     {
@@ -39,15 +39,13 @@ const millingLaborSchema = new mongoose.Schema(
 // Add pagination plugin
 millingLaborSchema.plugin(mongooseAggregatePaginate);
 
-// Pre-save hook to generate labor number and calculate total amount
-millingLaborSchema.pre('save', async function (next) {
-    if (!this.laborNumber) {
-        this.laborNumber = await generateLaborNumber('MILLING_LABOR');
-    }
+// Auto-generate laborNumber: MIL-DDMMYY-N
+millingLaborSchema.pre('save', createNumberGeneratorMiddleware('laborNumber', 'MIL'));
 
+// Pre-save hook to calculate amounts
+millingLaborSchema.pre('save', function (next) {
     // Calculate total amount
     this.totalAmount = this.hopperGunnyCount * this.hopperRate;
-
     next();
 });
 

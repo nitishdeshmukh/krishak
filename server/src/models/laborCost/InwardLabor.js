@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
-import { generateLaborNumber } from '../../utils/numberGenerator.js';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const inwardLaborSchema = new mongoose.Schema(
     {
@@ -64,17 +64,15 @@ const inwardLaborSchema = new mongoose.Schema(
 // Add pagination plugin
 inwardLaborSchema.plugin(mongooseAggregatePaginate);
 
-// Pre-save hook to generate labor number and calculate amounts
-inwardLaborSchema.pre('save', async function (next) {
-    if (!this.laborNumber) {
-        this.laborNumber = await generateLaborNumber('INWARD_LABOR');
-    }
+// Auto-generate laborNumber: IWL-DDMMYY-N
+inwardLaborSchema.pre('save', createNumberGeneratorMiddleware('laborNumber', 'IWL'));
 
+// Pre-save hook to calculate amounts
+inwardLaborSchema.pre('save', function (next) {
     // Calculate amounts
     this.unloadingAmount = this.totalBags * this.unloadingRate;
     this.stackingAmount = this.totalBags * this.stackingRate;
     this.totalAmount = this.unloadingAmount + this.stackingAmount;
-
     next();
 });
 

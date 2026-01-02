@@ -811,7 +811,7 @@
         },
         "labor": {
             "inward": {
-                "title": "जावक हमाली (Inward Labor)",
+                "title": "जावक हमाली",
                 "description": "जावक हमाली विवरण भरें",
                 "inwardType": "आवक प्रकार",
                 "truckNumber": "ट्रक नंबर",
@@ -825,7 +825,7 @@
                 "totalAmount": "कुल राशि"
             },
             "milling": {
-                "title": "मिलिंग हमाली (Milling Labor)",
+                "title": "मिलिंग हमाली",
                 "description": "मिलिंग हमाली विवरण भरें",
                 "date": "दिनांक",
                 "hopperGunnyCount": "हॉपर काटना (बोरे)",
@@ -834,7 +834,7 @@
                 "totalAmount": "कुल राशि"
             },
             "other": {
-                "title": "अन्य हमाली (Other Labor)",
+                "title": "अन्य हमाली",
                 "description": "अन्य हमाली विवरण भरें",
                 "laborType": "हमाली प्रकार",
                 "laborTeam": "हमाल/रेजा टोली",
@@ -848,6 +848,59 @@
                     "other": "अन्य"
                 }
             }
+        },
+        "laborTeam": {
+            "title": "हमाल/रेजा टोली जोड़ें",
+            "description": "नई हमाल/रेजा टोली विवरण भरें",
+            "name": "हमाल/रेजा टोली का नाम",
+            "successMessage": "हमाल/रेजा टोली सफलतापूर्वक जोड़ दी गई"
+        },
+        "receiving": {
+            "title": "प्राप्ति",
+            "description": "बिक्री से प्राप्त राशि दर्ज करें",
+            "party": "पार्टी",
+            "broker": "ब्रोकर",
+            "dealType": "बिक्री सौदा प्रकार",
+            "dealNumber": "सौदा नंबर",
+            "amount": "राशि",
+            "paymentMode": "भुगतान मोड",
+            "remarks": "टिप्पणी",
+            "successMessage": "प्राप्ति सफलतापूर्वक दर्ज की गई"
+        },
+        "payment": {
+            "title": "भुगतान",
+            "description": "विभिन्न प्रकार के भुगतान दर्ज करें",
+            "paymentCategory": "भुगतान श्रेणी",
+            "categories": {
+                "deal": "सौदा भुगतान",
+                "transport": "परिवहन भुगतान",
+                "hamali": "हमाली भुगतान",
+                "salary": "वेतन/अग्रिम",
+                "other": "अन्य/छोटे खर्च"
+            },
+            "party": "पार्टी",
+            "broker": "ब्रोकर",
+            "dealType": "खरीदी सौदा प्रकार",
+            "dealNumber": "सौदा नंबर",
+            "amount": "राशि",
+            "paymentMode": "भुगतान मोड",
+            "remarks": "टिप्पणी",
+            "transportMode": "परिवहन मोड",
+            "truckNo": "गाड़ी नंबर",
+            "diesel": "डीजल",
+            "allowance": "भत्ता",
+            "repair": "मरम्मत",
+            "transporterName": "परिवहनकर्ता का नाम",
+            "hamaliType": "हमाली प्रकार",
+            "laborTeam": "हमाल/रेजा टोली",
+            "staffName": "स्टाफ का नाम",
+            "month": "महीना",
+            "attendance": "उपस्थिति",
+            "earnedLeave": "अर्जित छुट्टी",
+            "payableSalary": "देय वेतन",
+            "salaryPayment": "वेतन भुगतान",
+            "advancePayment": "अग्रिम भुगतान",
+            "successMessage": "भुगतान सफलतापूर्वक दर्ज किया गया"
         }
     }
 }

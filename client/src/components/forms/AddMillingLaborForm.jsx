@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,10 +14,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateMillingLabor } from '@/hooks/useMillingLabor';
+import { useAllPaddyMilling } from '@/hooks/usePaddyMilling';
+import { useAllRiceMilling } from '@/hooks/useRiceMilling';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -30,14 +32,10 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// Import API to fetch milling records by date
-import { fetchPaddyMilling } from '@/api/paddyMillingApi';
-import { fetchRiceMilling } from '@/api/riceMillingApi';
-
 // Form validation schema
 const millingLaborFormSchema = z.object({
-    date: z.date({
-        required_error: 'Date is required.',
+    millingDate: z.string().min(1, {
+        message: 'Please select a milling date.',
     }),
     hopperGunnyCount: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',
@@ -55,11 +53,43 @@ export default function AddMillingLaborForm() {
     const createMillingLabor = useCreateMillingLabor();
     const [totalAmount, setTotalAmount] = useState('0.00');
 
+    // Use hooks to fetch all milling records
+    const { paddyMilling, isLoading: isPaddyLoading } = useAllPaddyMilling();
+    const { riceMilling, isLoading: isRiceLoading } = useAllRiceMilling();
+
+    const isLoading = isPaddyLoading || isRiceLoading;
+
+    // Generate date options for SearchableSelect
+    const dateOptions = useMemo(() => {
+        const paddyRecords = (paddyMilling || []).map(r => ({ ...r, type: 'paddy' }));
+        const riceRecords = (riceMilling || []).map(r => ({ ...r, type: 'rice' }));
+
+        // Combine and sort by date (most recent first)
+        const allRecords = [...paddyRecords, ...riceRecords].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+        );
+
+        return allRecords.map(record => {
+            const dateStr = format(new Date(record.date), 'yyyy-MM-dd');
+            const displayDate = format(new Date(record.date), 'dd-MM-yyyy');
+            const typeLabel = record.type === 'paddy' ? 'धान' : 'चावल';
+            const hopperGunny = record.hopperGunny || '0';
+
+            return {
+                value: record._id,
+                label: displayDate,
+                date: dateStr,
+                hopperGunny: hopperGunny,
+                record: record
+            };
+        });
+    }, [paddyMilling, riceMilling]);
+
     // Initialize form
     const form = useForm({
         resolver: zodResolver(millingLaborFormSchema),
         defaultValues: {
-            date: new Date(),
+            millingDate: '',
             hopperGunnyCount: '',
             hopperRate: '',
             laborTeam: '',
@@ -77,60 +107,27 @@ export default function AddMillingLaborForm() {
         setTotalAmount(total.toFixed(2));
     }, [hopperGunnyCount, hopperRate]);
 
-    // Lookup hopper gunny count when date changes
-    const handleDateChange = useCallback(async (date) => {
-        if (!date) return;
+    // Handle date selection - auto-fill hopperGunnyCount
+    const handleDateChange = useCallback((selectedValue) => {
+        form.setValue('millingDate', selectedValue);
 
-        try {
-            // Try to fetch milling records for the selected date
-            const formattedDate = format(date, 'yyyy-MM-dd');
-
-            // Try paddy milling first
-            let response = await fetchPaddyMilling({
-                page: 1,
-                pageSize: 100,
-                filters: [{ id: 'date', value: formattedDate }]
-            });
-
-            let millingRecords = response?.data?.paddyMilling || [];
-
-            // If no paddy milling, try rice milling
-            if (millingRecords.length === 0) {
-                response = await fetchRiceMilling({
-                    page: 1,
-                    pageSize: 100,
-                    filters: [{ id: 'date', value: formattedDate }]
-                });
-                millingRecords = response?.data?.riceMilling || [];
-            }
-
-            // Find record for the selected date and extract hopper gunny count
-            const record = millingRecords.find(r => {
-                const recordDate = format(new Date(r.date), 'yyyy-MM-dd');
-                return recordDate === formattedDate;
-            });
-
-            if (record && record.hopperGunnyCount) {
-                form.setValue('hopperGunnyCount', record.hopperGunnyCount.toString());
-                toast.success('Hopper Gunny Count found for selected date');
-            } else {
-                form.setValue('hopperGunnyCount', '');
-                toast.info('No milling record found for this date. Please enter manually.');
-            }
-        } catch (error) {
-            console.error('Error fetching milling records:', error);
+        const selectedOption = dateOptions.find(opt => opt.value === selectedValue);
+        if (selectedOption && selectedOption.hopperGunny) {
+            form.setValue('hopperGunnyCount', selectedOption.hopperGunny);
+        } else {
             form.setValue('hopperGunnyCount', '');
-            toast.warning('Could not lookup milling data. Please enter manually.');
         }
-    }, [form]);
+    }, [dateOptions, form]);
 
     // Form submission handler
     const handleConfirmedSubmit = (data) => {
+        const selectedOption = dateOptions.find(opt => opt.value === data.millingDate);
+
         const formattedData = {
-            ...data,
-            date: format(data.date, 'yyyy-MM-dd'),
+            date: selectedOption?.date || format(new Date(), 'yyyy-MM-dd'),
             hopperGunnyCount: parseFloat(data.hopperGunnyCount),
             hopperRate: parseFloat(data.hopperRate),
+            laborTeam: data.laborTeam,
             totalAmount: parseFloat(totalAmount),
         };
 
@@ -163,7 +160,7 @@ export default function AddMillingLaborForm() {
     return (
         <Card className="w-full max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle>मिलिंग हमाली (Milling Labor)</CardTitle>
+                <CardTitle>मिलिंग हमाली</CardTitle>
                 <CardDescription>
                     Add milling labor cost details
                 </CardDescription>
@@ -171,21 +168,20 @@ export default function AddMillingLaborForm() {
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        {/* Date with Lookup */}
+                        {/* Milling Date Dropdown */}
                         <FormField
                             control={form.control}
-                            name="date"
+                            name="millingDate"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-base">{t('forms.common.date')}</FormLabel>
+                                    <FormLabel className="text-base">{t('forms.common.date')} (मिलिंग तिथि)</FormLabel>
                                     <FormControl>
-                                        <DatePickerField
-                                            name="date"
-                                            label=""
-                                            onChange={(date) => {
-                                                field.onChange(date);
-                                                handleDateChange(date);
-                                            }}
+                                        <SearchableSelect
+                                            options={dateOptions}
+                                            value={field.value}
+                                            onChange={handleDateChange}
+                                            placeholder={isLoading ? "Loading dates..." : "Select milling date"}
+                                            disabled={isLoading}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -193,7 +189,7 @@ export default function AddMillingLaborForm() {
                             )}
                         />
 
-                        {/* Hopper Gunny Count (Lookup from Milling) */}
+                        {/* Hopper Gunny Count (Auto-filled) */}
                         <FormField
                             control={form.control}
                             name="hopperGunnyCount"
@@ -206,12 +202,10 @@ export default function AddMillingLaborForm() {
                                             step="0.01"
                                             placeholder="0"
                                             {...field}
-                                            className="placeholder:text-gray-400"
+                                            className="placeholder:text-gray-400 bg-muted"
+                                            readOnly
                                         />
                                     </FormControl>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Auto-filled from milling records if available
-                                    </p>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -258,17 +252,17 @@ export default function AddMillingLaborForm() {
                             )}
                         />
 
-                        {/* Total Amount (Read-only) */}
+                        {/* Total Amount (Calculated) */}
                         <div className="space-y-2 bg-muted p-4 rounded-lg">
-                            <FormLabel className="text-base font-semibold">Total Amount</FormLabel>
+                            <FormLabel className="text-base font-semibold">Total Amount (कुल राशि)</FormLabel>
                             <Input
                                 type="text"
-                                value={totalAmount}
+                                value={`₹ ${totalAmount}`}
                                 readOnly
                                 className="bg-background font-semibold text-lg"
                             />
                             <p className="text-xs text-muted-foreground">
-                                Calculated as: Hopper Gunny Count × Hopper Rate
+                                = Hopper Gunny Count × Hopper Rate
                             </p>
                         </div>
 

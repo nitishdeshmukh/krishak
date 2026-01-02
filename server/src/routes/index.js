@@ -63,8 +63,15 @@ import riceMillingRoutes from './milling/riceMillingRoutes.js';
 
 // Labor Cost routes
 import inwardLaborRoutes from './laborCost/inwardLaborRoutes.js';
+import outwardLaborRoutes from './laborCost/outwardLaborRoutes.js';
 import millingLaborRoutes from './laborCost/millingLaborRoutes.js';
 import otherLaborRoutes from './laborCost/otherLaborRoutes.js';
+
+// Financial routes
+import financialTransactionRoutes from './financialTransactionRoutes.js';
+
+// Labor Team routes
+import laborTeamRoutes from './laborTeamRoutes.js';
 
 const router = Router();
 
@@ -131,7 +138,14 @@ router.use('/milling/rice', riceMillingRoutes);
 
 // ===== LABOR COST ROUTES =====
 router.use('/labor-cost/inward', inwardLaborRoutes);
+router.use('/labor-cost/outward', outwardLaborRoutes);
 router.use('/labor-cost/milling', millingLaborRoutes);
 router.use('/labor-cost/other', otherLaborRoutes);
+
+// ===== FINANCIAL ROUTES =====
+router.use('/financial', financialTransactionRoutes);
+
+// ===== LABOR TEAM ROUTES =====
+router.use('/labor-teams', laborTeamRoutes);
 
 export default router;

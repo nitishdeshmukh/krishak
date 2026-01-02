@@ -15,14 +15,6 @@ const apiClient = axios.create({
 // Request interceptor - runs before every request
 apiClient.interceptors.request.use(
     (config) => {
-        // Add auth token if available from Redux store
-        const state = store.getState();
-        const token = state.auth.token;
-
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-
         // Log request in development
         if (import.meta.env.DEV) {
             console.log('🚀 API Request:', config.method?.toUpperCase(), config.url);
@@ -72,18 +64,11 @@ apiClient.interceptors.response.use(
                             const { refreshToken } = await import('@/api/authApi');
                             const { loginSuccess } = await import('@/store/slices/authSlice');
 
-                            const response = await refreshToken();
+                            // Attempt to refresh token (cookies handled automatically)
+                            await refreshToken();
 
-                            if (response.success && response.token) {
-                                const state = store.getState();
-                                store.dispatch(loginSuccess({
-                                    user: state.auth.user,
-                                    token: response.token
-                                }));
-
-                                originalRequest.headers.Authorization = `Bearer ${response.token}`;
-                                return apiClient(originalRequest);
-                            }
+                            // Retry original request (cookies handled automatically)
+                            return apiClient(originalRequest);
                         } catch (refreshError) {
                             store.dispatch(logout());
                         }

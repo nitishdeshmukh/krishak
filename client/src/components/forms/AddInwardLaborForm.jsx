@@ -146,7 +146,7 @@ export default function AddInwardLaborForm() {
                 response?.data?.sackInward || response?.data?.frkInward ||
                 response?.data?.otherInward || [];
 
-            const uniqueTrucks = [...new Set(inwardRecords.map(r => r.truckNumber))];
+            const uniqueTrucks = [...new Set(inwardRecords.map(r => r.truckNo).filter(Boolean))];
             setTruckOptions(uniqueTrucks.map(truck => ({ value: truck, label: truck })));
         } catch (error) {
             console.error('Error fetching inward records:', error);
@@ -192,7 +192,7 @@ export default function AddInwardLaborForm() {
                 response?.data?.sackInward || response?.data?.frkInward ||
                 response?.data?.otherInward || [];
 
-            const record = inwardRecords.find(r => r.truckNumber === truckNumber);
+            const record = inwardRecords.find(r => r.truckNo === truckNumber);
             if (record) {
                 setSelectedInward(record);
                 // Auto-fill total bags
@@ -255,7 +255,7 @@ export default function AddInwardLaborForm() {
     return (
         <Card className="w-full max-w-3xl mx-auto">
             <CardHeader>
-                <CardTitle>जावक हमाली (Inward Labor)</CardTitle>
+                <CardTitle>आवक हमाली</CardTitle>
                 <CardDescription>
                     Add inward labor cost details
                 </CardDescription>

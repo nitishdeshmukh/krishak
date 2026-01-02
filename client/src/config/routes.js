@@ -7,12 +7,15 @@ import {
     ShoppingBagIcon,
     ArrowDownTrayIcon,
     CurrencyDollarIcon,
+    BanknotesIcon,
     CogIcon,
-    UserGroupIcon
+    UserGroupIcon,
+    ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 // Lazy load all page components for code splitting
 const Home = lazy(() => import('@/pages/Home'));
+const Profile = lazy(() => import('@/pages/Profile'));
 const UIGuide = lazy(() => import('@/pages/UIGuide'));
 const Entry = lazy(() => import('@/pages/Entry'));
 const AddParty = lazy(() => import('@/pages/AddParty'));
@@ -66,15 +69,51 @@ const AddWhiteBranOutward = lazy(() => import('@/pages/AddWhiteBranOutward'));
 const AddOtherOutward = lazy(() => import('@/pages/AddOtherOutward'));
 const AddPaddyMilling = lazy(() => import('@/pages/AddPaddyMilling'));
 const AddRiceMilling = lazy(() => import('@/pages/AddRiceMilling'));
+const AddOutwardLaborEntry = lazy(() => import('@/pages/LaborCost/AddOutwardLaborEntry'));
+const OutwardLaborReport = lazy(() => import('@/pages/LaborCost/OutwardLaborReport'));
 const AddInwardLaborEntry = lazy(() => import('@/pages/LaborCost/AddInwardLaborEntry'));
 const AddMillingLaborEntry = lazy(() => import('@/pages/LaborCost/AddMillingLaborEntry'));
 const AddOtherLaborEntry = lazy(() => import('@/pages/LaborCost/AddOtherLaborEntry'));
 const InwardLaborReport = lazy(() => import('@/pages/LaborCost/InwardLaborReport'));
 const MillingLaborReport = lazy(() => import('@/pages/LaborCost/MillingLaborReport'));
 const OtherLaborReport = lazy(() => import('@/pages/LaborCost/OtherLaborReport'));
+const OtherPurchaseDealReport = lazy(() => import('@/pages/OtherPurchaseDealReport'));
+const OtherSalesDealReport = lazy(() => import('@/pages/OtherSalesDealReport'));
+const OtherInwardReport = lazy(() => import('@/pages/OtherInwardReport'));
+const OtherOutwardReport = lazy(() => import('@/pages/OtherOutwardReport'));
+const SackPurchaseDealReport = lazy(() => import('@/pages/SackPurchaseDealReport'));
+const FRKPurchaseDealReport = lazy(() => import('@/pages/FRKPurchaseDealReport'));
+const RiceSalesDealReport = lazy(() => import('@/pages/RiceSalesDealReport'));
+const SackSalesDealReport = lazy(() => import('@/pages/SackSalesDealReport'));
+const FRKSalesDealReport = lazy(() => import('@/pages/FRKSalesDealReport'));
+const BrokensSalesDealReport = lazy(() => import('@/pages/BrokensSalesDealReport'));
+const BrewersSalesDealReport = lazy(() => import('@/pages/BrewersSalesDealReport'));
+const HuskSalesDealReport = lazy(() => import('@/pages/HuskSalesDealReport'));
+const RiceBranSalesDealReport = lazy(() => import('@/pages/RiceBranSalesDealReport'));
+const WhiteBranSalesDealReport = lazy(() => import('@/pages/WhiteBranSalesDealReport'));
+const SackInwardReport = lazy(() => import('@/pages/SackInwardReport'));
+const FrkInwardReport = lazy(() => import('@/pages/FrkInwardReport'));
+const PrivatePaddyOutwardReport = lazy(() => import('@/pages/PrivatePaddyOutwardReport'));
+const GovtRiceOutwardReport = lazy(() => import('@/pages/GovtRiceOutwardReport'));
+const PrivateRiceOutwardReport = lazy(() => import('@/pages/PrivateRiceOutwardReport'));
+const GovtSackOutwardReport = lazy(() => import('@/pages/GovtSackOutwardReport'));
+const PrivateSackOutwardReport = lazy(() => import('@/pages/PrivateSackOutwardReport'));
+const FrkOutwardReport = lazy(() => import('@/pages/FrkOutwardReport'));
+const BrokensOutwardReport = lazy(() => import('@/pages/BrokensOutwardReport'));
+const BrewersOutwardReport = lazy(() => import('@/pages/BrewersOutwardReport'));
+const HuskOutwardReport = lazy(() => import('@/pages/HuskOutwardReport'));
+const RiceBranOutwardReport = lazy(() => import('@/pages/RiceBranOutwardReport'));
+const WhiteBranOutwardReport = lazy(() => import('@/pages/WhiteBranOutwardReport'));
+const PaddyMillingReport = lazy(() => import('@/pages/PaddyMillingReport'));
+const RiceMillingReport = lazy(() => import('@/pages/RiceMillingReport'));
 const AddAttendanceEntry = lazy(() => import('@/pages/Attendance/AddAttendanceEntry'));
 const AttendanceReport = lazy(() => import('@/pages/Attendance/AttendanceReport'));
 const ReportsPage = lazy(() => import('@/pages/Reports'));
+const ReceivingReport = lazy(() => import('@/pages/Financial/ReceivingReport'));
+const PaymentReport = lazy(() => import('@/pages/Financial/PaymentReport'));
+const AddReceivingEntry = lazy(() => import('@/pages/Financial/AddReceivingEntry'));
+const AddPaymentEntry = lazy(() => import('@/pages/Financial/AddPaymentEntry'));
+const AddLaborTeamEntry = lazy(() => import('@/pages/Entry/AddLaborTeamEntry'));
 
 /**
 * Centralized route configuration
@@ -146,6 +185,13 @@ export const routes = [
                 component: AddStaffForm,
                 title: 'Add Staff',
                 titleKey: 'entry:sections.entry.addStaff',
+                showInSidebar: true,
+            },
+            {
+                path: '/entry/labor-team',
+                component: AddLaborTeamEntry,
+                title: 'Labor Team',
+                titleKey: 'entry:sections.entry.laborTeam',
                 showInSidebar: true,
             },
         ],
@@ -520,6 +566,27 @@ export const routes = [
                 titleKey: 'reports:sections.purchase.rice',
                 showInSidebar: true,
             },
+            {
+                path: '/reports/purchase/sack',
+                component: SackPurchaseDealReport,
+                title: 'Sack Purchase Deal Report',
+                titleKey: 'reports:sections.purchase.sack',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/purchase/frk',
+                component: FRKPurchaseDealReport,
+                title: 'FRK Purchase Deal Report',
+                titleKey: 'reports:sections.purchase.frk',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/purchase/other',
+                component: OtherPurchaseDealReport,
+                title: 'Other Purchase Deal Report',
+                titleKey: 'reports:sections.purchase.other',
+                showInSidebar: true,
+            },
         ],
     },
     {
@@ -536,6 +603,69 @@ export const routes = [
                 component: PaddySalesDealReport,
                 title: 'Paddy Deals Report',
                 titleKey: 'reports:sections.sales.paddy',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/rice',
+                component: RiceSalesDealReport,
+                title: 'Rice Sales Deal Report',
+                titleKey: 'reports:sections.sales.rice',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/sack',
+                component: SackSalesDealReport,
+                title: 'Sack Sales Deal Report',
+                titleKey: 'reports:sections.sales.sack',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/frk',
+                component: FRKSalesDealReport,
+                title: 'FRK Sales Deal Report',
+                titleKey: 'reports:sections.sales.frk',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/brokens',
+                component: BrokensSalesDealReport,
+                title: 'Brokens Sales Deal Report',
+                titleKey: 'reports:sections.sales.brokens',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/brewers',
+                component: BrewersSalesDealReport,
+                title: 'Brewers Sales Deal Report',
+                titleKey: 'reports:sections.sales.brewers',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/husk',
+                component: HuskSalesDealReport,
+                title: 'Husk Sales Deal Report',
+                titleKey: 'reports:sections.sales.husk',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/rice-bran',
+                component: RiceBranSalesDealReport,
+                title: 'Rice Bran Sales Deal Report',
+                titleKey: 'reports:sections.sales.riceBran',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/white-bran',
+                component: WhiteBranSalesDealReport,
+                title: 'White Bran Sales Deal Report',
+                titleKey: 'reports:sections.sales.whiteBran',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/sales/other',
+                component: OtherSalesDealReport,
+                title: 'Other Sales Deal Report',
+                titleKey: 'reports:sections.sales.other',
                 showInSidebar: true,
             },
         ],
@@ -570,10 +700,149 @@ export const routes = [
                 titleKey: 'reports:sections.inward.rice',
                 showInSidebar: true,
             },
+            {
+                path: '/reports/inward/sack',
+                component: SackInwardReport,
+                title: 'Sack Inward Report',
+                titleKey: 'reports:sections.inward.sack',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/inward/frk',
+                component: FrkInwardReport,
+                title: 'FRK Inward Report',
+                titleKey: 'reports:sections.inward.frk',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/inward/other',
+                component: OtherInwardReport,
+                title: 'Other Inward Report',
+                titleKey: 'reports:sections.inward.other',
+                showInSidebar: true,
+            },
         ],
     },
 
-    // ===== LABOR COST REPORT ROUTES =====
+    // ===== OUTWARD REPORT ROUTES =====
+    {
+        path: '/reports/outward',
+        title: 'Outward Report',
+        titleKey: 'reports:sections.outward.title',
+        icon: ArrowDownTrayIcon,
+        showInSidebar: true,
+        view: 'reports',
+        children: [
+            {
+                path: '/reports/outward/private-paddy',
+                component: PrivatePaddyOutwardReport,
+                title: 'Private Paddy Outward Report',
+                titleKey: 'reports:sections.outward.privatePaddy',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/govt-rice',
+                component: GovtRiceOutwardReport,
+                title: 'Govt Rice Outward Report',
+                titleKey: 'reports:sections.outward.govtRice',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/private-rice',
+                component: PrivateRiceOutwardReport,
+                title: 'Private Rice Outward Report',
+                titleKey: 'reports:sections.outward.privateRice',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/govt-sack',
+                component: GovtSackOutwardReport,
+                title: 'Govt Sack Outward Report',
+                titleKey: 'reports:sections.outward.govtSack',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/private-sack',
+                component: PrivateSackOutwardReport,
+                title: 'Private Sack Outward Report',
+                titleKey: 'reports:sections.outward.privateSack',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/frk',
+                component: FrkOutwardReport,
+                title: 'FRK Outward Report',
+                titleKey: 'reports:sections.outward.frk',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/brokens',
+                component: BrokensOutwardReport,
+                title: 'Brokens Outward Report',
+                titleKey: 'reports:sections.outward.brokens',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/brewers',
+                component: BrewersOutwardReport,
+                title: 'Brewers Outward Report',
+                titleKey: 'reports:sections.outward.brewers',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/husk',
+                component: HuskOutwardReport,
+                title: 'Husk Outward Report',
+                titleKey: 'reports:sections.outward.husk',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/rice-bran',
+                component: RiceBranOutwardReport,
+                title: 'Rice Bran Outward Report',
+                titleKey: 'reports:sections.outward.riceBran',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/white-bran',
+                component: WhiteBranOutwardReport,
+                title: 'White Bran Outward Report',
+                titleKey: 'reports:sections.outward.whiteBran',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/outward/other',
+                component: OtherOutwardReport,
+                title: 'Other Outward Report',
+                titleKey: 'reports:sections.outward.other',
+                showInSidebar: true,
+            },
+        ],
+    },
+    {
+        path: '/reports/milling',
+        title: 'Milling Report',
+        titleKey: 'reports:sections.milling.title',
+        icon: ArrowPathIcon,
+        showInSidebar: true,
+        view: 'reports',
+        children: [
+            {
+                path: '/reports/milling/paddy',
+                component: PaddyMillingReport,
+                title: 'Paddy Milling Report',
+                titleKey: 'reports:sections.milling.paddy',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/milling/rice',
+                component: RiceMillingReport,
+                title: 'Rice Milling Report',
+                titleKey: 'reports:sections.milling.rice',
+                showInSidebar: true,
+            },
+        ],
+    },    // ===== LABOR COST REPORT ROUTES =====
     {
         path: '/reports/labor-cost',
         title: 'Labor Cost Report',
@@ -587,6 +856,13 @@ export const routes = [
                 component: InwardLaborReport,
                 title: 'Inward Labor Report',
                 titleKey: 'reports:sections.laborCost.inward',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/labor-cost/outward',
+                component: OutwardLaborReport,
+                title: 'Outward Labor Report',
+                titleKey: 'reports:sections.laborCost.outward',
                 showInSidebar: true,
             },
             {
@@ -634,6 +910,13 @@ export const routes = [
                 showInSidebar: true,
             },
             {
+                path: '/labor-cost/outward',
+                component: AddOutwardLaborEntry,
+                title: 'Outward Labor',
+                titleKey: 'entry:sections.laborCost.outward',
+                showInSidebar: true,
+            },
+            {
                 path: '/labor-cost/milling',
                 component: AddMillingLaborEntry,
                 title: 'Milling Labor',
@@ -645,6 +928,56 @@ export const routes = [
                 component: AddOtherLaborEntry,
                 title: 'Other Labor',
                 titleKey: 'entry:sections.laborCost.other',
+                showInSidebar: true,
+            },
+        ],
+    },
+    {
+        path: '/reports/financial',
+        title: 'Financial Report',
+        titleKey: 'reports:sections.financial.title',
+        icon: CurrencyDollarIcon,
+        showInSidebar: true,
+        view: 'reports',
+        children: [
+            {
+                path: '/reports/financial/receiving',
+                component: ReceivingReport,
+                title: 'Receiving Report',
+                titleKey: 'reports:sections.financial.receiving',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/financial/payment',
+                component: PaymentReport,
+                title: 'Payment Report',
+                titleKey: 'reports:sections.financial.payment',
+                showInSidebar: true,
+            },
+        ],
+    },
+
+    // ===== FINANCIAL ROUTES =====
+    {
+        path: '/financial',
+        title: 'Receiving / Payment',
+        titleKey: 'entry:sections.financial.title',
+        icon: BanknotesIcon,
+        showInSidebar: true,
+        view: 'entry',
+        children: [
+            {
+                path: '/financial/receiving',
+                component: AddReceivingEntry,
+                title: 'Receiving (Receipt)',
+                titleKey: 'entry:sections.financial.receiving',
+                showInSidebar: true,
+            },
+            {
+                path: '/financial/payment',
+                component: AddPaymentEntry,
+                title: 'Payment',
+                titleKey: 'entry:sections.financial.payment',
                 showInSidebar: true,
             },
         ],
@@ -673,7 +1006,7 @@ export const routes = [
     },
     {
         path: '/profile',
-        component: Home,
+        component: Profile,
         title: 'Profile',
         titleKey: 'common:profile',
         icon: UserIcon,

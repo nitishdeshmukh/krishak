@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const schema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    inwardNumber: { type: String, trim: true, unique: true },
     sackPurchaseNumber: { type: String, trim: true },
 
     partyName: { type: String, trim: true },
@@ -19,6 +21,9 @@ const schema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate inwardNumber: SI-DDMMYY-N
+schema.pre('save', createNumberGeneratorMiddleware('inwardNumber', 'SI'));
 
 schema.plugin(aggregatePaginate);
 export default mongoose.model('SackInward', schema);

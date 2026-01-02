@@ -1,45 +1,53 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import generateToken from '../utils/generateToken.js';
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 /**
- * @desc    Login user with temporary credentials
+ * @desc    Login user with database credentials
  * @route   POST /api/auth/login
  * @access  Public
  */
 export const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    const tempEmail = process.env.AUTH_EMAIL;
-    const tempPassword = process.env.AUTH_PASSWORD;
+    // Check for user
+    const user = await User.findOne({ email }).select('+password');
 
-    if (email === tempEmail && password === tempPassword) {
-        const mockUser = {
-            id: '1',
-            email: email,
-            name: 'Admin User',
-            role: 'admin',
-            permissions: ['all'],
-        };
-
+    if (user && (await user.matchPassword(password))) {
         // Generate tokens
-        const accessToken = generateToken(mockUser.id, '15m');
-        const refreshToken = generateToken(mockUser.id, '7d');
+        const accessToken = generateToken(user._id, '15m');
+        const refreshToken = generateToken(user._id, '7d');
 
         // Send refresh token in HTTP-only cookie
-        res.cookie('jwt', refreshToken, {
+        res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV !== 'development', // Use secure cookies in production
-            sameSite: 'strict', // Prevent CSRF attacks
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            secure: process.env.NODE_ENV !== 'development',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
+
+        // Send access token in HTTP-only cookie
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV !== 'development',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
+
+        const userData = {
+            id: user._id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            permissions: user.permissions,
+        };
 
         return res.status(200).json({
             success: true,
             message: 'Login successful',
             data: {
-                user: mockUser,
-                token: accessToken,
+                user: userData,
             },
         });
     }
@@ -58,26 +66,34 @@ export const login = asyncHandler(async (req, res) => {
 export const refreshToken = asyncHandler(async (req, res) => {
     const cookies = req.cookies;
 
-    if (!cookies?.jwt) {
+    if (!cookies?.refreshToken) {
         return res.status(401).json({ message: 'Unauthorized, no refresh token' });
     }
 
-    const refreshToken = cookies.jwt;
+    const refreshToken = cookies.refreshToken;
 
     try {
         const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
 
-        // Found valid user (In a real app, verify user exists in DB)
-        // For mock user, we just check ID
-        if (decoded.id !== '1') {
+        const user = await User.findById(decoded.id);
+
+        if (!user) {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        const accessToken = generateToken(decoded.id, '15m');
+        const accessToken = generateToken(user._id, '15m');
+
+        // Send access token in HTTP-only cookie
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV !== 'development',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000, // 15 minutes
+        });
 
         return res.json({
             success: true,
-            token: accessToken,
+            message: 'Token refreshed',
         });
 
     } catch (err) {
@@ -92,9 +108,15 @@ export const refreshToken = asyncHandler(async (req, res) => {
  */
 export const logout = asyncHandler(async (req, res) => {
     const cookies = req.cookies;
-    if (!cookies?.jwt) return res.sendStatus(204); // No content
+    if (!cookies?.refreshToken) return res.sendStatus(204); // No content
 
-    res.clearCookie('jwt', {
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV !== 'development',
+    });
+
+    res.clearCookie('accessToken', {
         httpOnly: true,
         sameSite: 'strict',
         secure: process.env.NODE_ENV !== 'development',
@@ -112,9 +134,22 @@ export const logout = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getMe = asyncHandler(async (req, res) => {
+    // req.user is already populated by the protect middleware
+    if (!req.user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = {
+        id: req.user._id,
+        email: req.user.email,
+        name: req.user.name,
+        role: req.user.role,
+        permissions: req.user.permissions,
+    };
+
     res.status(200).json({
         success: true,
         message: 'User retrieved successfully',
-        data: req.user,
+        data: userData,
     });
 });

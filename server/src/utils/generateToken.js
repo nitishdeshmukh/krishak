@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
  * @param {string} id - User ID
  * @returns {string} JWT token
  */
-const generateToken = (id, expiresIn = process.env.JWT_EXPIRE || '15m') => {
+const generateToken = (id, expiresIn = process.env.JWT_EXPIRE) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn,
     });

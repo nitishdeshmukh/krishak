@@ -9,6 +9,7 @@ import RouteLoader from './components/RouteLoader'
 // Lazy load layout and login for better initial load
 const AppLayout = lazy(() => import('./components/layout/AppLayout'))
 const Login = lazy(() => import('./pages/Login'))
+const ProtectedRoute = lazy(() => import('./components/auth/ProtectedRoute'))
 
 export default function App() {
   // Get all routes in flat array for easier mapping
@@ -36,7 +37,13 @@ export default function App() {
           <Route path="/" element={<Login />} />
 
           {/* Authenticated routes with AppLayout */}
-          <Route element={<AppLayout />}>
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
             {/* Redirects for parent nav items to their first child */}
             {parentRoutesWithChildren.map((route) => (
               <Route

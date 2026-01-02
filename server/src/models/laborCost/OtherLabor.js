@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
-import { generateLaborNumber } from '../../utils/numberGenerator.js';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const otherLaborSchema = new mongoose.Schema(
     {
@@ -48,18 +48,16 @@ const otherLaborSchema = new mongoose.Schema(
 // Add pagination plugin
 otherLaborSchema.plugin(mongooseAggregatePaginate);
 
-// Pre-save hook to generate labor number and calculate amount
-otherLaborSchema.pre('save', async function (next) {
-    if (!this.laborNumber) {
-        this.laborNumber = await generateLaborNumber('OTHER_LABOR');
-    }
+// Auto-generate laborNumber: OTL-DDMMYY-N
+otherLaborSchema.pre('save', createNumberGeneratorMiddleware('laborNumber', 'OTL'));
 
+// Pre-save hook to calculate amounts
+otherLaborSchema.pre('save', function (next) {
     // Calculate total amount for pala_bharai, kota, silai (not for 'other')
     if (this.laborType !== 'other' && this.rate > 0) {
         this.totalAmount = this.rate; // For these types, rate is the total amount
         this.gunnyCount = 0; // No gunny count for these types
     }
-
     next();
 });
 

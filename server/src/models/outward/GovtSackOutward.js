@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const schema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    outwardNumber: { type: String, trim: true, unique: true },
     gunnyDmNo: { type: String, trim: true }, // Form uses gunnyDmNo
     samitiSangrahan: { type: String, trim: true }, // Form uses samitiSangrahan
 
@@ -21,6 +23,9 @@ const schema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate outwardNumber: GSO-DDMMYY-N
+schema.pre('save', createNumberGeneratorMiddleware('outwardNumber', 'GSO'));
 
 schema.plugin(aggregatePaginate);
 export default mongoose.model('GovtSackOutward', schema);
