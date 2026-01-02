@@ -122,8 +122,8 @@ export default function AddRiceInwardForm() {
 
   const ricePurchaseOptions = useMemo(() =>
     ricePurchases.map(rp => ({
-      value: rp.dealNumber,
-      label: rp.dealNumber
+      value: rp.ricePurchaseNumber,
+      label: rp.ricePurchaseNumber
     })),
     [ricePurchases]
   );

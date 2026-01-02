@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -15,11 +15,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useCreateOtherLabor } from '@/hooks/useOtherLabor';
+import { useLaborTeams } from '@/hooks/useLaborTeam';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -41,7 +43,7 @@ const otherLaborFormSchema = z.object({
         required_error: 'Please select labor type.',
     }),
     laborTeam: z.string().min(1, {
-        message: 'Labor team name is required.',
+        message: 'Labor team is required.',
     }),
     gunnyCount: z.string().regex(/^\d*$/, {
         message: 'Must be a valid number.',
@@ -60,6 +62,18 @@ export default function AddOtherLaborForm() {
     const createOtherLabor = useCreateOtherLabor();
     const [selectedLaborType, setSelectedLaborType] = useState('');
 
+    // Fetch labor teams from server
+    const { data: laborTeams, isLoading: isLoadingTeams } = useLaborTeams();
+
+    // Convert labor teams to options format
+    const laborTeamOptions = useMemo(() =>
+        (laborTeams).map(team => ({
+            value: team.name,
+            label: team.name
+        })),
+        [laborTeams]
+    );
+
     // Initialize form
     const form = useForm({
         resolver: zodResolver(otherLaborFormSchema),
@@ -67,22 +81,25 @@ export default function AddOtherLaborForm() {
             date: new Date(),
             laborType: '',
             laborTeam: '',
-            gunnyCount: '0',
+            gunnyCount: '',
             rate: '',
             detail: '',
             totalAmount: '',
         },
     });
 
-    // Watch rate field for auto-setting total amount
-    const rate = form.watch('rate');
+    // Watch fields for auto-calculation
+    const [gunnyCount, rate] = form.watch(['gunnyCount', 'rate']);
 
-    // Auto-set total amount from rate for pala_bharai, kota, silai
+    // Auto-calculate total amount for pala_bharai, kota, silai
     useEffect(() => {
-        if (['pala_bharai', 'kota', 'silai'].includes(selectedLaborType) && rate) {
-            form.setValue('totalAmount', rate);
+        if (['pala_bharai', 'kota', 'silai'].includes(selectedLaborType)) {
+            const count = parseFloat(gunnyCount) || 0;
+            const rateVal = parseFloat(rate) || 0;
+            const total = count * rateVal;
+            form.setValue('totalAmount', total > 0 ? total.toFixed(2) : '');
         }
-    }, [rate, selectedLaborType, form]);
+    }, [gunnyCount, rate, selectedLaborType, form]);
 
     // Handle labor type change
     const handleLaborTypeChange = useCallback((type) => {
@@ -90,7 +107,7 @@ export default function AddOtherLaborForm() {
         form.setValue('laborType', type);
 
         // Reset conditional fields
-        form.setValue('gunnyCount', '0');
+        form.setValue('gunnyCount', '');
         form.setValue('rate', '');
         form.setValue('detail', '');
         form.setValue('totalAmount', '');
@@ -133,10 +150,14 @@ export default function AddOtherLaborForm() {
         openDialog(data);
     };
 
+    // Check if labor type requires gunny count and rate
+    const isCountableType = ['pala_bharai', 'kota', 'silai'].includes(selectedLaborType);
+    const isOtherType = selectedLaborType === 'other';
+
     return (
         <Card className="w-full max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle>अन्य हमाली (Other Labor)</CardTitle>
+                <CardTitle>अन्य हमाली</CardTitle>
                 <CardDescription>
                     Add other labor cost details
                 </CardDescription>
@@ -156,44 +177,36 @@ export default function AddOtherLaborForm() {
                             name="laborType"
                             render={({ field }) => (
                                 <FormItem className="space-y-3">
-                                    <FormLabel className="text-base">Labor Type (हमाली प्रकार)</FormLabel>
+                                    <FormLabel className="text-base">हमाली प्रकार</FormLabel>
                                     <FormControl>
                                         <RadioGroup
                                             onValueChange={handleLaborTypeChange}
                                             value={selectedLaborType}
-                                            className="flex flex-col space-y-2"
+                                            className="flex flex-wrap gap-4"
                                         >
                                             <FormItem className="flex items-center space-x-2 space-y-0">
                                                 <FormControl>
                                                     <RadioGroupItem value="pala_bharai" />
                                                 </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    Pala Bharai (पाला भराई)
-                                                </FormLabel>
+                                                <FormLabel className="font-normal">पाला भराई</FormLabel>
                                             </FormItem>
                                             <FormItem className="flex items-center space-x-2 space-y-0">
                                                 <FormControl>
                                                     <RadioGroupItem value="kota" />
                                                 </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    Kota (कोटा)
-                                                </FormLabel>
+                                                <FormLabel className="font-normal">कांटा</FormLabel>
                                             </FormItem>
                                             <FormItem className="flex items-center space-x-2 space-y-0">
                                                 <FormControl>
                                                     <RadioGroupItem value="silai" />
                                                 </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    Silai (सिलाई)
-                                                </FormLabel>
+                                                <FormLabel className="font-normal">सिलाई</FormLabel>
                                             </FormItem>
                                             <FormItem className="flex items-center space-x-2 space-y-0">
                                                 <FormControl>
                                                     <RadioGroupItem value="other" />
                                                 </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    Other (अन्य)
-                                                </FormLabel>
+                                                <FormLabel className="font-normal">अन्य</FormLabel>
                                             </FormItem>
                                         </RadioGroup>
                                     </FormControl>
@@ -202,19 +215,20 @@ export default function AddOtherLaborForm() {
                             )}
                         />
 
-                        {/* Labor Team (Always Visible) */}
+                        {/* Labor Team (SearchableSelect - Always Visible) */}
                         <FormField
                             control={form.control}
                             name="laborTeam"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-base">Labor Team (हमाल/रेजा टोली)</FormLabel>
+                                    <FormLabel className="text-base">हमाल/रेजा टोली</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="text"
-                                            placeholder="Enter labor team name"
-                                            {...field}
-                                            className="placeholder:text-gray-400"
+                                        <SearchableSelect
+                                            options={laborTeamOptions}
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            placeholder={isLoadingTeams ? "Loading..." : "Select labor team"}
+                                            disabled={isLoadingTeams}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -223,15 +237,36 @@ export default function AddOtherLaborForm() {
                         />
 
                         {/* Conditional Fields for Pala Bharai/Kota/Silai */}
-                        {['pala_bharai', 'kota', 'silai'].includes(selectedLaborType) && (
+                        {isCountableType && (
                             <>
-                                {/* Rate (which becomes total amount) */}
+                                {/* Gunny Count (बारदाना संख्या) */}
+                                <FormField
+                                    control={form.control}
+                                    name="gunnyCount"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-base">बारदाना संख्या</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    step="1"
+                                                    placeholder="0"
+                                                    {...field}
+                                                    className="placeholder:text-gray-400"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {/* Rate (हमाली दर) */}
                                 <FormField
                                     control={form.control}
                                     name="rate"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-base">Rate/Amount (हमाली दर)</FormLabel>
+                                            <FormLabel className="text-base">हमाली दर</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -241,29 +276,40 @@ export default function AddOtherLaborForm() {
                                                     className="placeholder:text-gray-400"
                                                 />
                                             </FormControl>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                This will be set as the total amount (No gunny count)
-                                            </p>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
+
+                                {/* Total Amount (Calculated) */}
+                                <div className="space-y-2 bg-muted p-4 rounded-lg">
+                                    <FormLabel className="text-base font-semibold">कुल राशि</FormLabel>
+                                    <Input
+                                        type="text"
+                                        value={`₹ ${form.watch('totalAmount') || '0.00'}`}
+                                        readOnly
+                                        className="bg-background font-semibold text-lg"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        = बारदाना संख्या × हमाली दर
+                                    </p>
+                                </div>
                             </>
                         )}
 
                         {/* Conditional Fields for Other */}
-                        {selectedLaborType === 'other' && (
+                        {isOtherType && (
                             <>
-                                {/* Detail/Description */}
+                                {/* Detail/Description (काम का विवरण) */}
                                 <FormField
                                     control={form.control}
                                     name="detail"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-base">Work Detail (काम का विवरण)</FormLabel>
+                                            <FormLabel className="text-base">काम का विवरण</FormLabel>
                                             <FormControl>
                                                 <Textarea
-                                                    placeholder="Describe the work..."
+                                                    placeholder="काम का विवरण लिखें..."
                                                     {...field}
                                                     className="placeholder:text-gray-400"
                                                     rows={3}
@@ -280,7 +326,7 @@ export default function AddOtherLaborForm() {
                                     name="totalAmount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-base">Total Amount (कुल राशि)</FormLabel>
+                                            <FormLabel className="text-base">कुल राशि</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
@@ -295,22 +341,6 @@ export default function AddOtherLaborForm() {
                                     )}
                                 />
                             </>
-                        )}
-
-                        {/* Auto-calculated Total Amount Display (for pala_bharai, kota, silai) */}
-                        {['pala_bharai', 'kota', 'silai'].includes(selectedLaborType) && (
-                            <div className="space-y-2 bg-muted p-4 rounded-lg">
-                                <FormLabel className="text-base font-semibold">Total Amount</FormLabel>
-                                <Input
-                                    type="text"
-                                    value={form.watch('totalAmount') || '0.00'}
-                                    readOnly
-                                    className="bg-background font-semibold text-lg"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Auto-set from rate (no gunny count applicable)
-                                </p>
-                            </div>
                         )}
 
                         {/* Submit Button */}

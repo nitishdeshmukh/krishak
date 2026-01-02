@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import { createNumberGeneratorMiddleware } from '../../utils/numberGenerator.js';
 
 const schema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
+    millingNumber: { type: String, trim: true, unique: true },
     riceType: { type: String, trim: true },
     hopperGunny: { type: String, trim: true },
     hopperQtl: { type: String, trim: true },
@@ -16,6 +18,9 @@ const schema = new mongoose.Schema({
     remarks: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
 }, { timestamps: true });
+
+// Auto-generate millingNumber: RM-DDMMYY-N
+schema.pre('save', createNumberGeneratorMiddleware('millingNumber', 'RM'));
 
 schema.plugin(aggregatePaginate);
 export default mongoose.model('RiceMilling', schema);

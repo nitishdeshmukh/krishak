@@ -53,8 +53,8 @@ const privateRiceOutwardFormSchema = z.object({
     fciNan: z.enum(['fci', 'nan'], {
         required_error: 'Please select FCI/NAN.',
     }),
-    riceType: z.enum(['mota', 'patla'], {
-        required_error: 'Please select rice type.',
+    riceType: z.string().min(1, {
+        message: 'Please select rice type.',
     }),
     dealQuantity: z.string().regex(/^\d*\.?\d*$/, {
         message: 'Must be a valid number.',

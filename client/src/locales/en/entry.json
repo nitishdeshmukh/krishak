@@ -34,7 +34,8 @@
             "addCommittee": "Add Committee Procurement",
             "addTruck": "Add Own Vehicles",
             "addStaff": "Add Mill Staff",
-            "doEntry": "DO Entry"
+            "doEntry": "DO Entry",
+            "laborTeam": "Labor Team Entry"
         },
         "purchase": {
             "title": "Purchase Deals",
@@ -85,6 +86,22 @@
             "title": "Milling",
             "paddy": "Paddy Milling",
             "rice": "Rice Milling"
+        },
+        "laborCost": {
+            "title": "Labor Cost",
+            "inward": "Inward Labor",
+            "outward": "Outward Labor",
+            "milling": "Milling Labor",
+            "other": "Other Labor"
+        },
+        "financial": {
+            "title": "Receiving/Payment",
+            "receiving": "Receiving",
+            "payment": "Payment"
+        },
+        "attendance": {
+            "title": "Attendance",
+            "markAttendance": "Mark Attendance"
         }
     },
     "nav": {

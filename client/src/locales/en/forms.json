@@ -12,7 +12,11 @@
             "selectPlaceholder": "Select...",
             "date": "Date",
             "success": "Saved successfully!",
-            "error": "An error occurred"
+            "error": "An error occurred",
+            "confirmTitle": "Confirm",
+            "confirmMessage": "Are you sure you want to save?",
+            "confirmYes": "Yes, Save",
+            "confirmNo": "Cancel"
         },
         "party": {
             "title": "Add New Party",
@@ -802,6 +806,59 @@
             "brokerPayable": "Payable to Broker",
             "totalPayable": "Total Payable Amount",
             "successMessage": "Other Sales Added Successfully"
+        },
+        "laborTeam": {
+            "title": "Labor Team Entry",
+            "description": "Add a new Hamal/Reja team to the system",
+            "name": "Team Name",
+            "successMessage": "Labor Team Added Successfully"
+        },
+        "receiving": {
+            "title": "Receiving (Prapti)",
+            "description": "Record money received from sales",
+            "party": "Party",
+            "broker": "Broker",
+            "dealType": "Sale Deal Type",
+            "dealNumber": "Deal Number",
+            "amount": "Amount",
+            "paymentMode": "Payment Mode",
+            "remarks": "Remarks",
+            "successMessage": "Receiving entry added successfully"
+        },
+        "payment": {
+            "title": "Payment (Bhugtan)",
+            "description": "Record various types of payments",
+            "paymentCategory": "Payment Category",
+            "categories": {
+                "deal": "Deal Payment",
+                "transport": "Transport Payment",
+                "hamali": "Hamali Payment",
+                "salary": "Salary/Advance",
+                "other": "Other/Petty Expenses"
+            },
+            "party": "Party",
+            "broker": "Broker",
+            "dealType": "Purchase Deal Type",
+            "dealNumber": "Deal Number",
+            "amount": "Amount",
+            "paymentMode": "Payment Mode",
+            "remarks": "Remarks",
+            "transportMode": "Transport Mode",
+            "truckNo": "Truck Number",
+            "diesel": "Diesel",
+            "allowance": "Allowance",
+            "repair": "Repair",
+            "transporterName": "Transporter Name",
+            "hamaliType": "Hamali Type",
+            "laborTeam": "Labor Team",
+            "staffName": "Staff Name",
+            "month": "Month",
+            "attendance": "Attendance",
+            "earnedLeave": "Earned Leave",
+            "payableSalary": "Payable Salary",
+            "salaryPayment": "Salary Payment",
+            "advancePayment": "Advance Payment",
+            "successMessage": "Payment entry added successfully"
         }
     }
 }
