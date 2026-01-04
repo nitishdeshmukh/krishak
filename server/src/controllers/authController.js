@@ -1,5 +1,6 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import generateToken from '../utils/generateToken.js';
+import parseExpiry from '../utils/parseExpiry.js';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
@@ -15,16 +16,24 @@ export const login = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email }).select('+password');
 
     if (user && (await user.matchPassword(password))) {
-        // Generate tokens
-        const accessToken = generateToken(user._id, '15m');
-        const refreshToken = generateToken(user._id, '7d');
+        // Generate tokens with separate secrets
+        const accessToken = generateToken(
+            user._id,
+            process.env.JWT_ACCESS_EXPIRE,
+            process.env.JWT_ACCESS_SECRET
+        );
+        const refreshToken = generateToken(
+            user._id,
+            process.env.JWT_REFRESH_EXPIRE,
+            process.env.JWT_REFRESH_SECRET
+        );
 
         // Send refresh token in HTTP-only cookie
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
             sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            maxAge: parseExpiry(process.env.JWT_REFRESH_EXPIRE),
         });
 
         // Send access token in HTTP-only cookie
@@ -32,7 +41,7 @@ export const login = asyncHandler(async (req, res) => {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000, // 15 minutes
+            maxAge: parseExpiry(process.env.JWT_ACCESS_EXPIRE),
         });
 
         const userData = {
@@ -73,7 +82,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
     const refreshToken = cookies.refreshToken;
 
     try {
-        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
         const user = await User.findById(decoded.id);
 
@@ -81,14 +90,18 @@ export const refreshToken = asyncHandler(async (req, res) => {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        const accessToken = generateToken(user._id, '15m');
+        const accessToken = generateToken(
+            user._id,
+            process.env.JWT_ACCESS_EXPIRE || '15m',
+            process.env.JWT_ACCESS_SECRET
+        );
 
         // Send access token in HTTP-only cookie
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
             sameSite: 'strict',
-            maxAge: 15 * 60 * 1000, // 15 minutes
+            maxAge: parseExpiry(process.env.JWT_ACCESS_EXPIRE || '15m'),
         });
 
         return res.json({

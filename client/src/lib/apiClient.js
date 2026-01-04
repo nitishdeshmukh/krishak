@@ -53,29 +53,35 @@ apiClient.interceptors.response.use(
                 case 401:
                     const originalRequest = error.config;
 
+                    // Don't retry if it's a login or refresh request
                     if (originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/refresh')) {
                         return Promise.reject(error);
                     }
 
+                    // Only retry once
                     if (!originalRequest._retry) {
                         originalRequest._retry = true;
 
                         try {
                             const { refreshToken } = await import('@/api/authApi');
-                            const { loginSuccess } = await import('@/store/slices/authSlice');
 
                             // Attempt to refresh token (cookies handled automatically)
                             await refreshToken();
 
-                            // Retry original request (cookies handled automatically)
+                            // Retry original request with new access token
                             return apiClient(originalRequest);
                         } catch (refreshError) {
+                            // Refresh failed, logout user
+                            console.error('Token refresh failed:', refreshError);
                             store.dispatch(logout());
+                            return Promise.reject(refreshError);
                         }
                     } else {
+                        // Already retried, logout user
+                        console.error('Token refresh already attempted, logging out');
                         store.dispatch(logout());
+                        return Promise.reject(error);
                     }
-                    break;
                 case 403:
                     console.error('Access forbidden');
                     break;

@@ -18,7 +18,7 @@ import { useLogin } from '@/hooks/useAuth';
 
 // Validation schema
 const loginSchema = z.object({
-    email: z.string().email('Please enter a valid email address'),
+    email: z.email('Please enter a valid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -83,6 +83,7 @@ export default function LoginPage() {
                                                 <Input
                                                     placeholder="Enter your email"
                                                     className="pl-10 h-11 bg-background"
+                                                    autoComplete="username"
                                                     {...field}
                                                 />
                                             </div>
@@ -107,6 +108,7 @@ export default function LoginPage() {
                                                 <Input
                                                     type={showPassword ? "text" : "password"}
                                                     placeholder="Enter your password"
+                                                    autoComplete="current-password"
                                                     className="pl-10 pr-10 h-11 bg-background"
                                                     {...field}
                                                     style={{
