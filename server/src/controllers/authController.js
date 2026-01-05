@@ -32,7 +32,7 @@ export const login = asyncHandler(async (req, res) => {
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'development' ? 'strict' : 'none',
             maxAge: parseExpiry(process.env.JWT_REFRESH_EXPIRE),
         });
 
@@ -40,7 +40,7 @@ export const login = asyncHandler(async (req, res) => {
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'development' ? 'strict' : 'none',
             maxAge: parseExpiry(process.env.JWT_ACCESS_EXPIRE),
         });
 
@@ -100,7 +100,7 @@ export const refreshToken = asyncHandler(async (req, res) => {
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
-            sameSite: 'strict',
+            sameSite: process.env.NODE_ENV === 'development' ? 'strict' : 'none',
             maxAge: parseExpiry(process.env.JWT_ACCESS_EXPIRE || '15m'),
         });
 
@@ -125,13 +125,13 @@ export const logout = asyncHandler(async (req, res) => {
 
     res.clearCookie('refreshToken', {
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'development' ? 'strict' : 'none',
         secure: process.env.NODE_ENV !== 'development',
     });
 
     res.clearCookie('accessToken', {
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'development' ? 'strict' : 'none',
         secure: process.env.NODE_ENV !== 'development',
     });
 
