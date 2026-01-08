@@ -20,7 +20,12 @@ export function SearchableSelect({
 }) {
     const selectedOption = React.useMemo(() => {
         if (!value) return null;
-        return options.find((opt) => opt.value === value) || null;
+        const found = options.find((opt) => opt.value === value);
+        if (found) return found;
+        
+        // Fallback: If option not found (e.g. data not loaded yet, or legacy value),
+        // return an object with the value as label so it displays correctly.
+        return { value, label: value };
     }, [value, options]);
 
     const handleChange = (selected) => {

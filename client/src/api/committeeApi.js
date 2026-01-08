@@ -113,4 +113,18 @@ export const createBulkCommitteeMembers = async (members) => {
     return await apiClient.post('/committees/bulk', { members });
 };
 
-export default { fetchCommittee, createCommitteeMember, fetchAllCommittees, createBulkCommitteeMembers };
+/**
+ * Update a committee
+ */
+export const updateCommittee = async (id, data) => {
+    return await apiClient.put(`/committees/${id}`, data);
+};
+
+/**
+ * Delete a committee
+ */
+export const deleteCommittee = async (id) => {
+    return await apiClient.delete(`/committees/${id}`);
+};
+
+export default { fetchCommittee, createCommitteeMember, fetchAllCommittees, createBulkCommitteeMembers, updateCommittee, deleteCommittee };

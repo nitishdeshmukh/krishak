@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getStaff, createStaff } from '../api/staffApi';
+import { getStaff, createStaff, updateStaff, deleteStaff } from '../api/staffApi';
 import { toast } from 'sonner';
 
 export const useStaff = () => {
@@ -24,3 +24,27 @@ export const useCreateStaff = () => {
         },
     });
 };
+
+export const useUpdateStaff = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, data }) => updateStaff(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['staff'] });
+        },
+    });
+};
+
+export const useDeleteStaff = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: deleteStaff,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['staff'] });
+        },
+    });
+};
+
+export default useStaff;

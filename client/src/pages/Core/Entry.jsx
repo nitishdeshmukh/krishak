@@ -61,7 +61,7 @@ export default function EntryPage() {
         },
         {
             icon: TruckIcon,
-            title: t('entry:entry.management.addTruck') || 'Add Truck',
+            title: t('entry:entry.management.addVehicle') || 'Add Truck',
             onClick: () => navigate('/entry/trucks'),
             iconBg: 'bg-purple-100',
             iconColor: 'text-purple-600',

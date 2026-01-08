@@ -1,9 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { ArrowPathIcon, EllipsisHorizontalIcon, EyeIcon, PencilIcon, TrashIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, EllipsisHorizontalIcon, EyeIcon, PencilIcon, TrashIcon, ShoppingBagIcon, CalendarIcon, UserIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { DataTable } from '@/components/ui/data-table';
 import {
     DropdownMenu,
@@ -11,21 +12,49 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+} from '@/components/ui/drawer';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { setPageIndex, setPageSize } from '@/store/slices/tableSlice';
 import TablePagination from '@/components/ui/table-pagination';
 import EmptyState from '@/components/EmptyState';
-import { usePaddyPurchases } from '@/hooks/usePaddyPurchases';
+import { usePaddyPurchases, useDeletePaddyPurchase } from '@/hooks/usePaddyPurchases';
+import { cn } from '@/lib/utils';
 
 export default function PaddyPurchaseDealReport() {
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const { pageIndex, pageSize } = useSelector(state => state.table);
     const { t } = useTranslation(['reports', 'common']);
 
+    // State for drawer
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [selectedDeal, setSelectedDeal] = useState(null);
+
+    // State for delete dialog
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [dealToDelete, setDealToDelete] = useState(null);
+
     // Use the usePaddyPurchases hook to fetch data
     const { paddyPurchases, totalPages, currentPage, isLoading, isError, error, hasNext, hasPrev } = usePaddyPurchases();
+
+    // Delete mutation
+    const deleteDealMutation = useDeletePaddyPurchase();
 
     // Table column definitions
     const columns = [
@@ -39,7 +68,7 @@ export default function PaddyPurchaseDealReport() {
         },
         {
             accessorKey: 'date',
-            header: 'सौदा तिथि',
+            header: 'सौदा दिनांक',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
                 const date = row.getValue('date');
@@ -75,11 +104,11 @@ export default function PaddyPurchaseDealReport() {
             },
         },
         {
-            accessorKey: 'grainType',
+            accessorKey: 'paddyType',
             header: 'धान का प्रकार',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => (
-                <div className="text-sm">{row.getValue('grainType') || '-'}</div>
+                <div className="text-sm">{row.getValue('paddyType') || '-'}</div>
             ),
         },
         {
@@ -93,11 +122,11 @@ export default function PaddyPurchaseDealReport() {
             },
         },
         {
-            accessorKey: 'quantity',
+            accessorKey: 'paddyQuantity',
             header: 'मात्रा (क्विंटल)',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const quantity = row.getValue('quantity');
+                const quantity = row.getValue('paddyQuantity');
                 return quantity ? (
                     <div className="text-sm font-medium">{quantity} क्विंटल</div>
                 ) : (
@@ -106,25 +135,13 @@ export default function PaddyPurchaseDealReport() {
             },
         },
         {
-            accessorKey: 'rate',
+            accessorKey: 'paddyRatePerQuintal',
             header: 'दर (₹)',
             meta: { filterVariant: 'text' },
             cell: ({ row }) => {
-                const rate = row.getValue('rate');
+                const rate = row.getValue('paddyRatePerQuintal');
                 return rate ? (
                     <div className="text-sm font-medium">₹{rate}</div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
-        },
-        {
-            accessorKey: 'amount',
-            header: 'कुल राशि (₹)',
-            cell: ({ row }) => {
-                const amount = row.getValue('amount');
-                return amount ? (
-                    <div className="text-sm font-semibold text-green-600">₹{parseFloat(amount).toLocaleString('hi-IN')}</div>
                 ) : (
                     <span className="text-muted-foreground">-</span>
                 );
@@ -147,21 +164,8 @@ export default function PaddyPurchaseDealReport() {
             ),
         },
         {
-            accessorKey: 'remarks',
-            header: 'टिप्पणी',
-            meta: { filterVariant: 'text' },
-            cell: ({ row }) => {
-                const remarks = row.getValue('remarks');
-                return remarks ? (
-                    <div className="text-sm truncate max-w-[150px]" title={remarks}>{remarks}</div>
-                ) : (
-                    <span className="text-muted-foreground">-</span>
-                );
-            },
-        },
-        {
             id: 'actions',
-            header: t('common:actions'),
+            header: '',
             enableColumnFilter: false,
             cell: ({ row }) => {
                 const deal = row.original;
@@ -196,21 +200,35 @@ export default function PaddyPurchaseDealReport() {
     ];
 
     const handleView = (deal) => {
-        toast.info(t('common:view'), {
-            description: `View Deal: ${deal.paddyPurchaseNumber || '-'}\nParty: ${deal.partyName}`,
-        });
+        setSelectedDeal(deal);
+        setIsDrawerOpen(true);
     };
 
     const handleEdit = (deal) => {
-        toast.info(t('common:edit'), {
-            description: `Edit Deal: ${deal.paddyPurchaseNumber || '-'}`,
-        });
+        navigate('/purchase/paddy', { state: { deal, isEditing: true } });
     };
 
     const handleDelete = (deal) => {
-        toast.error(t('common:delete'), {
-            description: `Are you sure you want to delete deal ${deal.paddyPurchaseNumber || '-'}?`,
-        });
+        setDealToDelete(deal);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!dealToDelete?._id) return;
+
+        try {
+            await deleteDealMutation.mutateAsync(dealToDelete._id);
+            toast.success('धान खरीदी सौदा हटाया गया', {
+                description: `सौदा ${dealToDelete.paddyPurchaseNumber} सफलतापूर्वक हटाया गया है।`,
+            });
+        } catch (error) {
+            toast.error('सौदा हटाने में विफल', {
+                description: error.message || 'कुछ गलत हो गया।',
+            });
+        } finally {
+            setIsDeleteDialogOpen(false);
+            setDealToDelete(null);
+        }
     };
 
     // Error state
@@ -263,7 +281,7 @@ export default function PaddyPurchaseDealReport() {
                         <DataTable
                             columns={columns}
                             data={paddyPurchases}
-                            showFilters={true}
+                            showFilters={false}
                         />
                     </div>
 
@@ -281,6 +299,199 @@ export default function PaddyPurchaseDealReport() {
                     />
                 </CardContent>
             </Card>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>सौदा हटाएं</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            क्या आप वाकई सौदा <span className="font-semibold text-foreground">{dealToDelete?.paddyPurchaseNumber}</span> को हटाना चाहते हैं?
+                            यह क्रिया पूर्ववत नहीं की जा सकती।
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>रद्द करें</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {deleteDealMutation.isPending ? 'हटाया जा रहा है...' : 'हटाएं'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* View Deal Drawer */}
+            <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} direction="right">
+                <DrawerContent className="h-full w-full sm:max-w-[420px] border-l shadow-2xl">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 py-1.5 border-b border-border/40">
+                        <div>
+                            <h2 className="text-lg font-semibold text-foreground">धान खरीदी सौदा विवरण</h2>
+                            <p className="text-sm text-muted-foreground">Paddy Purchase Deal</p>
+                        </div>
+                        <DrawerClose asChild>
+                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted">
+                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </Button>
+                        </DrawerClose>
+                    </div>
+
+                    {selectedDeal && (
+                        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-4">
+                            {/* Deal Number Card */}
+                            <div className="p-4 rounded-2xl border border-border/50 bg-card/50">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs text-muted-foreground mb-1">सौदा नंबर</p>
+                                        <p className="text-base font-semibold text-foreground truncate">
+                                            {selectedDeal.paddyPurchaseNumber || <span className="text-muted-foreground/50">Not  provided</span>}
+                                        </p>
+                                    </div>
+                                    <span className={cn(
+                                        "shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 mt-3 rounded-full text-xs font-medium",
+                                        selectedDeal.purchaseType === 'do-purchase'
+                                            ? "bg-blue-500/10 text-blue-600"
+                                            : "bg-amber-500/10 text-amber-600"
+                                    )}>
+                                        {selectedDeal.purchaseType === 'do-purchase' ? 'DO खरीदी' : 'अन्य खरीदी'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Details Card */}
+                            <div className="rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
+                                <div className="px-4 py-3 border-b border-border/30 bg-muted/30">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        सौदा जानकारी
+                                    </h3>
+                                </div>
+                                <div className="divide-y divide-border/30">
+                                    {/* Date */}
+                                    <div className="flex items-center gap-4 px-4 py-3.5">
+                                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-blue-500/20 to-blue-500/5 flex items-center justify-center">
+                                            <CalendarIcon className="h-5 w-5 text-blue-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground mb-0.5">दिनांक</p>
+                                            <p className="text-sm font-medium text-foreground">
+                                                {selectedDeal.date ? new Date(selectedDeal.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Party Name */}
+                                    <div className="flex items-center gap-4 px-4 py-3.5">
+                                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-green-500/20 to-green-500/5 flex items-center justify-center">
+                                            <UserIcon className="h-5 w-5 text-green-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground mb-0.5">पार्टी</p>
+                                            <p className="text-sm font-medium text-foreground">{selectedDeal.partyName || '—'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Broker */}
+                                    <div className="flex items-center gap-4 px-4 py-3.5">
+                                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center">
+                                            <UserIcon className="h-5 w-5 text-purple-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground mb-0.5">ब्रोकर</p>
+                                            <p className="text-sm font-medium text-foreground">{selectedDeal.brokerName || '—'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Paddy Type */}
+                                    {selectedDeal.paddyType && (
+                                        <div className="flex items-center gap-4 px-4 py-3.5">
+                                            <div className="h-10 w-10 rounded-xl bg-linear-to-br from-amber-500/20 to-amber-500/5 flex items-center justify-center">
+                                                <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                                </svg>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs text-muted-foreground mb-0.5">धान प्रकार</p>
+                                                <p className="text-sm font-medium text-foreground">{selectedDeal.paddyType}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Quantity */}
+                                    <div className="flex items-center gap-4 px-4 py-3.5">
+                                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center">
+                                            <BanknotesIcon className="h-5 w-5 text-cyan-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground mb-0.5">मात्रा</p>
+                                            <p className="text-sm font-medium text-foreground">{selectedDeal.paddyQuantity || '0'} क्विंटल</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Rate */}
+                                    {selectedDeal.paddyRatePerQuintal && (
+                                        <div className="flex items-center gap-4 px-4 py-3.5">
+                                            <div className="h-10 w-10 rounded-xl bg-linear-to-br from-green-500/20 to-green-500/5 flex items-center justify-center">
+                                                <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs text-muted-foreground mb-0.5">दर/क्विंटल</p>
+                                                <p className="text-sm font-medium text-foreground">₹{selectedDeal.paddyRatePerQuintal}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Wastage */}
+                                    <div className="flex items-center gap-4 px-4 py-3.5">
+                                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-red-500/20 to-red-500/5 flex items-center justify-center">
+                                            <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground mb-0.5">बटाव %</p>
+                                            <p className="text-sm font-medium text-foreground">{selectedDeal.wastagePercent || '0'}%</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Brokerage */}
+                                    <div className="flex items-center gap-4 px-4 py-3.5">
+                                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-orange-500/20 to-orange-500/5 flex items-center justify-center">
+                                            <svg className="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground mb-0.5">दलाली</p>
+                                            <p className="text-sm font-medium text-foreground">₹{selectedDeal.brokerage || '0'}/क्विंटल</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Delivery */}
+                                    <div className="flex items-center gap-4 px-4 py-3.5">
+                                        <div className="h-10 w-10 rounded-xl bg-linear-to-br from-indigo-500/20 to-indigo-500/5 flex items-center justify-center">
+                                            <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                            </svg>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs text-muted-foreground mb-0.5">डिलीवरी</p>
+                                            <p className="text-sm font-medium text-foreground">
+                                                {selectedDeal.delivery === 'pickup' ? 'पड़े में' : 'पहुंचा कर'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </DrawerContent>
+            </Drawer>
         </div>
     );
 }

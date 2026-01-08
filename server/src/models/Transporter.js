@@ -12,11 +12,11 @@ const transporterSchema = new mongoose.Schema({
     gstn: { type: String, trim: true },
 
     // Address fields
-    address: { type: String, trim: true }, // addressLine1 + addressLine2
-    city: { type: String, trim: true },
-    state: { type: String, trim: true },
-    postalCode: { type: String, trim: true },
-    country: { type: String, default: 'India', trim: true },
+    address: { type: String, trim: true },
+    // city: { type: String, trim: true },
+    // state: { type: String, trim: true },
+    // postalCode: { type: String, trim: true },
+    // country: { type: String, default: 'India', trim: true },
 
     vehicleNumber: { type: String, trim: true },
     isActive: { type: Boolean, default: true },

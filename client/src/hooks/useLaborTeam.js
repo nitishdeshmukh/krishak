@@ -6,6 +6,7 @@ export const useLaborTeams = () => {
     return useQuery({
         queryKey: ['laborTeams'],
         queryFn: getLaborTeams,
+        select: (data) => data.data,
     });
 };
 

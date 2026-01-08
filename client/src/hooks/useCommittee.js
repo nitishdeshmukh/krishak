@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchCommittee, createCommitteeMember, fetchAllCommittees, createBulkCommitteeMembers } from '../api/committeeApi';
+import { fetchCommittee, createCommitteeMember, fetchAllCommittees, createBulkCommitteeMembers, updateCommittee, deleteCommittee } from '../api/committeeApi';
 
 export const useCommittee = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -60,6 +60,22 @@ export const useCreateBulkCommitteeMembers = () => {
             queryClient.invalidateQueries({ queryKey: ['committee'] });
             queryClient.invalidateQueries({ queryKey: ['committees-all'] });
         },
+    });
+};
+
+export const useUpdateCommittee = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }) => updateCommittee(id, data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committee'] }),
+    });
+};
+
+export const useDeleteCommittee = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteCommittee,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['committee'] }),
     });
 };
 

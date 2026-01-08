@@ -1,8 +1,6 @@
-"use client";
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
-import { fetchPaddyPurchases, fetchAllPaddyPurchases, createPaddyPurchase } from '../api/paddyPurchasesApi';
+import { fetchPaddyPurchases, fetchAllPaddyPurchases, createPaddyPurchase, deletePaddyPurchase } from '../api/paddyPurchasesApi';
 
 export const usePaddyPurchases = () => {
     const { pageIndex, pageSize, columnFilters, sorting } = useSelector(state => state.table);
@@ -48,4 +46,13 @@ export const useCreatePaddyPurchase = () => {
     });
 };
 
+export const useDeletePaddyPurchase = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deletePaddyPurchase,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['paddyPurchases'] }),
+    });
+};
+
 export default usePaddyPurchases;
+

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import {
     Form,
     FormControl,
@@ -15,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { useCreateLaborTeam } from '@/hooks/useLaborTeam';
+import { useCreateLaborTeam, useUpdateLaborTeam } from '@/hooks/useLaborTeam';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -37,7 +39,14 @@ const laborTeamSchema = z.object({
 
 export default function AddLaborTeamForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Check if we're in edit mode
+    const { laborTeam, isEditing } = location.state || {};
+
     const createTeamMutation = useCreateLaborTeam();
+    const updateTeamMutation = useUpdateLaborTeam();
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -47,16 +56,33 @@ export default function AddLaborTeamForm() {
         },
     });
 
+    // Pre-fill form when editing
+    useEffect(() => {
+        if (isEditing && laborTeam) {
+            form.reset({
+                name: laborTeam.name || '',
+            });
+        }
+    }, [isEditing, laborTeam, form]);
+
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = async (data) => {
         try {
-            await createTeamMutation.mutateAsync(data);
-            toast.success(t('forms.laborTeam.successMessage'), {
-                description: `${data.name} has been added to the system.`,
-            });
-            form.reset();
+            if (isEditing && laborTeam?._id) {
+                await updateTeamMutation.mutateAsync({ id: laborTeam._id, data });
+                toast.success('Labor Team Updated Successfully', {
+                    description: `${data.name} has been updated.`,
+                });
+                navigate('/reports/entry/labor-teams');
+            } else {
+                await createTeamMutation.mutateAsync(data);
+                toast.success(t('forms.laborTeam.successMessage'), {
+                    description: `${data.name} has been added to the system.`,
+                });
+                form.reset();
+            }
         } catch (error) {
-            toast.error('Failed to add labor team', {
+            toast.error(isEditing ? 'Failed to update labor team' : 'Failed to add labor team', {
                 description: error.message || 'An error occurred.',
             });
         }
@@ -64,7 +90,7 @@ export default function AddLaborTeamForm() {
 
     // Hook for confirmation dialog
     const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
-        'add-labor-team',
+        isEditing ? 'update-labor-team' : 'add-labor-team',
         handleConfirmedSubmit
     );
 
@@ -76,9 +102,20 @@ export default function AddLaborTeamForm() {
     return (
         <Card className="w-full max-w-3xl mx-auto">
             <CardHeader>
-                <CardTitle>{t('forms.laborTeam.title')}</CardTitle>
+                {isEditing && (
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-fit mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => navigate(-1)}
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Back
+                    </Button>
+                )}
+                <CardTitle>{isEditing ? 'Edit Labor Team' : t('forms.laborTeam.title')}</CardTitle>
                 <CardDescription>
-                    {t('forms.laborTeam.description')}
+                    {isEditing ? 'Update labor team information' : t('forms.laborTeam.description')}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -107,9 +144,11 @@ export default function AddLaborTeamForm() {
                         <Button
                             type="submit"
                             className="w-full md:w-auto"
-                            disabled={createTeamMutation.isPending}
+                            disabled={createTeamMutation.isPending || updateTeamMutation.isPending}
                         >
-                            {createTeamMutation.isPending ? t('forms.common.saving') : t('forms.common.submit')}
+                            {(createTeamMutation.isPending || updateTeamMutation.isPending) 
+                                ? t('forms.common.saving') 
+                                : isEditing ? 'Update' : t('forms.common.submit')}
                         </Button>
                     </form>
                 </Form>

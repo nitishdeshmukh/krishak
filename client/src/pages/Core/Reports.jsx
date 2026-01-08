@@ -27,7 +27,7 @@ export default function ReportsPage() {
         {
             icon: UserGroupIcon,
             title: t('reports:sections.entry.partyInfo'),
-            onClick: () => navigate('/reports/entry/party-info'),
+            onClick: () => navigate('/reports/entry/parties'),
             iconBg: 'bg-purple-100',
             iconColor: 'text-purple-600',
         },
@@ -56,6 +56,13 @@ export default function ReportsPage() {
             icon: DocumentTextIcon,
             title: t('reports:sections.entry.doReport'),
             onClick: () => navigate('/reports/entry/do'),
+            iconBg: 'bg-purple-100',
+            iconColor: 'text-purple-600',
+        },
+        {
+            icon: UserGroupIcon,
+            title: t('reports:sections.entry.laborTeamReport'),
+            onClick: () => navigate('/reports/entry/labor-teams'),
             iconBg: 'bg-purple-100',
             iconColor: 'text-purple-600',
         },

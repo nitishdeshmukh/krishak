@@ -6,6 +6,9 @@
             "transporters": "Information of Transporters",
             "brokers": "Information of Brokers",
             "committee": "Information of Committee Procurement",
+            "vehicleReport": "Vehicle Report",
+            "staffReport": "Staff Report",
+            "laborTeamReport": "Labor Team Report",
             "doReport": "DO Entry Report",
             "remainingDO": "Details of Remaining DO Lifting"
         },

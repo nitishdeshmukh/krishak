@@ -41,6 +41,33 @@ export const getTrucks = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Update a truck
+ * @route   PUT /api/trucks/:id
+ * @access  Private
+ */
+export const updateTruck = asyncHandler(async (req, res) => {
+    const { truckNumber, isActive } = req.body;
+
+    const truck = await Truck.findById(req.params.id);
+
+    if (!truck) {
+        res.status(404);
+        throw new Error('Truck not found');
+    }
+
+    truck.truckNumber = truckNumber || truck.truckNumber;
+    if (isActive !== undefined) truck.isActive = isActive;
+
+    const updatedTruck = await truck.save();
+
+    res.status(200).json({
+        success: true,
+        data: updatedTruck,
+        message: 'Truck updated successfully',
+    });
+});
+
+/**
  * @desc    Delete a truck
  * @route   DELETE /api/trucks/:id
  * @access  Private

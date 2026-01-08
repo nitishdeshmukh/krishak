@@ -1,7 +1,10 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { useCreateStaff } from '@/hooks/useStaff';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useCreateStaff, useUpdateStaff } from '@/hooks/useStaff';
+import { toast } from 'sonner';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,7 +23,12 @@ import {
 
 export default function AddStaffForm() {
     const { t } = useTranslation(['forms', 'common']);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { staff, isEditing } = location.state || {};
+    
     const createStaffMutation = useCreateStaff();
+    const updateStaffMutation = useUpdateStaff();
 
     const form = useForm({
         defaultValues: {
@@ -33,19 +41,42 @@ export default function AddStaffForm() {
         },
     });
 
+    // Pre-fill form when editing
+    React.useEffect(() => {
+        if (isEditing && staff) {
+            form.reset({
+                name: staff.name || '',
+                post: staff.post || '',
+                phone: staff.phone || '',
+                email: staff.email || '',
+                address: staff.address || '',
+                salary: staff.salary || '',
+            });
+        }
+    }, [isEditing, staff, form]);
+
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = async (data) => {
         try {
-            await createStaffMutation.mutateAsync(data);
-            form.reset();
+            if (isEditing && staff) {
+                await updateStaffMutation.mutateAsync({ id: staff._id, data });
+                toast.success('Staff Updated', {
+                    description: `${data.name} has been updated successfully.`,
+                });
+                navigate('/reports/entry/staff');
+            } else {
+                await createStaffMutation.mutateAsync(data);
+                form.reset();
+            }
         } catch (error) {
-            console.error('Failed to add staff:', error);
+            console.error('Failed to save staff:', error);
+            toast.error(isEditing ? 'Failed to update staff' : 'Failed to add staff');
         }
     };
 
     // Hook for confirmation dialog
     const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
-        'add-staff',
+        isEditing ? 'edit-staff' : 'add-staff',
         handleConfirmedSubmit
     );
 
@@ -57,8 +88,21 @@ export default function AddStaffForm() {
     return (
         <Card className="w-full max-w-3xl mx-auto">
             <CardHeader>
-                <CardTitle>{t('forms.staff.title')}</CardTitle>
-                <CardDescription>{t('forms.staff.description')}</CardDescription>
+                {isEditing && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(-1)}
+                        className="w-fit mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+                    >
+                        <ArrowLeftIcon className="h-4 w-4 mr-1" />
+                        Back
+                    </Button>
+                )}
+                <CardTitle>{isEditing ? 'Edit Staff' : t('forms.staff.title')}</CardTitle>
+                <CardDescription>
+                    {isEditing ? 'Update staff details' : t('forms.staff.description')}
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -177,9 +221,11 @@ export default function AddStaffForm() {
                             <Button
                                 type="submit"
                                 className="w-full md:w-auto px-8"
-                                disabled={form.formState.isSubmitting}
+                                disabled={form.formState.isSubmitting || createStaffMutation.isPending || updateStaffMutation.isPending}
                             >
-                                {form.formState.isSubmitting ? t('forms.common.saving') : t('forms.common.save')}
+                                {(form.formState.isSubmitting || createStaffMutation.isPending || updateStaffMutation.isPending)
+                                    ? (isEditing ? 'Updating...' : t('forms.common.saving'))
+                                    : (isEditing ? 'Update' : t('forms.common.save'))}
                             </Button>
                         </div>
                     </form>
@@ -191,7 +237,9 @@ export default function AddStaffForm() {
                         <AlertDialogHeader>
                             <AlertDialogTitle>{t('forms.common.confirmTitle')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                                {t('forms.common.confirmMessage')}
+                                {isEditing
+                                    ? "Are you sure you want to update this staff member's information?"
+                                    : t('forms.common.confirmMessage')}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

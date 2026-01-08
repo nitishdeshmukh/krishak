@@ -15,6 +15,11 @@ const staffSchema = new mongoose.Schema(
             type: String,
             trim: true,
         },
+        salary: {
+            type: Number,
+            default: 0,
+            trim: true,
+        },
         email: {
             type: String,
             trim: true,
@@ -23,6 +28,11 @@ const staffSchema = new mongoose.Schema(
         address: {
             type: String,
             trim: true,
+        },
+        previousStaffId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Staff',
+            default: null,
         },
     },
     {

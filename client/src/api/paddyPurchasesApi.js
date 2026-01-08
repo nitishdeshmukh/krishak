@@ -101,4 +101,19 @@ export const createPaddyPurchase = async (purchaseData) => {
     }
 };
 
-export default { fetchPaddyPurchases, fetchAllPaddyPurchases, createPaddyPurchase };
+export const deletePaddyPurchase = async (id) => {
+    try {
+        const data = await apiClient.delete(`/purchases/paddy/${id}`);
+        return data;
+    } catch (error) {
+        console.warn('⚠️ API not available, simulating delete:', error.message);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return {
+            success: true,
+            message: 'Paddy Purchase deleted successfully (SIMULATED)',
+        };
+    }
+};
+
+export default { fetchPaddyPurchases, fetchAllPaddyPurchases, createPaddyPurchase, deletePaddyPurchase };
+

@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,9 +19,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
-import { useCreateCommitteeMember, useCreateBulkCommitteeMembers } from '@/hooks/useCommittee';
+import { useCreateCommitteeMember, useCreateBulkCommitteeMembers, useUpdateCommittee } from '@/hooks/useCommittee';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
-import { Upload, FileSpreadsheet, X, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, X, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import {
@@ -35,7 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 // Form validation schema
-const committeeProcurementFormSchema = z.object({
+const committeeFormSchema = z.object({
   type: z.enum(['committee-production', 'storage'], {
     required_error: 'Please select a type.',
   }),
@@ -44,10 +45,17 @@ const committeeProcurementFormSchema = z.object({
   }),
 });
 
-export default function AddCommitteeProcurementForm() {
+export default function AddCommitteeForm() {
   const { t } = useTranslation(['forms', 'entry', 'common']);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Check if editing
+  const { committee, isEditing } = location.state || {};
+  
   const createCommitteeMemberMutation = useCreateCommitteeMember();
   const createBulkCommitteeMembersMutation = useCreateBulkCommitteeMembers();
+  const updateCommitteeMutation = useUpdateCommittee();
 
   // Tab state
   const [activeTab, setActiveTab] = useState('manual');
@@ -60,12 +68,22 @@ export default function AddCommitteeProcurementForm() {
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
-    resolver: zodResolver(committeeProcurementFormSchema),
+    resolver: zodResolver(committeeFormSchema),
     defaultValues: {
-      type: 'committee-production',
+      type: '',
       committeeName: '',
     },
   });
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (isEditing && committee) {
+      form.reset({
+        type: committee.type,
+        committeeName: committee.committeeName,
+      });
+    }
+  }, [isEditing, committee, form]);
 
   // Parse Excel file
   const parseExcelFile = useCallback((file) => {
@@ -156,14 +174,23 @@ export default function AddCommitteeProcurementForm() {
   // Manual Submit - Confirmed
   const handleConfirmedSubmit = async (data) => {
     try {
-      await createCommitteeMemberMutation.mutateAsync(data);
-      const typeLabel = data.type === 'committee-production' ? 'समिति-उपार्जन केंद्र' : 'संग्रहण केंद्र';
-      toast.success('Committee Procurement Added Successfully', {
-        description: `${data.committeeName} (${typeLabel}) has been added to the system.`,
-      });
-      form.reset();
+      if (isEditing && committee) {
+        await updateCommitteeMutation.mutateAsync({ id: committee._id, data });
+        const typeLabel = data.type === 'committee-production' ? 'समिति-उपार्जन केंद्र' : 'संग्रहण केंद्र';
+        toast.success('Committee Updated Successfully', {
+          description: `${data.committeeName} (${typeLabel}) has been updated.`,
+        });
+        navigate('/reports/entry/committees');
+      } else {
+        await createCommitteeMemberMutation.mutateAsync(data);
+        const typeLabel = data.type === 'committee-production' ? 'समिति-उपार्जन केंद्र' : 'संग्रहण केंद्र';
+        toast.success('Committee Procurement Added Successfully', {
+          description: `${data.committeeName} (${typeLabel}) has been added to the system.`,
+        });
+        form.reset();
+      }
     } catch (error) {
-      toast.error('Failed to add committee', {
+      toast.error(isEditing ? 'Failed to update committee' : 'Failed to add committee', {
         description: error.message || 'An error occurred.',
       });
     }
@@ -200,9 +227,20 @@ export default function AddCommitteeProcurementForm() {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>{t('forms.committee.title')}</CardTitle>
+        {isEditing && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="w-fit mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        )}
+        <CardTitle>{isEditing ? 'Edit Committee' : t('forms.committee.title')}</CardTitle>
         <CardDescription>
-          {t('forms.committee.description')}
+          {isEditing ? 'Update committee information' : t('forms.committee.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -394,15 +432,15 @@ export default function AddCommitteeProcurementForm() {
                   <Button
                     type="submit"
                     className="w-full md:w-auto px-8"
-                    disabled={createCommitteeMemberMutation.isPending}
+                    disabled={createCommitteeMemberMutation.isPending || updateCommitteeMutation.isPending}
                   >
-                    {createCommitteeMemberMutation.isPending ? (
+                    {(createCommitteeMemberMutation.isPending || updateCommitteeMutation.isPending) ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         {t('forms.common.saving')}
                       </>
                     ) : (
-                      t('forms.common.submit')
+                      isEditing ? 'Update' : t('forms.common.submit')
                     )}
                   </Button>
                 </div>

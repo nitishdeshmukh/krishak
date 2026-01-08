@@ -19,11 +19,14 @@ const Profile = lazy(() => import('@/pages/Core/Profile'));
 const UIGuide = lazy(() => import('@/pages/Core/UIGuide'));
 const Entry = lazy(() => import('@/pages/Core/Entry'));
 const AddParty = lazy(() => import('@/pages/Entry/AddParty'));
-const PartyInfo = lazy(() => import('@/pages/EntryReports/PartyInfo'));
-const TransportersInfo = lazy(() => import('@/pages/EntryReports/TransportersInfo'));
-const BrokerInfo = lazy(() => import('@/pages/EntryReports/BrokerInfo'));
-const CommitteeProcurementInfo = lazy(() => import('@/pages/EntryReports/CommitteeProcurementInfo'));
+const PartyEntryReport = lazy(() => import('@/pages/EntryReports/PartyEntryReport'));
+const TransportersEntryReport = lazy(() => import('@/pages/EntryReports/TransportersEntryReport'));
+const BrokerEntryReport = lazy(() => import('@/pages/EntryReports/BrokerEntryReport'));
+const CommitteeEntryReport = lazy(() => import('@/pages/EntryReports/CommitteeEntryReport'));
 const DOEntryReport = lazy(() => import('@/pages/EntryReports/DOEntryReport'));
+const VehicleEntryReport = lazy(() => import('@/pages/EntryReports/VehicleEntryReport'));
+const StaffEntryReport = lazy(() => import('@/pages/EntryReports/StaffEntryReport'));
+const LaborTeamEntryReport = lazy(() => import('@/pages/EntryReports/LaborTeamEntryReport'));
 const RemainingDOInfo = lazy(() => import('@/pages/EntryReports/RemainingDOInfo'));
 const PaddyPurchaseDealReport = lazy(() => import('@/pages/Deal/PaddyPurchaseDealReport'));
 const RicePurchaseDealReport = lazy(() => import('@/pages/Deal/RicePurchaseDealReport'));
@@ -33,9 +36,9 @@ const PrivateInwardReport = lazy(() => import('@/pages/Inward/PrivateInwardRepor
 const RiceInwardReport = lazy(() => import('@/pages/Inward/RiceInwardReport'));
 const AddTransporters = lazy(() => import('@/pages/Entry/AddTransporters'));
 const AddBroker = lazy(() => import('@/pages/Entry/AddBroker'));
-const AddCommitteeProcurement = lazy(() => import('@/pages/Entry/AddCommitteeProcurement'));
+const AddCommittee = lazy(() => import('@/pages/Entry/AddCommittee'));
 const AddDOEntry = lazy(() => import('@/pages/Entry/AddDOEntry'));
-const AddTruckEntry = lazy(() => import('@/pages/Entry/AddTruckEntry'));
+const AddVehicleEntry = lazy(() => import('@/pages/Entry/AddVehicleEntry'));
 const AddStaffEntry = lazy(() => import('@/pages/Entry/AddStaffEntry'));
 const AddPaddyPurchase = lazy(() => import('@/pages/Purchase/AddPaddyPurchase'));
 const AddRicePurchase = lazy(() => import('@/pages/Purchase/AddRicePurchase'));
@@ -161,8 +164,8 @@ export const routes = [
             },
             {
                 path: '/entry/committee',
-                component: AddCommitteeProcurement,
-                title: 'Add Committee Procurement',
+                component: AddCommittee,
+                title: 'Add Committee',
                 titleKey: 'entry:sections.entry.addCommittee',
                 showInSidebar: true,
             },
@@ -175,9 +178,9 @@ export const routes = [
             },
             {
                 path: '/entry/trucks',
-                component: AddTruckEntry,
+                component: AddVehicleEntry,
                 title: 'Add Truck',
-                titleKey: 'entry:sections.entry.addTruck',
+                titleKey: 'entry:sections.entry.addVehicle',
                 showInSidebar: true,
             },
             {
@@ -500,30 +503,30 @@ export const routes = [
         view: 'reports',
         children: [
             {
-                path: '/reports/entry/party-info',
-                component: PartyInfo,
+                path: '/reports/entry/parties',
+                component: PartyEntryReport,
                 title: 'Information of Party',
                 titleKey: 'reports:sections.entry.partyInfo',
                 showInSidebar: true,
             },
             {
                 path: '/reports/entry/transporters',
-                component: TransportersInfo,
+                component: TransportersEntryReport,
                 title: 'Transporters',
                 titleKey: 'reports:sections.entry.transporters',
                 showInSidebar: true,
             },
             {
                 path: '/reports/entry/brokers',
-                component: BrokerInfo,
+                component: BrokerEntryReport,
                 title: 'Brokers',
                 titleKey: 'reports:sections.entry.brokers',
                 showInSidebar: true,
             },
             {
                 path: '/reports/entry/committee',
-                component: CommitteeProcurementInfo,
-                title: 'Committee Procurement',
+                component: CommitteeEntryReport,
+                title: 'Committees',
                 titleKey: 'reports:sections.entry.committee',
                 showInSidebar: true,
             },
@@ -532,6 +535,27 @@ export const routes = [
                 component: DOEntryReport,
                 title: 'DO Entry Report',
                 titleKey: 'reports:sections.entry.doReport',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/entry/vehicles',
+                component: VehicleEntryReport,
+                title: 'Vehicle Report',
+                titleKey: 'reports:sections.entry.vehicleReport',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/entry/staff',
+                component: StaffEntryReport,
+                title: 'Staff Report',
+                titleKey: 'reports:sections.entry.staffReport',
+                showInSidebar: true,
+            },
+            {
+                path: '/reports/entry/labor-teams',
+                component: LaborTeamEntryReport,
+                title: 'Labor Team Report',
+                titleKey: 'reports:sections.entry.laborTeamReport',
                 showInSidebar: true,
             },
             {

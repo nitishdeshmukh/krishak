@@ -1,10 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import {
     Form,
     FormControl,
@@ -20,7 +22,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { PhoneInputField } from '@/components/ui/phone-input-field';
-import { useCreateParty } from '@/hooks/useParties';
+import { useCreateParty, useUpdateParty } from '@/hooks/useParties';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import {
     AlertDialog,
@@ -50,7 +52,14 @@ const partyFormSchema = z.object({
 
 export default function AddPartyForm() {
     const { t } = useTranslation(['forms', 'entry', 'common']);
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    // Check if we're in edit mode
+    const { party, isEditing } = location.state || {};
+    
     const createPartyMutation = useCreateParty();
+    const updatePartyMutation = useUpdateParty();
 
     // Initialize form with react-hook-form and zod validation
     const form = useForm({
@@ -64,24 +73,45 @@ export default function AddPartyForm() {
         },
     });
 
+    // Pre-fill form when editing
+    useEffect(() => {
+        if (isEditing && party) {
+            form.reset({
+                partyName: party.partyName || '',
+                phone: party.phone || '',
+                email: party.email || '',
+                gstn: party.gstn || '',
+                address: party.address || '',
+            });
+        }
+    }, [isEditing, party, form]);
+
     // Form submission handler - actual submission after confirmation
     const handleConfirmedSubmit = async (data) => {
         try {
-            await createPartyMutation.mutateAsync(data);
-            toast.success('Party Added Successfully', {
-                description: `${data.partyName} has been added to the system.`,
-            });
-            form.reset();
+            if (isEditing && party?._id) {
+                await updatePartyMutation.mutateAsync({ id: party._id, data });
+                toast.success('Party Updated Successfully', {
+                    description: `${data.partyName} has been updated.`,
+                });
+                navigate('/reports/entry/parties');
+            } else {
+                await createPartyMutation.mutateAsync(data);
+                toast.success('Party Added Successfully', {
+                    description: `${data.partyName} has been added to the system.`,
+                });
+                form.reset();
+            }
         } catch (error) {
-            toast.error('Failed to add party', {
-                description: error.message || 'An error occurred while adding the party.',
+            toast.error(isEditing ? 'Failed to update party' : 'Failed to add party', {
+                description: error.message || 'An error occurred.',
             });
         }
     };
 
     // Hook for confirmation dialog
     const { isOpen, openDialog, closeDialog, handleConfirm } = useConfirmDialog(
-        'add-party',
+        isEditing ? 'update-party' : 'add-party',
         handleConfirmedSubmit
     );
 
@@ -93,9 +123,20 @@ export default function AddPartyForm() {
     return (
         <Card className="max-w-3xl mx-auto">
             <CardHeader>
-                <CardTitle>{t('forms.party.title')}</CardTitle>
+                {isEditing && (
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-fit mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+                        onClick={() => navigate(-1)}
+                    >
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Back
+                    </Button>
+                )}
+                <CardTitle>{isEditing ? 'Edit Party' : t('forms.party.title')}</CardTitle>
                 <CardDescription>
-                    {t('forms.party.description')}
+                    {isEditing ? 'Update party information' : t('forms.party.description')}
                 </CardDescription>
             </CardHeader>
             <CardContent>

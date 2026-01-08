@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,9 +20,9 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { DatePickerField } from '@/components/ui/date-picker-field';
-import { useCreateDOEntry, useCreateBulkDOEntries } from '@/hooks/useDOEntries';
+import { useCreateDOEntry, useCreateBulkDOEntries, useUpdateDOEntry } from '@/hooks/useDOEntries';
 import { useAllCommittees } from '@/hooks/useCommittee';
-import { Upload, FileSpreadsheet, X, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, X, Check, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
@@ -61,8 +62,15 @@ const doEntryFormSchema = z.object({
 
 export default function DOEntryForm() {
   const { t } = useTranslation(['forms', 'common']);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Check if editing
+  const { doEntry, isEditing } = location.state || {};
+  
   const createDOEntryMutation = useCreateDOEntry();
   const createBulkDOEntriesMutation = useCreateBulkDOEntries();
+  const updateDOEntryMutation = useUpdateDOEntry();
 
   // Fetch committees from server
   const { committees, isLoading: isLoadingCommittees } = useAllCommittees();
@@ -104,6 +112,26 @@ export default function DOEntryForm() {
     // Format total to remove unnecessary decimals if integer
     form.setValue('total', total % 1 === 0 ? total.toString() : total.toFixed(2));
   }, [watchedFields, form]);
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (isEditing && doEntry && !isLoadingCommittees && committees.length > 0) {
+      console.log('Pre-filling form with doEntry:', doEntry);
+      console.log('Committees available:', committees.map(c => c.committeeName));
+      
+      // Reset form with all values including committeeCenter
+      // SearchableSelect will now handle displaying the value even if options aren't loaded yet
+      form.reset({
+        committeeCenter: doEntry.committeeCenter || '',
+        doNumber: doEntry.doNumber || '',
+        date: doEntry.date ? new Date(doEntry.date) : new Date(),
+        grainMota: doEntry.grainMota?.toString() || '0',
+        grainPatla: doEntry.grainPatla?.toString() || '0',
+        grainSarna: doEntry.grainSarna?.toString() || '0',
+        total: doEntry.total?.toString() || '0',
+      });
+    }
+  }, [isEditing, doEntry, form, isLoadingCommittees, committees]);
 
   // Parse Excel file logic (kept consistent but cleaned up)
   const parseExcelFile = useCallback((file) => {
@@ -194,19 +222,27 @@ export default function DOEntryForm() {
   const handleConfirmedManualSubmit = async (data) => {
     try {
       const submitData = { ...data, date: format(data.date, 'yyyy-MM-dd') };
-      await createDOEntryMutation.mutateAsync(submitData);
-      toast.success(t('common:doEntry.successSingle'));
-      form.reset({
-        committeeCenter: data.committeeCenter, // Keep last selected center
-        doNumber: '',
-        date: new Date(),
-        grainMota: '0',
-        grainPatla: '0',
-        grainSarna: '0',
-        total: '0',
-      });
+      if (isEditing && doEntry) {
+        await updateDOEntryMutation.mutateAsync({ id: doEntry._id, data: submitData });
+        toast.success('DO Entry Updated Successfully', {
+          description: `DO ${submitData.doNumber} has been updated.`,
+        });
+        navigate('/reports/entry/do');
+      } else {
+        await createDOEntryMutation.mutateAsync(submitData);
+        toast.success(t('common:doEntry.successSingle'));
+        form.reset({
+          committeeCenter: data.committeeCenter, // Keep last selected center
+          doNumber: '',
+          date: new Date(),
+          grainMota: '0',
+          grainPatla: '0',
+          grainSarna: '0',
+          total: '0',
+        });
+      }
     } catch (error) {
-      toast.error(t('common:doEntry.errorSubmit'));
+      toast.error(isEditing ? 'Failed to update DO entry' : t('common:doEntry.errorSubmit'));
     }
   };
 
@@ -243,9 +279,20 @@ export default function DOEntryForm() {
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>{t('forms:forms.doEntry.title')}</CardTitle>
+        {isEditing && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="w-fit mb-2 -ml-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+        )}
+        <CardTitle>{isEditing ? 'Edit DO Entry' : t('forms:forms.doEntry.title')}</CardTitle>
         <CardDescription>
-          {t('forms:forms.doEntry.description')}
+          {isEditing ? 'Update DO entry details' : t('forms:forms.doEntry.description')}
         </CardDescription>
       </CardHeader>
 
@@ -508,15 +555,15 @@ export default function DOEntryForm() {
                   <Button
                     type="submit"
                     className="w-full sm:w-auto"
-                    disabled={createDOEntryMutation.isPending}
+                    disabled={createDOEntryMutation.isPending || updateDOEntryMutation.isPending}
                   >
-                    {createDOEntryMutation.isPending ? (
+                    {(createDOEntryMutation.isPending || updateDOEntryMutation.isPending) ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         {t('common:buttons.processing')}
                       </>
                     ) : (
-                      t('common:buttons.submit')
+                      isEditing ? 'Update' : t('common:buttons.submit')
                     )}
                   </Button>
                 </div>
