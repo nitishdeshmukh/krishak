@@ -101,27 +101,27 @@ export default function DOEntryReport() {
       },
     },
     {
-      accessorKey: "grainMota",
+      accessorKey: "paddyMota",
       header: "धान (मोटा)",
       meta: { filterVariant: "text" },
       cell: ({ row }) => (
-        <div className="text-sm">{row.getValue("grainMota") || 0}</div>
+        <div className="text-sm">{row.getValue("paddyMota") || 0}</div>
       ),
     },
     {
-      accessorKey: "grainPatla",
+      accessorKey: "paddyPatla",
       header: "धान (पतला)",
       meta: { filterVariant: "text" },
       cell: ({ row }) => (
-        <div className="text-sm ">{row.getValue("grainPatla") || 0}</div>
+        <div className="text-sm ">{row.getValue("paddyPatla") || 0}</div>
       ),
     },
     {
-      accessorKey: "grainSarna",
+      accessorKey: "paddySarna",
       header: "धान (सरना)",
       meta: { filterVariant: "text" },
       cell: ({ row }) => (
-        <div className="text-sm ">{row.getValue("grainSarna") || 0}</div>
+        <div className="text-sm ">{row.getValue("paddySarna") || 0}</div>
       ),
     },
     {
@@ -256,9 +256,9 @@ export default function DOEntryReport() {
             showFilters={[
               "date",
               "committeeCenter",
-              "grainSarna",
-              "grainPatla",
-              "grainMota",
+              "paddySarna",
+              "paddyPatla",
+              "paddyMota",
             ]}
           />
 
@@ -450,19 +450,19 @@ export default function DOEntryReport() {
                   <div className="px-4 py-3.5 text-center">
                     <p className="text-xs text-muted-foreground mb-1">मोटा</p>
                     <p className="text-lg font-semibold text-foreground">
-                      {selectedDO.grainMota || 0}
+                      {selectedDO.paddyMota || 0}
                     </p>
                   </div>
                   <div className="px-4 py-3.5 text-center">
                     <p className="text-xs text-muted-foreground mb-1">पतला</p>
                     <p className="text-lg font-semibold text-foreground">
-                      {selectedDO.grainPatla || 0}
+                      {selectedDO.paddyPatla || 0}
                     </p>
                   </div>
                   <div className="px-4 py-3.5 text-center">
                     <p className="text-xs text-muted-foreground mb-1">सरना</p>
                     <p className="text-lg font-semibold text-foreground">
-                      {selectedDO.grainSarna || 0}
+                      {selectedDO.paddySarna || 0}
                     </p>
                   </div>
                 </div>
