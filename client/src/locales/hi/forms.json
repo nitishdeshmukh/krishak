@@ -565,10 +565,7 @@
       "wastagePercent": "बवाद %",
       "brokerage": "दलाली (प्रति क्विंटल)",
       "packaging": "बारदाना सहित/वापसी",
-      "salesTypes": {
-        "mill": "मिल",
-        "party": "पार्टी"
-      }
+      "paddyType": "धान का प्रकार"
     },
     "ricePurchase": {
       "title": "चावल खरीदी सौदा",

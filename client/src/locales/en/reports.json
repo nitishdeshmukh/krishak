@@ -1,81 +1,94 @@
 {
-    "sections": {
-        "entry": {
-            "title": "Entry Report",
-            "partyInfo": "Information of Party",
-            "transporters": "Information of Transporters",
-            "brokers": "Information of Brokers",
-            "committee": "Information of Committee Procurement",
-            "vehicleReport": "Vehicle Report",
-            "staffReport": "Staff Report",
-            "laborTeamReport": "Labor Team Report",
-            "doReport": "DO Entry Report",
-            "remainingDO": "Details of Remaining DO Lifting"
-        },
-        "purchase": {
-            "title": "Purchase Deals Report",
-            "paddy": "Paddy Purchase Deal Report",
-            "rice": "Rice Purchase Deal Report",
-            "sack": "Sack Purchase Deal Report",
-            "frk": "FRK Purchase Deal Report",
-            "other": "Other Purchase Deal Report"
-        },
-        "sales": {
-            "title": "Sales Deals Report",
-            "paddy": "Paddy Deals Report",
-            "rice": "Rice Sales Deal Report",
-            "sack": "Sack Sales Deal Report",
-            "frk": "FRK Sales Deal Report",
-            "brokens": "Brokens Sales Deal Report",
-            "brewers": "Brewers Sales Deal Report",
-            "husk": "Husk Sales Deal Report",
-            "riceBran": "Rice Bran Sales Deal Report",
-            "whiteBran": "White Bran Sales Deal Report",
-            "other": "Other Sales Deal Report"
-        },
-        "inward": {
-            "title": "Inward Report",
-            "paddy": "Paddy Inward Report",
-            "private": "Private Inward Report",
-            "rice": "Rice Inward / Lot Deposit Report",
-            "sack": "Sack Inward Report",
-            "frk": "FRK Inward Report",
-            "other": "Other Inward Report"
-        },
-        "outward": {
-            "title": "Outward Report",
-            "privatePaddy": "Private Paddy Outward Report",
-            "govtRice": "Govt Rice Outward Report",
-            "privateRice": "Private Rice Outward Report",
-            "govtSack": "Govt Sack Outward Report",
-            "privateSack": "Private Sack Outward Report",
-            "frk": "FRK Outward Report",
-            "brokens": "Brokens Outward Report",
-            "brewers": "Brewers Outward Report",
-            "husk": "Husk Outward Report",
-            "riceBran": "Rice Bran Outward Report",
-            "whiteBran": "White Bran Outward Report",
-            "other": "Other Outward Report"
-        },
-        "milling": {
-            "title": "Milling Report",
-            "paddy": "Paddy Milling Report",
-            "rice": "Rice Milling Report"
-        },
-        "laborCost": {
-            "title": "Labor Cost Report",
-            "inward": "Inward Labor Report",
-            "outward": "Outward Labor Report",
-            "milling": "Milling Labor Report",
-            "other": "Other Labor Report"
-        },
-        "financial": {
-            "title": "Receiving/Payment Report",
-            "receiving": "Receiving Report",
-            "payment": "Payment Report"
-        },
-        "attendance": {
-            "title": "Attendance Report"
-        }
+  "sections": {
+    "entry": {
+      "title": "Entry Report",
+      "partyInfo": "Information of Party",
+      "transporters": "Information of Transporters",
+      "brokers": "Information of Brokers",
+      "committee": "Information of Committee Procurement",
+      "vehicleReport": "Vehicle Report",
+      "staffReport": "Staff Report",
+      "laborTeamReport": "Labor Team Report",
+      "doReport": "DO Entry Report",
+      "remainingDO": "Details of Remaining DO Lifting"
+    },
+    "purchase": {
+      "title": "Purchase Deals Report",
+      "paddy": "Paddy Purchase Deal Report",
+      "rice": "Rice Purchase Deal Report",
+      "sack": "Sack Purchase Deal Report",
+      "frk": "FRK Purchase Deal Report",
+      "other": "Other Purchase Deal Report"
+    },
+    "sales": {
+      "title": "Sales Deals Report",
+      "paddyDo": "Paddy Deals Report (DO sales)",
+      "paddyMill": "Paddy Deals Report (from Mill)",
+      "rice": "Rice Sales Deal Report",
+      "sack": "Sack Sales Deal Report",
+      "frk": "FRK Sales Deal Report",
+      "brokens": "Brokens Sales Deal Report",
+      "brewers": "Brewers Sales Deal Report",
+      "husk": "Husk Sales Deal Report",
+      "riceBran": "Rice Bran Sales Deal Report",
+      "whiteBran": "White Bran Sales Deal Report",
+      "other": "Other Sales Deal Report"
+    },
+    "inward": {
+      "title": "Inward Report",
+      "paddy": "Paddy Inward Report",
+      "private": "Private Inward Report",
+      "rice": "Rice Inward / Lot Deposit Report",
+      "sack": "Sack Inward Report",
+      "frk": "FRK Inward Report",
+      "other": "Other Inward Report"
+    },
+    "outward": {
+      "title": "Outward Report",
+      "privatePaddy": "Private Paddy Outward Report",
+      "govtRice": "Govt Rice Outward Report",
+      "privateRice": "Private Rice Outward Report",
+      "govtSack": "Govt Sack Outward Report",
+      "privateSack": "Private Sack Outward Report",
+      "frk": "FRK Outward Report",
+      "brokens": "Brokens Outward Report",
+      "brewers": "Brewers Outward Report",
+      "husk": "Husk Outward Report",
+      "riceBran": "Rice Bran Outward Report",
+      "whiteBran": "White Bran Outward Report",
+      "other": "Other Outward Report"
+    },
+    "milling": {
+      "title": "Milling Report",
+      "paddy": "Paddy Milling Report",
+      "rice": "Rice Milling Report"
+    },
+    "laborCost": {
+      "title": "Labor Cost Report",
+      "inward": "Inward Labor Report",
+      "outward": "Outward Labor Report",
+      "milling": "Milling Labor Report",
+      "other": "Other Labor Report"
+    },
+    "financial": {
+      "title": "Receiving/Payment Report",
+      "receiving": "Receiving Report",
+      "payment": "Payment Report"
+    },
+    "attendance": {
+      "title": "Attendance Report"
     }
+  },
+  "stock": {
+    "title": "Stock Report"
+  },
+  "daily": {
+    "title": "Daily Report"
+  },
+  "brokerTransaction": {
+    "title": "Broker Transaction"
+  },
+  "partyTransaction": {
+    "title": "Party Transaction"
+  }
 }

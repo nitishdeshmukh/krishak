@@ -25,6 +25,60 @@ export const fetchPaddySales = async ({
   }
 };
 
+// Fetch DO Sales with pagination
+export const fetchPaddyDoSales = async ({
+  page = 1,
+  pageSize = 10,
+  filters = [],
+  sorting = [],
+}) => {
+  const params = {
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    salesType: "DO बिक्री",
+  };
+  filters.forEach((filter) => {
+    if (filter.value) params[`filter[${filter.id}]`] = filter.value;
+  });
+  if (sorting.length > 0) {
+    params.sortBy = sorting[0].id;
+    params.sortOrder = sorting[0].desc ? "desc" : "asc";
+  }
+
+  try {
+    return await apiClient.get("/sales/paddy", { params });
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Fetch Mill Sales with pagination
+export const fetchPaddyMillSales = async ({
+  page = 1,
+  pageSize = 10,
+  filters = [],
+  sorting = [],
+}) => {
+  const params = {
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+    salesType: "अन्य (मिल से बिक्री)",
+  };
+  filters.forEach((filter) => {
+    if (filter.value) params[`filter[${filter.id}]`] = filter.value;
+  });
+  if (sorting.length > 0) {
+    params.sortBy = sorting[0].id;
+    params.sortOrder = sorting[0].desc ? "desc" : "asc";
+  }
+
+  try {
+    return await apiClient.get("/sales/paddy", { params });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const createPaddySale = async (saleData) => {
   try {
     const data = await apiClient.post("/sales/paddy", saleData);

@@ -30,24 +30,31 @@ export const getPaddySaleBySaleNumber = asyncHandler(async (req, res) => {
 });
 
 export const getPaddySales = asyncHandler(async (req, res) => {
-  const { page, pageSize } = getPagination(req.query);
+  const { page, pageSize, salesType } = req.query;
+  const { page: pageNum, pageSize: limit } = getPagination(req.query);
   const sort = getSorting(req.query);
   const filters = getFilters(req.query, ["partyName", "brokerName"]);
   filters.isActive = { $ne: false };
+
+  // Add salesType filter if provided
+  if (salesType) {
+    filters.salesType = salesType;
+  }
+
   const aggregate = PaddySales.aggregate([
     { $match: filters },
     { $sort: sort },
   ]);
   const result = await PaddySales.aggregatePaginate(aggregate, {
-    page,
-    limit: pageSize,
+    page: pageNum,
+    limit,
   });
   res.status(200).json({
     success: true,
     data: {
       paddySales: result.docs,
       totalPaddySales: result.totalDocs,
-      ...buildPaginationResponse(result.totalDocs, page, pageSize),
+      ...buildPaginationResponse(result.totalDocs, pageNum, limit),
     },
   });
 });

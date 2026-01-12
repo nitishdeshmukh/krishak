@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import {
   fetchPaddySales,
+  fetchPaddyDoSales,
+  fetchPaddyMillSales,
   createPaddySale,
   updatePaddySale,
   fetchAllPaddySales,
@@ -49,6 +51,58 @@ export const usePaddySales = () => {
     queryKey: ["paddySales", page, pageSize, columnFilters, sorting],
     queryFn: () =>
       fetchPaddySales({ page, pageSize, filters: columnFilters, sorting }),
+    keepPreviousData: true,
+    staleTime: 30000,
+  });
+
+  return {
+    ...query,
+    paddySales: query.data?.data?.paddySales || [],
+    totalPaddySales: query.data?.data?.totalPaddySales || 0,
+    totalPages: query.data?.data?.totalPages || 0,
+    currentPage: query.data?.data?.currentPage || 1,
+    hasNext: query.data?.data?.hasNext || false,
+    hasPrev: query.data?.data?.hasPrev || false,
+  };
+};
+
+// Hook for fetching DO sales with pagination
+export const usePaddyDoSales = () => {
+  const { pageIndex, pageSize, columnFilters, sorting } = useSelector(
+    (state) => state.table
+  );
+  const page = pageIndex + 1;
+
+  const query = useQuery({
+    queryKey: ["paddySales", "do", page, pageSize, columnFilters, sorting],
+    queryFn: () =>
+      fetchPaddyDoSales({ page, pageSize, filters: columnFilters, sorting }),
+    keepPreviousData: true,
+    staleTime: 30000,
+  });
+
+  return {
+    ...query,
+    paddySales: query.data?.data?.paddySales || [],
+    totalPaddySales: query.data?.data?.totalPaddySales || 0,
+    totalPages: query.data?.data?.totalPages || 0,
+    currentPage: query.data?.data?.currentPage || 1,
+    hasNext: query.data?.data?.hasNext || false,
+    hasPrev: query.data?.data?.hasPrev || false,
+  };
+};
+
+// Hook for fetching Mill sales with pagination
+export const usePaddyMillSales = () => {
+  const { pageIndex, pageSize, columnFilters, sorting } = useSelector(
+    (state) => state.table
+  );
+  const page = pageIndex + 1;
+
+  const query = useQuery({
+    queryKey: ["paddySales", "mill", page, pageSize, columnFilters, sorting],
+    queryFn: () =>
+      fetchPaddyMillSales({ page, pageSize, filters: columnFilters, sorting }),
     keepPreviousData: true,
     staleTime: 30000,
   });

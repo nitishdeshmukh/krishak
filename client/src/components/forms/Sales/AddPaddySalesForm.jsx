@@ -272,12 +272,13 @@ export default function AddPaddySalesForm() {
     }
   }, [salesType, debouncedDoEntries, form]);
 
-  // Clear quantity when switching from DO sales to other sales
+  // Clear quantity when switching from DO sales to other sales (but not in edit mode on load)
   useEffect(() => {
-    if (salesType === salesTypeOptions[1].value) {
+    // Don't clear if we're in edit mode and just loading the data
+    if (salesType === salesTypeOptions[1].value && !isEditMode) {
       form.setValue("quantity", "");
     }
-  }, [salesType, form]);
+  }, [salesType, form, isEditMode]);
 
   // Handler to fetch DO details and auto-fill grain fields
   const handleDOChange = useCallback(
@@ -737,29 +738,27 @@ export default function AddPaddySalesForm() {
               </div>
             )}
 
-            {/* Paddy Type Dropdown - Only show for DO बिक्री */}
-            {salesType === salesTypeOptions[0].value && (
-              <FormField
-                control={form.control}
-                name="paddyType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">
-                      {t("forms.paddySales.paddyType")}
-                    </FormLabel>
-                    <FormControl>
-                      <SearchableSelect
-                        options={paddyTypeOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            {/* Paddy Type Dropdown */}
+            <FormField
+              control={form.control}
+              name="paddyType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base">
+                    {t("forms.paddySales.paddyType")}
+                  </FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      options={paddyTypeOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* धान का भाव/दर (Paddy Rate) */}
             <FormField
