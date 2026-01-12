@@ -23,9 +23,6 @@ export const riceTypeOptions = [
   { value: "चावल(पतला)", label: "चावल(पतला)" },
 ];
 
-// Alias for backward compatibility
-export const grainTypeOptions = paddyTypeOptions;
-
 // Delevery options for dropdowns
 export const deliveryOptions = [
   { value: "पड़े में", label: "Pickup", labelHi: "पड़े में" },
@@ -65,6 +62,15 @@ export const frkOptions = [
   { value: "NON FRK", label: "Non FRK", labelHi: "NON FRK" },
 ];
 
+export const salesTypeOptions = [
+  { value: "DO बिक्री", label: "DO Sales", labelHi: "DO बिक्री" },
+  {
+    value: "अन्य (मिल से बिक्री)",
+    label: "Other Sales(Sales from Mill)",
+    labelHi: "अन्य (मिल से बिक्री)",
+  },
+];
+
 // Purchase Deal Types
 export const purchaseDealTypes = [
   { value: "PADDY", label: "Paddy Purchase", labelHi: "धान खरीदी" },
@@ -74,6 +80,13 @@ export const purchaseDealTypes = [
   { value: "OTHER", label: "Other Purchase", labelHi: "अन्य खरीदी" },
 ];
 
+export const quantityType = [
+  { value: "क्विंटल", label: "क्विंटल", labelHi: "क्विंटल" },
+  { value: "कि.ग्रा.", label: "कि.ग्रा.", labelHi: "कि.ग्रा." },
+  { value: "टन", label: "टन", labelHi: "टन" },
+  { value: "नग", label: "नग", labelHi: "नग" },
+  { value: "अन्य", label: "अन्य", labelHi: "अन्य" },
+];
 // Sale Deal Types
 export const saleDealTypes = [
   { value: "RICE", label: "Rice Sale", labelHi: "चावल बिक्री" },

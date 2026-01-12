@@ -80,6 +80,24 @@ export const FCI_OPTIONS = {
 
 export const FCI_OPTION_VALUES = Object.values(FCI_OPTIONS);
 
+// Gunny Delivery Options
+export const GUNNY_DELIVERY_OPTIONS = {
+  MILL: "मिल में",
+  COMMITTEE: "समिति / संग्रहण केंद्र में",
+};
+
+export const GUNNY_DELIVERY_OPTION_VALUES = Object.values(
+  GUNNY_DELIVERY_OPTIONS
+);
+
+// Sales Types (Paddy)
+export const SALES_TYPES = {
+  DO_SALES: "DO बिक्री",
+  OTHER_SALES: "अन्य (मिल से बिक्री)",
+};
+
+export const SALES_TYPE_VALUES = Object.values(SALES_TYPES);
+
 // Payment Modes
 export const PAYMENT_MODES = {
   CASH: "CASH",
@@ -126,13 +144,3 @@ export const SALE_DEAL_TYPES = {
 };
 
 export const SALE_DEAL_TYPE_VALUES = Object.values(SALE_DEAL_TYPES);
-
-// Gunny Delivery Options
-export const GUNNY_DELIVERY_OPTIONS = {
-  MILL: "मिल में",
-  COMMITTEE: "समिति / संग्रहण केंद्र में",
-};
-
-export const GUNNY_DELIVERY_OPTION_VALUES = Object.values(
-  GUNNY_DELIVERY_OPTIONS
-);
